@@ -73,7 +73,7 @@ var rng := RandomNumberGenerator.new()
 # ── Boot ──────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
-	rng.seed = 42
+	rng.seed = 45
 	var ts := _build_tileset()
 	ground_layer.tile_set = ts
 	water_layer.tile_set  = ts
@@ -249,6 +249,10 @@ func _scatter_decorations() -> void:
 
 	for col in range(MAP_COLS):
 		for row in range(WATER_ROWS, MAP_ROWS):
+			# Skip any cell the terrain system left empty
+			if ground_layer.get_cell_source_id(Vector2i(col, row)) == -1:
+				continue
+
 			var rock_chance := 0.0
 			if col < COL_WILDS_END:
 				rock_chance = 0.04
