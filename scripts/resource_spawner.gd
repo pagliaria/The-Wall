@@ -7,6 +7,12 @@ extends Node2D
 #   Z_GOLD  = 2  — gold stones
 #   Z_UNITS = 3  — sheep (and future units)
 #   Z_TREES = 4  — trees (render in front of everything)
+#
+# COLLISION:
+#   Uses Godot's built-in physics throughout — no manual obstacle lists.
+#   Each tree gets a StaticBody2D + CollisionShape2D at stump level.
+#   Sheep are CharacterBody2D scenes that use move_and_collide(), so they
+#   automatically bounce off tree stumps, future buildings, walls, etc.
 
 const TILE_SIZE      = 64
 const MAP_COLS       = 48
@@ -17,6 +23,11 @@ const COL_TOWN_START = 20
 const Z_GOLD         = 2
 const Z_UNITS        = 3
 const Z_TREES        = 4
+
+# Radius (px) of the CircleShape2D placed at each tree stump.
+# Tree sprites are 192 px tall; the stump occupies roughly the bottom 48 px,
+# so a radius of 20 px covers the trunk base without blocking too much ground.
+const STUMP_RADIUS   = 50.0
 
 # ── Gold Stone 3 ──────────────────────────────────────────────────────────────
 const GOLD_BASE      = preload("res://assets/Terrain/Resources/Gold/Gold Stones/Gold Stone 3.png")
@@ -37,6 +48,7 @@ const TREE_COUNT   = 10
 const TREE_SPACING = 3
 
 # ── Sheep ─────────────────────────────────────────────────────────────────────
+const SHEEP_SCENE = preload("res://scenes/sheep.tscn")
 const SHEEP_IDLE  = preload("res://assets/Terrain/Resources/Meat/Sheep/Sheep_Idle.png")
 const SHEEP_GRAZE = preload("res://assets/Terrain/Resources/Meat/Sheep/Sheep_Grass.png")
 const SHEEP_MOVE  = preload("res://assets/Terrain/Resources/Meat/Sheep/Sheep_Move.png")
@@ -44,7 +56,7 @@ const SHEEP_IDLE_FRAMES  = 6
 const SHEEP_GRAZE_FRAMES = 12
 const SHEEP_MOVE_FRAMES  = 4
 const SHEEP_FPS          = 8.0
-const SHEEP_COUNT        = 20
+const SHEEP_COUNT        = 50
 const SHEEP_SPACING      = 2
 
 func _ready() -> void:
@@ -124,18 +136,34 @@ func _spawn_trees(ground_layer: TileMapLayer, rng: RandomNumberGenerator,
 func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	var texture : Texture2D = TREE_TEXTURES[rng.randi_range(0, TREE_TEXTURES.size() - 1)]
 
-	var node     := AnimatedSprite2D.new()
-	node.name     = "Tree_%d_%d" % [col, row]
-	node.position = _tile_center(col, row)
-	node.z_index  = Z_TREES
-	node.flip_h   = rng.randf() > 0.5
+	# ─ Visual sprite ─────────────────────────────────────────────────────────
+	var sprite     := AnimatedSprite2D.new()
+	sprite.name     = "Tree_%d_%d" % [col, row]
+	sprite.position = _tile_center(col, row)
+	sprite.z_index  = Z_TREES
+	sprite.flip_h   = rng.randf() > 0.5
 
-	node.sprite_frames = _make_frames(texture, TREE_FRAMES, TREE_FPS, true)
-	node.animation     = "anim"
-	node.frame         = rng.randi_range(0, TREE_FRAMES - 1)
-	node.play("anim")
+	sprite.sprite_frames = _make_frames(texture, TREE_FRAMES, TREE_FPS, true)
+	sprite.animation     = "anim"
+	sprite.frame         = rng.randi_range(0, TREE_FRAMES - 1)
+	sprite.play("anim")
 
-	add_child(node)
+	add_child(sprite)
+
+	# ─ Stump collision — StaticBody2D with a circle at the trunk base ────────
+	# Tree sprites are 192 px tall. The stump sits in the bottom ~48 px.
+	# Offset: half sprite height (96) minus half stump height (24) = 72 px down.
+	var stump          := StaticBody2D.new()
+	stump.name          = "Stump_%d_%d" % [col, row]
+	stump.position      = _tile_center(col, row) + Vector2(0.0, 72.0)
+
+	var shape          := CollisionShape2D.new()
+	var circle         := CircleShape2D.new()
+	circle.radius       = STUMP_RADIUS
+	shape.shape         = circle
+	stump.add_child(shape)
+
+	add_child(stump)
 
 # ── Sheep ─────────────────────────────────────────────────────────────────────
 
@@ -158,6 +186,12 @@ func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator,
 		_spawn_one_sheep(col, row, rng)
 
 func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
+	var sheep          := SHEEP_SCENE.instantiate()
+	sheep.name          = "Sheep_%d_%d" % [col, row]
+	sheep.position      = _tile_center(col, row)
+	sheep.z_index       = Z_UNITS
+
+	# Build sprite frames and hand them to the Sprite child.
 	var sf := SpriteFrames.new()
 	sf.remove_animation("default")
 
@@ -176,16 +210,13 @@ func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	sf.set_animation_loop("move", true)
 	_add_frames_to_anim(sf, "move", SHEEP_MOVE, SHEEP_MOVE_FRAMES)
 
-	var sheep          := AnimatedSprite2D.new()
-	sheep.name          = "Sheep_%d_%d" % [col, row]
-	sheep.sprite_frames = sf
-	sheep.position      = _tile_center(col, row)
-	sheep.z_index       = Z_UNITS
-	sheep.frame         = rng.randi_range(0, SHEEP_IDLE_FRAMES - 1)
-	sheep.flip_h        = rng.randf() > 0.5
-	sheep.set_script(load("res://scripts/sheep.gd"))
-
 	add_child(sheep)
+
+	# Sprite node is available after add_child.
+	var sprite          := sheep.get_node("Sprite") as AnimatedSprite2D
+	sprite.sprite_frames = sf
+	sprite.frame         = rng.randi_range(0, SHEEP_IDLE_FRAMES - 1)
+	sprite.flip_h        = rng.randf() > 0.5
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

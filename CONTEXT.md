@@ -105,6 +105,7 @@ Scattered after terrain paint, skipping empty cells (`get_cell_source_id == -1`)
 | `Z_GOLD` | resource_spawner.gd | 2 | Z layer for gold stones |
 | `Z_TREES` | resource_spawner.gd | 4 | Z layer for trees (frontmost) |
 | `Z_UNITS` | resource_spawner.gd | 3 | Z layer for sheep, future units |
+| `STUMP_RADIUS` | resource_spawner.gd | 28.0 | Collision radius (px) around each tree stump |
 
 ---
 
