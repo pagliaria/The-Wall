@@ -26,7 +26,7 @@ const MAP_ROWS   = 27
 const WATER_ROWS = 3
 
 # ── Zone column boundaries ────────────────────────────────────────────────────
-const COL_WILDS_END  = 11
+const COL_WILDS_END  = 20
 const COL_NOMANS_END = 20
 
 # ── TileSet source IDs ────────────────────────────────────────────────────────
@@ -215,16 +215,17 @@ func _fill_ground(ts: TileSet) -> void:
 
 func _terrain_for_cell(col: int, row: int, noise: FastNoiseLite) -> int:
 	var n : float = noise.get_noise_2d(col * 0.5, row * 0.5) * 3.0
-	var effective_col : float = col + n
+	var effective_col : float = col #+ n
 
 	if effective_col < COL_WILDS_END:
-		if row > MAP_ROWS - 5 and rng.randf() < 0.15:
-			return TERRAIN_STONE
-		return TERRAIN_DARK_GRASS
-	elif effective_col < COL_NOMANS_END:
-		if rng.randf() < 0.2:
-			return TERRAIN_STONE
+		#if row > MAP_ROWS - 5 and rng.randf() < 0.15:
+			#return TERRAIN_STONE
 		return TERRAIN_DIRT
+		
+	#elif effective_col < COL_NOMANS_END:
+		##if rng.randf() < 0.2:
+			##return TERRAIN_STONE
+		#return TERRAIN_DARK_GRASS
 	else:
 		return TERRAIN_GRASS
 
