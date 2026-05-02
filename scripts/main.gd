@@ -37,9 +37,8 @@ func _ready() -> void:
 	# this call, so the ground_layer is fully painted by the time we spawn.
 	resource_layer.spawn($Terrain/GroundLayer)
 	print("The Wall – world initialised  (%d × %d px)" % [WORLD_WIDTH, WORLD_HEIGHT])
-
+	
 # ── Camera fit ────────────────────────────────────────────────────────────────
-
 func _fit_camera_to_screen() -> void:
 	var screen := Vector2(DisplayServer.window_get_size())
 	var zoom_x := screen.x / float(WORLD_WIDTH)

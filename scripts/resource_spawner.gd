@@ -27,7 +27,7 @@ const Z_TREES        = 4
 # Radius (px) of the CircleShape2D placed at each tree stump.
 # Tree sprites are 192 px tall; the stump occupies roughly the bottom 48 px,
 # so a radius of 20 px covers the trunk base without blocking too much ground.
-const STUMP_RADIUS   = 50.0
+const STUMP_RADIUS   = 20.0
 
 # ── Gold Stone 3 ──────────────────────────────────────────────────────────────
 const GOLD_BASE      = preload("res://assets/Terrain/Resources/Gold/Gold Stones/Gold Stone 3.png")
@@ -36,6 +36,7 @@ const GOLD_HL_FRAMES = 6
 const GOLD_HL_FPS    = 10.0
 const GOLD_COUNT     = 6
 const GOLD_SPACING   = 3
+const GOLD_RADIUS    = 25.0
 
 # ── Trees ─────────────────────────────────────────────────────────────────────
 const TREE_TEXTURES := [
@@ -112,6 +113,19 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 
 	node.set_script(load("res://scripts/gold_stone.gd"))
 	add_child(node)
+	
+	# ─ Gold collision — StaticBody2D with a circle ────────
+	var gold_collision       := StaticBody2D.new()
+	gold_collision.name       = "Gold_collision_%d_%d" % [col, row]
+	gold_collision.position   = _tile_center(col, row)
+
+	var shape          := CollisionShape2D.new()
+	var circle         := CircleShape2D.new()
+	circle.radius       = GOLD_RADIUS
+	shape.shape         = circle
+	gold_collision.add_child(shape)
+
+	add_child(gold_collision)
 
 # ── Trees ─────────────────────────────────────────────────────────────────────
 
@@ -155,7 +169,7 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	# Offset: half sprite height (96) minus half stump height (24) = 72 px down.
 	var stump          := StaticBody2D.new()
 	stump.name          = "Stump_%d_%d" % [col, row]
-	stump.position      = _tile_center(col, row) + Vector2(0.0, 72.0)
+	stump.position      = _tile_center(col, row) + Vector2(0.0, 100.0)
 
 	var shape          := CollisionShape2D.new()
 	var circle         := CircleShape2D.new()
