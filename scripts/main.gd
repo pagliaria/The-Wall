@@ -27,11 +27,15 @@ var _panning          := false
 var _pan_start_mouse  := Vector2.ZERO
 var _pan_start_cam    := Vector2.ZERO
 
-@onready var camera: Camera2D = $Camera2D
-@onready var terrain: Node2D  = $Terrain
+@onready var camera          : Camera2D  = $Camera2D
+@onready var terrain         : Node2D    = $Terrain
+@onready var resource_layer  : Node2D    = $ResourceLayer
 
 func _ready() -> void:
 	_fit_camera_to_screen()
+	# Terrain fills its TileMapLayer in its own _ready(), which runs before
+	# this call, so the ground_layer is fully painted by the time we spawn.
+	resource_layer.spawn($Terrain/GroundLayer)
 	print("The Wall – world initialised  (%d × %d px)" % [WORLD_WIDTH, WORLD_HEIGHT])
 
 # ── Camera fit ────────────────────────────────────────────────────────────────
