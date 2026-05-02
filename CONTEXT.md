@@ -71,14 +71,26 @@ When adding new units, set `z_index = 3` and they will always render on top of g
 
 ---
 
+## Collision System
+All collision uses Godot's built-in physics — no manual obstacle lists anywhere.
+
+| Node type | Used by | Notes |
+|---|---|---|
+| `StaticBody2D` + `CollisionShape2D` | Tree stumps, Gold stones | Impassable to all units automatically |
+| `CharacterBody2D` | Sheep (and future units) | Uses `move_and_collide()`, bounces off any StaticBody2D |
+
+Collision shapes, sizes, and offsets are tuned in-editor — do not adjust from code.
+
+---
+
 ## Resources (Town Zone)
 All resources share one `placed: Array[Vector2i]` so nothing overlaps across types.
 
 | Resource | Count | Script | Notes |
 |---|---|---|---|
-| Gold Stone 3 | 6 | `gold_stone.gd` | Static sprite + periodic 6-frame glint, seed 99 |
-| Tree1 / Tree2 | 10 | inline | 8-frame looping sway, random flip, seed 77 |
-| Sheep | 6 | `sheep.gd` | State machine: idle(40%) graze(40%) move(20%), seed 55 |
+| Gold Stone 3 | 6 | `gold_stone.gd` | Static sprite + periodic 6-frame glint, seed 99. Has StaticBody2D collision |
+| Tree1 / Tree2 | 10 | inline | 8-frame looping sway, random flip, seed 77. Stump has StaticBody2D collision |
+| Sheep | 20 | `sheep.gd` | State machine: idle(40%) graze(40%) move(20%), seed 55. CharacterBody2D |
 
 Sheep wander within town zone bounds and flip to face direction of travel. Spacing constants (`GOLD_SPACING`, `TREE_SPACING`, `SHEEP_SPACING`) control minimum tile distance between each resource of that type.
 
@@ -105,7 +117,7 @@ Scattered after terrain paint, skipping empty cells (`get_cell_source_id == -1`)
 | `Z_GOLD` | resource_spawner.gd | 2 | Z layer for gold stones |
 | `Z_TREES` | resource_spawner.gd | 4 | Z layer for trees (frontmost) |
 | `Z_UNITS` | resource_spawner.gd | 3 | Z layer for sheep, future units |
-| `STUMP_RADIUS` | resource_spawner.gd | 28.0 | Collision radius (px) around each tree stump |
+| `STUMP_RADIUS` | resource_spawner.gd | — | Tuned in-editor, do not change from code |
 
 ---
 

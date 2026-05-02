@@ -42,7 +42,7 @@ var _rng         := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
-	_enter_state(_pick_random_state())
+	#_enter_state(_pick_random_state())
 
 func _physics_process(delta: float) -> void:
 	_state_timer += delta
