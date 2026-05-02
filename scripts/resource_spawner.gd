@@ -1,6 +1,6 @@
 extends Node2D
 
-# Resource spawner — places gold stones and wood trees in the town zone.
+# Resource spawner — places gold stones, wood trees, and sheep in the town zone.
 # A single shared 'placed' array is passed to every spawner so nothing overlaps.
 
 const TILE_SIZE      = 64
@@ -14,7 +14,7 @@ const GOLD_BASE      = preload("res://assets/Terrain/Resources/Gold/Gold Stones/
 const GOLD_HIGHLIGHT = preload("res://assets/Terrain/Resources/Gold/Gold Stones/Gold Stone 3_Highlight.png")
 const GOLD_HL_FRAMES = 6
 const GOLD_HL_FPS    = 10.0
-const GOLD_COUNT     = 3
+const GOLD_COUNT     = 6
 const GOLD_SPACING   = 3
 
 # ── Trees ─────────────────────────────────────────────────────────────────────
@@ -24,8 +24,19 @@ const TREE_TEXTURES := [
 ]
 const TREE_FRAMES  = 8
 const TREE_FPS     = 8.0
-const TREE_COUNT   = 6
+const TREE_COUNT   = 10
 const TREE_SPACING = 3
+
+# ── Sheep ─────────────────────────────────────────────────────────────────────
+const SHEEP_IDLE  = preload("res://assets/Terrain/Resources/Meat/Sheep/Sheep_Idle.png")
+const SHEEP_GRAZE = preload("res://assets/Terrain/Resources/Meat/Sheep/Sheep_Grass.png")
+const SHEEP_MOVE  = preload("res://assets/Terrain/Resources/Meat/Sheep/Sheep_Move.png")
+const SHEEP_IDLE_FRAMES  = 6
+const SHEEP_GRAZE_FRAMES = 12
+const SHEEP_MOVE_FRAMES  = 4
+const SHEEP_FPS          = 8.0
+const SHEEP_COUNT        = 6
+const SHEEP_SPACING      = 2   # sheep can be closer together than trees/gold
 
 func _ready() -> void:
 	pass  # called from main.gd after terrain is ready
@@ -33,13 +44,16 @@ func _ready() -> void:
 func spawn(ground_layer: TileMapLayer) -> void:
 	# One shared list — every placed resource blocks future ones regardless of type
 	var placed : Array[Vector2i] = []
-	var rng := RandomNumberGenerator.new()
+	var rng    := RandomNumberGenerator.new()
 
 	rng.seed = 99
 	_spawn_gold(ground_layer, rng, placed)
 
 	rng.seed = 77
 	_spawn_trees(ground_layer, rng, placed)
+
+	rng.seed = 55
+	_spawn_sheep(ground_layer, rng, placed)
 
 # ── Gold ──────────────────────────────────────────────────────────────────────
 
@@ -115,7 +129,69 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 
 	add_child(node)
 
+# ── Sheep ─────────────────────────────────────────────────────────────────────
+
+func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator,
+				  placed: Array[Vector2i]) -> void:
+	var sheep_placed := 0
+	var attempts     := 0
+	while sheep_placed < SHEEP_COUNT and attempts < 500:
+		attempts += 1
+		var col := rng.randi_range(COL_TOWN_START + 1, MAP_COLS - 2)
+		var row := rng.randi_range(WATER_ROWS + 1,     MAP_ROWS - 2)
+
+		if ground_layer.get_cell_source_id(Vector2i(col, row)) == -1:
+			continue
+		if _too_close(placed, col, row, SHEEP_SPACING):
+			continue
+
+		placed.append(Vector2i(col, row))
+		sheep_placed += 1
+		_spawn_one_sheep(col, row, rng)
+
+func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
+	# Build SpriteFrames with all three named animations
+	var sf := SpriteFrames.new()
+	sf.remove_animation("default")
+
+	sf.add_animation("idle")
+	sf.set_animation_speed("idle", SHEEP_FPS)
+	sf.set_animation_loop("idle", true)
+	_add_frames_to_anim(sf, "idle", SHEEP_IDLE, SHEEP_IDLE_FRAMES)
+
+	sf.add_animation("graze")
+	sf.set_animation_speed("graze", SHEEP_FPS)
+	sf.set_animation_loop("graze", true)
+	_add_frames_to_anim(sf, "graze", SHEEP_GRAZE, SHEEP_GRAZE_FRAMES)
+
+	sf.add_animation("move")
+	sf.set_animation_speed("move", SHEEP_FPS)
+	sf.set_animation_loop("move", true)
+	_add_frames_to_anim(sf, "move", SHEEP_MOVE, SHEEP_MOVE_FRAMES)
+
+	var sheep          := AnimatedSprite2D.new()
+	sheep.name          = "Sheep_%d_%d" % [col, row]
+	sheep.sprite_frames = sf
+	sheep.position      = _tile_center(col, row)
+	sheep.z_index       = row
+	# Stagger start frame and random flip so they don't look identical
+	sheep.frame         = rng.randi_range(0, SHEEP_IDLE_FRAMES - 1)
+	sheep.flip_h        = rng.randf() > 0.5
+	sheep.set_script(load("res://scripts/sheep.gd"))
+
+	add_child(sheep)
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+func _add_frames_to_anim(sf: SpriteFrames, anim: String,
+						  texture: Texture2D, frame_count: int) -> void:
+	var frame_w : int = texture.get_width() / frame_count
+	var sheet_h : int = texture.get_height()
+	for i in range(frame_count):
+		var atlas   := AtlasTexture.new()
+		atlas.atlas  = texture
+		atlas.region = Rect2(i * frame_w, 0, frame_w, sheet_h)
+		sf.add_frame(anim, atlas)
 
 func _make_frames(texture: Texture2D, frame_count: int, fps: float, loop: bool) -> SpriteFrames:
 	var sf := SpriteFrames.new()
@@ -123,15 +199,7 @@ func _make_frames(texture: Texture2D, frame_count: int, fps: float, loop: bool) 
 	sf.add_animation("anim")
 	sf.set_animation_speed("anim", fps)
 	sf.set_animation_loop("anim", loop)
-
-	var frame_w : int = texture.get_width() / frame_count
-	var sheet_h : int = texture.get_height()
-	for i in range(frame_count):
-		var atlas   := AtlasTexture.new()
-		atlas.atlas  = texture
-		atlas.region = Rect2(i * frame_w, 0, frame_w, sheet_h)
-		sf.add_frame("anim", atlas)
-
+	_add_frames_to_anim(sf, "anim", texture, frame_count)
 	return sf
 
 func _tile_center(col: int, row: int) -> Vector2:
