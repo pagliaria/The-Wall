@@ -21,9 +21,9 @@ extends Node2D
 
 # ── Map dimensions ────────────────────────────────────────────────────────────
 const TILE_SIZE  = 64
-const MAP_COLS   = 32
-const MAP_ROWS   = 18
-const WATER_ROWS = 2
+const MAP_COLS   = 48
+const MAP_ROWS   = 27
+const WATER_ROWS = 3
 
 # ── Zone column boundaries ────────────────────────────────────────────────────
 const COL_WILDS_END  = 11
