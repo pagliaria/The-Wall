@@ -2,12 +2,21 @@ extends Node2D
 
 # Resource spawner — places gold stones, wood trees, and sheep in the town zone.
 # A single shared 'placed' array is passed to every spawner so nothing overlaps.
+#
+# Z-INDEX LAYERS (fixed per type, no per-frame updates):
+#   Z_GOLD  = 2  — gold stones
+#   Z_UNITS = 3  — sheep (and future units)
+#   Z_TREES = 4  — trees (render in front of everything)
 
 const TILE_SIZE      = 64
 const MAP_COLS       = 48
 const MAP_ROWS       = 27
 const WATER_ROWS     = 3
-const COL_TOWN_START = 20   # must match terrain.gd COL_NOMANS_END
+const COL_TOWN_START = 20
+
+const Z_GOLD         = 2
+const Z_UNITS        = 3
+const Z_TREES        = 4
 
 # ── Gold Stone 3 ──────────────────────────────────────────────────────────────
 const GOLD_BASE      = preload("res://assets/Terrain/Resources/Gold/Gold Stones/Gold Stone 3.png")
@@ -35,14 +44,13 @@ const SHEEP_IDLE_FRAMES  = 6
 const SHEEP_GRAZE_FRAMES = 12
 const SHEEP_MOVE_FRAMES  = 4
 const SHEEP_FPS          = 8.0
-const SHEEP_COUNT        = 6
-const SHEEP_SPACING      = 2   # sheep can be closer together than trees/gold
+const SHEEP_COUNT        = 20
+const SHEEP_SPACING      = 2
 
 func _ready() -> void:
-	pass  # called from main.gd after terrain is ready
+	pass
 
 func spawn(ground_layer: TileMapLayer) -> void:
-	# One shared list — every placed resource blocks future ones regardless of type
 	var placed : Array[Vector2i] = []
 	var rng    := RandomNumberGenerator.new()
 
@@ -77,7 +85,7 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 	var node      := Node2D.new()
 	node.name      = "GoldStone_%d_%d" % [col, row]
 	node.position  = _tile_center(col, row)
-	node.z_index   = row
+	node.z_index   = Z_GOLD
 
 	var base      := Sprite2D.new()
 	base.texture   = GOLD_BASE
@@ -119,7 +127,7 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	var node     := AnimatedSprite2D.new()
 	node.name     = "Tree_%d_%d" % [col, row]
 	node.position = _tile_center(col, row)
-	node.z_index  = row
+	node.z_index  = Z_TREES
 	node.flip_h   = rng.randf() > 0.5
 
 	node.sprite_frames = _make_frames(texture, TREE_FRAMES, TREE_FPS, true)
@@ -150,7 +158,6 @@ func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator,
 		_spawn_one_sheep(col, row, rng)
 
 func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
-	# Build SpriteFrames with all three named animations
 	var sf := SpriteFrames.new()
 	sf.remove_animation("default")
 
@@ -173,8 +180,7 @@ func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	sheep.name          = "Sheep_%d_%d" % [col, row]
 	sheep.sprite_frames = sf
 	sheep.position      = _tile_center(col, row)
-	sheep.z_index       = row
-	# Stagger start frame and random flip so they don't look identical
+	sheep.z_index       = Z_UNITS
 	sheep.frame         = rng.randi_range(0, SHEEP_IDLE_FRAMES - 1)
 	sheep.flip_h        = rng.randf() > 0.5
 	sheep.set_script(load("res://scripts/sheep.gd"))

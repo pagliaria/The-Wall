@@ -48,7 +48,7 @@ Main (Node2D)               main.gd
 
 ## Camera
 - Zoom calculated dynamically from window size — map always fills the window
-- `ZOOM_MIN` is set at runtime so user can never zoom out beyond map bounds
+- `zoom_min` is set at runtime so the user can never zoom out beyond map bounds
 - **Scroll wheel** — zoom toward mouse pointer
 - **Middle mouse drag** — pan
 - **Screen edge** — pan (24px margin)
@@ -56,16 +56,31 @@ Main (Node2D)               main.gd
 
 ---
 
+## Z-Index Layers
+Fixed per type — no per-frame z sorting anywhere.
+
+| Z | Layer | Contents |
+|---|---|---|
+| 0 | Ground | WaterLayer, GroundLayer |
+| 1 | Decorations | Bushes, rocks, water rocks |
+| 2 | Gold | Gold stones |
+| 3 | Units | Sheep, future player/enemy units |
+| 4 | Trees | Trees (render in front of everything) |
+
+When adding new units, set `z_index = 3` and they will always render on top of gold and decorations, but behind trees.
+
+---
+
 ## Resources (Town Zone)
-All resources share one `placed: Array[Vector2i]` so nothing overlaps.
+All resources share one `placed: Array[Vector2i]` so nothing overlaps across types.
 
 | Resource | Count | Script | Notes |
 |---|---|---|---|
-| Gold Stone 3 | 6 | `gold_stone.gd` | Static sprite + periodic 6-frame glint |
-| Tree1 / Tree2 | 10 | inline | 8-frame looping sway, random flip |
-| Sheep | 6 | `sheep.gd` | State machine: idle(40%) graze(40%) move(20%) |
+| Gold Stone 3 | 6 | `gold_stone.gd` | Static sprite + periodic 6-frame glint, seed 99 |
+| Tree1 / Tree2 | 10 | inline | 8-frame looping sway, random flip, seed 77 |
+| Sheep | 6 | `sheep.gd` | State machine: idle(40%) graze(40%) move(20%), seed 55 |
 
-Sheep wander within town zone bounds, flip to face direction of travel, and re-sort their `z_index` each frame for depth correctness.
+Sheep wander within town zone bounds and flip to face direction of travel. Spacing constants (`GOLD_SPACING`, `TREE_SPACING`, `SHEEP_SPACING`) control minimum tile distance between each resource of that type.
 
 ---
 
@@ -77,16 +92,19 @@ Scattered after terrain paint, skipping empty cells (`get_cell_source_id == -1`)
 
 ---
 
-## Key Constants to Know
+## Key Constants
 
 | Constant | File | Value | Notes |
 |---|---|---|---|
 | `MAP_COLS` / `MAP_ROWS` | terrain.gd | 48 / 27 | Change map size here |
 | `WORLD_WIDTH` / `WORLD_HEIGHT` | main.gd | 3072 / 1728 | Must equal MAP_* × 64 |
 | `COL_WILDS_END` | terrain.gd | 11 | End of enemy zone |
-| `COL_NOMANS_END` | terrain.gd | 20 | End of no-man's land |
+| `COL_NOMANS_END` | terrain.gd | 20 | End of no-man's land / start of town |
 | `WATER_ROWS` | terrain.gd | 3 | Rows of water at top |
 | `ZOOM_MAX` | main.gd | 2.0 | Closest zoom level |
+| `Z_GOLD` | resource_spawner.gd | 2 | Z layer for gold stones |
+| `Z_TREES` | resource_spawner.gd | 4 | Z layer for trees (frontmost) |
+| `Z_UNITS` | resource_spawner.gd | 3 | Z layer for sheep, future units |
 
 ---
 
