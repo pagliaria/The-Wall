@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=18 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -7,6 +7,11 @@
 [ext_resource type="Texture2D" uid="uid://d4ay054ed0g3j" path="res://assets/Buildings/Wall/bridge_down.png" id="3_tefeu"]
 [ext_resource type="Texture2D" uid="uid://do4w8s38xy6sy" path="res://assets/Buildings/Wall/bridge_up.png" id="4_tefeu"]
 [ext_resource type="Script" uid="uid://blo5bdqpkl1n8" path="res://scripts/drawbridge.gd" id="5_drawbridge"]
+[ext_resource type="Script" uid="uid://uctts7lgwibe" path="res://scripts/hud.gd" id="6_hud"]
+[ext_resource type="Texture2D" uid="uid://c5vigrgfialt4" path="res://assets/UI Elements/UI Elements/Wood Table/WoodTable_Slots.png" id="7_table"]
+[ext_resource type="Texture2D" uid="uid://b20aapmvuj1vb" path="res://assets/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Regular.png" id="8_btn_reg"]
+[ext_resource type="Texture2D" uid="uid://ddosuypdkpci6" path="res://assets/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Pressed.png" id="9_btn_press"]
+[ext_resource type="Texture2D" uid="uid://dfam5w0cf5wyl" path="res://assets/UI Elements/UI Elements/Icons/Icon_01.png" id="10_hammer"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -183,3 +188,57 @@ limit_left = 0
 limit_top = 0
 limit_right = 3072
 limit_bottom = 1728
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("6_hud")
+
+[node name="ActionBar" type="NinePatchRect" parent="HUD"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -160.0
+offset_top = -96.0
+offset_right = 160.0
+offset_bottom = -8.0
+texture = ExtResource("7_table")
+patch_margin_left = 24
+patch_margin_top = 24
+patch_margin_right = 24
+patch_margin_bottom = 24
+
+[node name="BuildButton" type="TextureButton" parent="HUD/ActionBar"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -144.0
+offset_top = -32.0
+offset_right = -16.0
+offset_bottom = 96.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.5, 0.5)
+texture_normal = ExtResource("8_btn_reg")
+texture_pressed = ExtResource("9_btn_press")
+texture_hover = ExtResource("8_btn_reg")
+
+[node name="HammerIcon" type="TextureRect" parent="HUD/ActionBar/BuildButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = 24.0
+offset_right = 8.0
+offset_bottom = 4.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.7, 0.7)
+mouse_filter = 2
+texture = ExtResource("10_hammer")
+expand_mode = 1
+stretch_mode = 5
