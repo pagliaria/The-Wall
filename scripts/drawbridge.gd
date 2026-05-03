@@ -7,6 +7,7 @@ extends Node2D
 @onready var bridge_down   : Sprite2D        = $bridge_down
 @onready var bridge_up     : Sprite2D        = $bridge_up
 @onready var anim_player   : AnimationPlayer = $AnimationPlayer
+@onready var bridge_collision   : CollisionShape2D = $Wall_Collision/bridge_collision
 
 var _is_raised := true   # starts closed/raised
 
@@ -27,6 +28,8 @@ func _toggle() -> void:
 		return
 	if _is_raised:
 		anim_player.play("lower")   # raised → lowered  (open the bridge)
+		bridge_collision.disabled = true
 	else:
 		anim_player.play("raise")   # lowered → raised  (close the bridge)
+		bridge_collision.disabled = false
 	_is_raised = not _is_raised
