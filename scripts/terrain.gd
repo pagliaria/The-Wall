@@ -231,14 +231,14 @@ func _terrain_for_cell(col: int, row: int, noise: FastNoiseLite) -> int:
 	if effective_col < COL_WILDS_END:
 		#if row > MAP_ROWS - 5 and rng.randf() < 0.15:
 			#return TERRAIN_STONE
-		return TERRAIN_DIRT
+		return TERRAIN_GRASS
 		
 	#elif effective_col < COL_NOMANS_END:
 		##if rng.randf() < 0.2:
 			##return TERRAIN_STONE
 		#return TERRAIN_DARK_GRASS
 	else:
-		return TERRAIN_GRASS
+		return TERRAIN_DIRT
 
 func _source_for_terrain(terrain_id: int) -> int:
 	match terrain_id:

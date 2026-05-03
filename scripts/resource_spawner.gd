@@ -57,7 +57,7 @@ const SHEEP_IDLE_FRAMES  = 6
 const SHEEP_GRAZE_FRAMES = 12
 const SHEEP_MOVE_FRAMES  = 4
 const SHEEP_FPS          = 8.0
-const SHEEP_COUNT        = 50
+const SHEEP_COUNT        = 5
 const SHEEP_SPACING      = 2
 
 func _ready() -> void:
