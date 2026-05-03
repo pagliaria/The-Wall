@@ -11,26 +11,47 @@ A 2D tower-defence style game built in Godot 4.4. Enemies spawn on the left side
 
 | Zone | Columns | Terrain |
 |---|---|---|
-| Enemy Wilds | 0 – 10 | Dark grass + stone patches |
-| No-Man's Land | 11 – 19 | Dirt + stone rubble |
-| Town Zone | 20 – 47 | Grass |
+| Enemy Wilds | 0 – 19 | Grass |
+| Town Zone | 20 – 47 | Dirt |
 
-Zone borders are **noise-warped** (±3 tiles) so edges are organic, not straight lines. Godot's **blob/Wang terrain autotiling** (`set_cells_terrain_connect`) handles edge and corner tile selection automatically.
+Zone boundary is at `COL_WILDS_END = 20`. Noise warping is currently disabled in `_terrain_for_cell()` (commented out).
 
 ---
 
 ## Scene Tree
 ```
 Main (Node2D)               main.gd
-├── Terrain (Node2D)        terrain.gd
-│   ├── WaterLayer          TileMapLayer — water strip
-│   ├── GroundLayer         TileMapLayer — terrain zones
-│   └── DecorationLayer     Node2D — bushes, rocks, water rocks
-├── ResourceLayer (Node2D)  resource_spawner.gd
-├── TownZone (Node2D)       anchor marker
-├── EnemyZone (Node2D)      anchor marker
+├── wall (Node2D)              manually built in editor — do not remove
+│   ├── bridge_down (Sprite2D)  bridge_down.png, z=5
+│   ├── bridge_up (Sprite2D)    bridge_up.png, z=5
+│   ├── base6 (Sprite2D)        wall_the_one.png segment, z=5
+│   ├── base7 (Sprite2D)        wall_the_one.png segment, z=5
+│   ├── base11 (Sprite2D)       wall_the_one.png segment, z=5
+│   ├── base12 (Sprite2D)       wall_the_one.png segment, z=5 (hidden)
+│   └── base13 (Sprite2D)       wall_the_one.png segment, z=5 (hidden)
+├── Terrain (Node2D)            terrain.gd
+│   ├── WaterLayer              TileMapLayer — water strip
+│   ├── GroundLayer             TileMapLayer — terrain zones
+│   ├── DecorationLayer         Node2D — bushes, rocks, water rocks
+│   └── WallLayer               Node2D — reserved for code-built wall
+├── ResourceLayer (Node2D)      resource_spawner.gd
+├── TownZone (Node2D)           anchor marker
+├── EnemyZone (Node2D)          anchor marker
 └── Camera2D
 ```
+
+---
+
+## Wall (In Progress)
+Built manually in the editor under the `wall` Node2D in `main.tscn`. **Do not remove or modify from code.**
+
+| Asset | File | Notes |
+|---|---|---|
+| Wall segments | `wall_the_one.png` | Sliced with `region_rect`, scaled 1.3x, z=5 |
+| Bridge (down) | `bridge_down.png` | Gate/opening in the wall |
+| Bridge (up) | `bridge_up.png` | Gate/opening in the wall |
+
+Two segment nodes (`base12`, `base13`) are currently hidden — work in progress. `WallLayer` in the Terrain scene is reserved for a future code-built wall if needed.
 
 ---
 
@@ -110,14 +131,13 @@ Scattered after terrain paint, skipping empty cells (`get_cell_source_id == -1`)
 |---|---|---|---|
 | `MAP_COLS` / `MAP_ROWS` | terrain.gd | 48 / 27 | Change map size here |
 | `WORLD_WIDTH` / `WORLD_HEIGHT` | main.gd | 3072 / 1728 | Must equal MAP_* × 64 |
-| `COL_WILDS_END` | terrain.gd | 11 | End of enemy zone |
-| `COL_NOMANS_END` | terrain.gd | 20 | End of no-man's land / start of town |
+| `COL_WILDS_END` | terrain.gd | 20 | Zone boundary — also where wall sits |
+| `COL_NOMANS_END` | terrain.gd | 20 | Currently same as WILDS_END (2-zone map) |
 | `WATER_ROWS` | terrain.gd | 3 | Rows of water at top |
 | `ZOOM_MAX` | main.gd | 2.0 | Closest zoom level |
 | `Z_GOLD` | resource_spawner.gd | 2 | Z layer for gold stones |
 | `Z_TREES` | resource_spawner.gd | 4 | Z layer for trees (frontmost) |
 | `Z_UNITS` | resource_spawner.gd | 3 | Z layer for sheep, future units |
-| `STUMP_RADIUS` | resource_spawner.gd | — | Tuned in-editor, do not change from code |
 
 ---
 
