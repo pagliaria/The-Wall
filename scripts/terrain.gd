@@ -91,7 +91,6 @@ func _ready() -> void:
 	_fill_water()
 	_fill_ground(ts)
 	_scatter_decorations()
-	_build_wall()
 
 # ═════════════════════════════════════════════════════════════════════════════
 # TILESET CONSTRUCTION
@@ -332,44 +331,3 @@ func get_zone_center(zone: String) -> Vector2:
 		"town":   mid_col = (COL_NOMANS_END + MAP_COLS) * 0.5
 		_:        mid_col = MAP_COLS * 0.5
 	return Vector2(mid_col * TILE_SIZE, (MAP_ROWS * 0.5) * TILE_SIZE)
-
-# ═════════════════════════════════════════════════════════════════════════════
-# WALL
-# ═════════════════════════════════════════════════════════════════════════════
-
-func _build_wall() -> void:
-	var texture    : Texture2D = load(WALL_TEXTURE)
-	var total_rows : int       = MAP_ROWS - WATER_ROWS
-	# Cols 0-1 (x=0..63), rows 3-4 (y=96..159) = body and top cap — 64x64 px, no scaling.
-	# Cols 0-1 (x=0..63), rows 5-6 (y=160..223) = bottom cap — 64x64 px, no scaling.
-	for i in range(total_rows):
-		var row : int   = WATER_ROWS + i
-		var x   : float = WALL_COL * TILE_SIZE
-		var y   : float = row * TILE_SIZE
-
-		var sheet_y : int
-		if i == total_rows - 1:
-			sheet_y = 5 * WALL_TILE_PX    # bottom cap (rows 5-6)
-		elif i == total_rows - 2:
-			sheet_y = 3 * WALL_TILE_PX    # bottom cap top (rows 3-4)
-		else:
-			sheet_y = 3 * WALL_TILE_PX    # body + top cap (row 3)
-
-		var sprite           := Sprite2D.new()
-		sprite.texture        = texture
-		sprite.region_enabled = true
-		sprite.region_rect    = Rect2(0 * WALL_TILE_PX, sheet_y, 2 * WALL_TILE_PX, 2 * WALL_TILE_PX)
-		sprite.centered       = false
-		sprite.position       = Vector2(x, y)
-		sprite.scale          = Vector2(1.0, 1.0)
-		wall_layer.add_child(sprite)
-
-		# Collision
-		var body  := StaticBody2D.new()
-		body.position = Vector2(x + TILE_SIZE * 0.5, y + TILE_SIZE * 0.5)
-		var shape := CollisionShape2D.new()
-		var box   := RectangleShape2D.new()
-		box.size   = Vector2(TILE_SIZE, TILE_SIZE)
-		shape.shape = box
-		body.add_child(shape)
-		wall_layer.add_child(body)
