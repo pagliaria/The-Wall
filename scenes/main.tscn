@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=19 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://b20aapmvuj1vb" path="res://assets/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Regular.png" id="8_btn_reg"]
 [ext_resource type="Texture2D" uid="uid://ddosuypdkpci6" path="res://assets/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Pressed.png" id="9_btn_press"]
 [ext_resource type="Texture2D" uid="uid://dfam5w0cf5wyl" path="res://assets/UI Elements/UI Elements/Icons/Icon_01.png" id="10_hammer"]
+[ext_resource type="PackedScene" uid="uid://cwgtv3300cseo" path="res://scenes/build_menu.tscn" id="11_build_menu"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -242,3 +243,9 @@ mouse_filter = 2
 texture = ExtResource("10_hammer")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="BuildMenu" parent="HUD" instance=ExtResource("11_build_menu")]
+layout_mode = 3
+anchors_preset = 8
+grow_horizontal = 2
+grow_vertical = 2

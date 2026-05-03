@@ -1,0 +1,140 @@
+[gd_scene load_steps=9 format=3 uid="uid://cwgtv3300cseo"]
+
+[ext_resource type="Script" uid="uid://b3x0ps32eev6x" path="res://scripts/build_menu.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://03hji3qdk0hb" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Regular.png" id="3_red_reg"]
+[ext_resource type="Texture2D" uid="uid://c5fkle31ll17f" path="res://assets/UI Elements/UI Elements/Ribbons/BigRibbons.png" id="4_jp2d4"]
+[ext_resource type="Texture2D" uid="uid://cm0jpiu1lr3am" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Pressed.png" id="4_red_press"]
+[ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="5_4h3qg"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4h3qg"]
+atlas = ExtResource("4_jp2d4")
+region = Rect2(22.4539, 520.74, 104.808, 123.967)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s8q86"]
+atlas = ExtResource("4_jp2d4")
+region = Rect2(321.205, 527.465, 107.905, 109.88)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yiarh"]
+atlas = ExtResource("4_jp2d4")
+region = Rect2(192.445, 528.027, 63.1105, 100.301)
+
+[node name="BuildMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Panel" type="NinePatchRect" parent="."]
+layout_mode = 0
+patch_margin_left = 16
+patch_margin_top = 16
+patch_margin_right = 16
+patch_margin_bottom = 16
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Grid" type="GridContainer" parent="Panel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 16
+columns = 4
+
+[node name="CloseButton" type="TextureButton" parent="Panel"]
+custom_minimum_size = Vector2(25, 25)
+layout_mode = 2
+offset_left = 460.0
+offset_top = -5.0
+offset_right = 588.0
+offset_bottom = 123.0
+scale = Vector2(0.5, 0.5)
+size_flags_vertical = 4
+texture_normal = ExtResource("3_red_reg")
+texture_pressed = ExtResource("4_red_press")
+texture_hover = ExtResource("3_red_reg")
+
+[node name="Ribbon" type="Panel" parent="Panel"]
+layout_mode = 0
+offset_left = 192.0
+offset_top = -12.0
+offset_right = 232.0
+offset_bottom = 28.0
+scale = Vector2(0.5, 0.5)
+
+[node name="ribbon_left" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
+offset_left = -102.0
+offset_top = -60.0
+offset_right = 2.0
+offset_bottom = 63.0
+texture = SubResource("AtlasTexture_4h3qg")
+
+[node name="ribbon_right" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
+offset_left = 249.0
+offset_top = -53.0
+offset_right = 356.0
+offset_bottom = 56.0
+texture = SubResource("AtlasTexture_s8q86")
+
+[node name="ribbon_left2" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = -53.0
+offset_right = 65.0
+offset_bottom = 47.0
+texture = SubResource("AtlasTexture_yiarh")
+
+[node name="ribbon_left3" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
+offset_left = 64.0
+offset_top = -53.0
+offset_right = 127.0
+offset_bottom = 47.0
+texture = SubResource("AtlasTexture_yiarh")
+
+[node name="ribbon_left4" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
+offset_left = 126.0
+offset_top = -53.0
+offset_right = 189.0
+offset_bottom = 47.0
+texture = SubResource("AtlasTexture_yiarh")
+
+[node name="ribbon_left5" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
+offset_left = 188.0
+offset_top = -53.0
+offset_right = 251.0
+offset_bottom = 47.0
+texture = SubResource("AtlasTexture_yiarh")
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 2
+offset_left = 227.0
+offset_top = -40.0
+offset_right = 277.0
+offset_bottom = 8.0
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("5_4h3qg")
+theme_override_font_sizes/font_size = 28
+text = "Build"

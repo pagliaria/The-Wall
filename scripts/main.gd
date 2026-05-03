@@ -38,10 +38,14 @@ func _ready() -> void:
 	# this call, so the ground_layer is fully painted by the time we spawn.
 	resource_layer.spawn($Terrain/GroundLayer)
 	hud.build_pressed.connect(_on_build_pressed)
+	hud.building_selected.connect(_on_building_selected)
 	print("The Wall – world initialised  (%d × %d px)" % [WORLD_WIDTH, WORLD_HEIGHT])
 
 func _on_build_pressed() -> void:
-	print("Build menu opened")  # placeholder — build menu goes here
+	pass  # hammer button toggled — build menu handles its own open/close
+
+func _on_building_selected(building_id: String) -> void:
+	print("Player wants to build: ", building_id)  # placeholder — place building logic goes here
 
 # ── Camera fit ────────────────────────────────────────────────────────────────
 func _fit_camera_to_screen() -> void:
