@@ -9,14 +9,15 @@ extends Node2D
 @onready var anim_player   : AnimationPlayer = $AnimationPlayer
 @onready var bridge_collision   : CollisionShape2D = $Wall_Collision/bridge_collision
 
-var _is_raised := true   # starts closed/raised
+var _is_raised := false   # starts closed/raised
 
 func _ready() -> void:
 	# Initial state: bridge raised (closed), down sprite invisible
-	bridge_up.modulate.a   = 1.0
-	bridge_down.modulate.a = 0.0
+	bridge_up.modulate.a   = 0.0
+	bridge_down.modulate.a = 1.0
 	bridge_down.visible    = true   # keep both visible so animation can fade
 	bridge_up.visible      = true
+	bridge_collision.disabled = true
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:

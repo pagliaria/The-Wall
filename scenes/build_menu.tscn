@@ -99,7 +99,6 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(70, 24)
 layout_mode = 2
 text = "Build"
-metadata/_custom_type_script = ""
 metadata/building_id = "archery"
 
 [node name="BarracksCard" type="PanelContainer" parent="Panel/MarginContainer/VBox/Grid"]
