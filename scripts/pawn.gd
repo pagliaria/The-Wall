@@ -10,6 +10,18 @@ extends CharacterBody2D
 #   └── Collision (CollisionShape2D)
 
 signal died
+signal selected_changed(is_selected: bool)
+
+# ── Selection ─────────────────────────────────────────────────────────────────
+var is_selected : bool = false
+
+func set_selected(value: bool) -> void:
+	if is_selected == value:
+		return
+	is_selected = value
+	if is_instance_valid(_selection_circle):
+		_selection_circle.visible = value
+	emit_signal("selected_changed", value)
 
 const TILE_SIZE      = 64
 const MAP_COLS       = 48
@@ -38,7 +50,8 @@ var _move_dir    : Vector2 = Vector2.ZERO
 var _spawn_pos   : Vector2 = Vector2.ZERO   # set on first frame
 var _rng         := RandomNumberGenerator.new()
 
-@onready var _sprite : AnimatedSprite2D = $Sprite
+@onready var _sprite            : AnimatedSprite2D = $Sprite
+@onready var _selection_circle  : Node2D           = $SelectionCircle
 
 # ── Sprite sheet constants ────────────────────────────────────────────────────
 const IDLE_TEX  = preload("res://assets/Units/Blue Units/Pawn/Pawn_Idle.png")

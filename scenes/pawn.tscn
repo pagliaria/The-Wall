@@ -1,6 +1,7 @@
-[gd_scene load_steps=155 format=3 uid="uid://dmn8ddwlrfofu"]
+[gd_scene load_steps=156 format=3 uid="uid://dmn8ddwlrfofu"]
 
 [ext_resource type="Script" uid="uid://doyur7dicmr6x" path="res://scripts/pawn.gd" id="1_pawn"]
+[ext_resource type="Script" uid="uid://j5v5w444d8s7" path="res://scripts/selection_circle.gd" id="2_selcircle"]
 [ext_resource type="Texture2D" uid="uid://csq834oyrvmp6" path="res://assets/Units/Black Units/Pawn/Pawn_Idle.png" id="tex_idle"]
 [ext_resource type="Texture2D" uid="uid://0yh5kr5cx7gx" path="res://assets/Units/Black Units/Pawn/Pawn_Idle Axe.png" id="tex_idle_axe"]
 [ext_resource type="Texture2D" uid="uid://dlvpt0g8nsm5q" path="res://assets/Units/Black Units/Pawn/Pawn_Idle Gold.png" id="tex_idle_gold"]
@@ -1055,3 +1056,8 @@ animation = &"run_wood"
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
 shape = SubResource("1_circle")
+
+[node name="SelectionCircle" type="Node2D" parent="."]
+visible = false
+z_index = 2
+script = ExtResource("2_selcircle")

@@ -33,6 +33,7 @@ var _pan_start_cam    := Vector2.ZERO
 @onready var building_placer  : Node2D         = $BuildingPlacer
 @onready var buildings_layer  : Node2D         = $BuildingsLayer
 @onready var units_layer      : Node2D         = $UnitsLayer
+@onready var unit_selection   : Node2D         = $UnitSelection
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -40,6 +41,10 @@ func _ready() -> void:
 
 	# Give the placer a reference to the ground layer for tile validity checks
 	building_placer.ground_layer = $Terrain/GroundLayer
+
+	# Wire unit selection
+	unit_selection.units_layer = units_layer
+	unit_selection.camera     = camera
 
 	hud.build_pressed.connect(_on_build_pressed)
 	hud.building_selected.connect(_on_building_selected)
@@ -55,9 +60,15 @@ func _on_build_pressed() -> void:
 func _on_building_selected(building_id: String) -> void:
 	# Build menu has already closed itself; enter placement mode
 	building_placer.start_placement(building_id)
+	unit_selection.disabled = true
 	print("Placement mode: ", building_id)
 
+func _on_placement_cancelled() -> void:
+	unit_selection.disabled = false
+	print("Placement cancelled")
+
 func _on_building_placed(building_id: String, tile: Vector2i) -> void:
+	unit_selection.disabled = false
 	var building := StaticBody2D.new()
 	building.set_script(load("res://scripts/placed_building.gd"))
 	buildings_layer.add_child(building)
@@ -69,8 +80,6 @@ func _on_building_clicked(building: Node) -> void:
 	print("Clicked building: ", building.building_id)
 	# Future: open building-specific UI panel here
 
-func _on_placement_cancelled() -> void:
-	print("Placement cancelled")
 
 # ── Camera fit ────────────────────────────────────────────────────────────────
 func _fit_camera_to_screen() -> void:
