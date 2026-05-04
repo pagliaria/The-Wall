@@ -154,6 +154,9 @@ func _issue_move_order(screen_pos: Vector2) -> void:
 		)
 		unit.move_to(world_target + offset)
 
+	# Show move-order ping at the click position
+	_get_overlay().show_ping(screen_pos)
+
 # ── Coordinate helpers ────────────────────────────────────────────────────────
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
