@@ -1,13 +1,14 @@
 # The Wall — Project Context
 
 ## Game Overview
-A 2D tower-defence style game built in Godot 4.4. Enemies spawn on the left side of the map and attack a player-built town on the right. The player gathers resources and constructs defences. Asset pack: **Tiny Swords (Free Pack)**.
+A 2D tower-defence style game built in Godot 4.4. Enemies spawn on the left side of the map and attack a player-built town on the right. The player gathers resources, constructs buildings, and commands units. Asset pack: **Tiny Swords (Free Pack)**.
 
 ---
 
 ## Development Preferences
-- **UI layout in scene files** — UI elements should be defined as nodes in `.tscn` files rather than generated in code. Code-side UI generation is a last resort (e.g. dynamic lists where count is unknown at edit time).
-- Scripts should wire up signals and update state; scenes define the structure.
+- **UI layout in scene files** — UI elements and sprite frames should be defined as nodes in `.tscn` files rather than generated in code. Code-side generation is a last resort only for truly dynamic content (e.g. runtime tile queries).
+- Scripts wire up signals and update state; scenes define structure and assets.
+- Buildings place exactly where the ghost highlights — no automatic sprite offset or repositioning.
 
 ---
 
@@ -26,27 +27,35 @@ Zone boundary is at `COL_WILDS_END = 20`. Noise warping is currently disabled in
 
 ## Scene Tree
 ```
-Main (Node2D)                    main.gd
-├── wall (Node2D)                drawbridge.gd — do not remove
-│   ├── bridge_down (Sprite2D)   bridge_down.png, z=5, starts hidden (alpha=0)
-│   ├── bridge_up (Sprite2D)     bridge_up.png, z=5, starts visible
-│   ├── base6–13 (Sprite2D)      wall_the_one.png segments, z=5
-│   ├── Wall_Collision           StaticBody2D with collision shapes
-│   └── AnimationPlayer          "lower" / "raise" animations (2.0s crossfade)
-├── Terrain (Node2D)             terrain.gd
-│   ├── WaterLayer               TileMapLayer — water strip
-│   ├── GroundLayer              TileMapLayer — terrain zones
-│   ├── DecorationLayer          Node2D — bushes, rocks, water rocks
-│   └── WallLayer                Node2D — reserved for code-built wall
-├── ResourceLayer (Node2D)       resource_spawner.gd
-├── TownZone (Node2D)            anchor marker at (1280, 576)
-├── EnemyZone (Node2D)           anchor marker at (352, 576)
+Main (Node2D)                      main.gd
+├── wall (Node2D)                  drawbridge.gd — do not remove
+│   ├── bridge_down (Sprite2D)     bridge_down.png, z=5, starts hidden
+│   ├── bridge_up (Sprite2D)       bridge_up.png, z=5, starts visible
+│   ├── base6–13 (Sprite2D)        wall_the_one.png segments, z=5
+│   ├── Wall_Collision             StaticBody2D with collision shapes
+│   └── AnimationPlayer            "lower" / "raise" animations (2.0s crossfade)
+├── Terrain (Node2D)               terrain.gd
+│   ├── WaterLayer                 TileMapLayer — water strip
+│   ├── GroundLayer                TileMapLayer — terrain zones
+│   ├── DecorationLayer            Node2D — bushes, rocks, water rocks
+│   └── WallLayer                  Node2D — reserved for code-built wall
+├── ResourceLayer (Node2D)         resource_spawner.gd
+├── TownZone (Node2D)              anchor marker at (1280, 576)
+├── EnemyZone (Node2D)             anchor marker at (352, 576)
 ├── Camera2D
-└── HUD (CanvasLayer)            hud.gd
-    ├── ActionBar (NinePatchRect) WoodTable_Slots.png — bottom-centre
-    │   └── BuildButton          hammer icon (Icon_01), opens build menu
-    ├── BuildMenu (Control)      build_menu.gd — centred popup
-    └── ResourceDisplay (Control) resource_display.gd — top-centre ribbon
+├── HUD (CanvasLayer)              hud.gd
+│   ├── ActionBar (NinePatchRect)  WoodTable_Slots.png — bottom-centre
+│   │   └── BuildButton           hammer icon (Icon_01), opens build menu
+│   ├── BuildMenu (Control)        build_menu.gd — centred popup
+│   └── ResourceDisplay (Control)  resource_display.gd — top-right ribbon
+├── BuildingsLayer (Node2D)        z=3 — container for all placed buildings
+├── UnitsLayer (Node2D)            z=3 — container for all spawned units (pawns etc.)
+├── UnitSelection (Node2D)         unit_selection.gd
+│   └── Overlay (CanvasLayer)      always-on-top canvas for drag box
+│       └── Draw (Node2D)          selection_overlay.gd — draws the drag rect
+└── BuildingPlacer (Node2D)        building_placer.gd
+    ├── GhostSprite (Sprite2D)     ghost preview, hidden when not placing
+    └── ShapeCast2D                overlap check for placement validity
 ```
 
 ---
@@ -66,44 +75,143 @@ Main (Node2D)                    main.gd
 - Close button: `SmallRedSquareButton` top-right
 - Grid: 4 columns of building cards, built dynamically in `_build_grid()`
 - Emits `building_selected(building_id: String)` → bubbles through `hud.gd` → `main.gd`
-- Building cards are `PanelContainer` nodes created in code (dynamic count)
 
 #### Available Buildings
-| ID | Name | Gold | Wood |
-|---|---|---|---|
-| archery | Archery Range | TBD | TBD |
-| barracks | Barracks | TBD | TBD |
-| castle | Castle | TBD | TBD |
-| house1 | House | TBD | TBD |
-| monastery | Monastery | TBD | TBD |
-| tower | Tower | TBD | TBD |
+| ID | Name | Asset |
+|---|---|---|
+| archery | Archery Range | `Archery.png` |
+| barracks | Barracks | `Barracks.png` |
+| castle | Castle | `Castle.png` |
+| house1 | House | `House1.png` |
+| monastery | Monastery | `Monastery.png` |
+| tower | Tower | `Tower.png` |
 
-All from `assets/Buildings/Black Buildings/`. House2 and House3 removed (duplicate angles of House1).
+All from `assets/Buildings/Black Buildings/`. House2 and House3 removed (duplicate angles).
 
 ### Resource Display (`resource_display.tscn` / `resource_display.gd`)
-- Single horizontal ribbon anchored top-centre of screen
-- Uses bottom ribbon from `SmallRibbons.png` (darkest slate, y=580, h=54)
-  - Left cap: `Rect2(1.58, 580, 62.5, 54)`
-  - Centre (×3 tiled): `Rect2(128.3, 580, 63.7, 54)`
-  - Right cap: `Rect2(256, 580, 62, 54)`
+- Single horizontal ribbon anchored top-right of screen
 - Icons: `Icon_03` (gold), `Icon_02` (wood), `Icon_04` (meat)
-- Labels updated via `set_resources(gold, wood, meat)` or individual `set_gold/wood/meat()`
-- Starting values set in `main.gd _ready()`: gold=100, wood=50, meat=25 (placeholder)
+- Labels updated via `set_resources(gold, wood, meat)` or individual setters
+- Starting values: gold=100, wood=50, meat=25 (placeholder, set in `main.gd _ready()`)
 
 ---
 
 ## Wall & Drawbridge
 Built manually in the editor under the `wall` Node2D. **Do not remove or modify from code.**
 
-| Asset | File | Notes |
-|---|---|---|
-| Wall segments | `wall_the_one.png` | Sliced with `region_rect`, scaled 1.3×, z=5 |
-| Bridge (down) | `bridge_down.png` | Open/lowered state |
-| Bridge (up) | `bridge_up.png` | Closed/raised state |
-
 - Drawbridge controlled by `drawbridge.gd` on the `wall` node
-- Press **B** to toggle — AnimationPlayer crossfades between `bridge_up` (visible) and `bridge_down` (visible) over 2.0 seconds
+- Press **B** to toggle — AnimationPlayer crossfades between `bridge_up` and `bridge_down` over 2.0 seconds
 - `Wall_Collision` StaticBody2D has collision shapes for the wall segments
+
+---
+
+## Building Placement System
+
+### Flow
+1. Player clicks a building card → `building_selected` signal fires → build menu closes
+2. `main.gd` calls `building_placer.start_placement(id)` and sets `unit_selection.disabled = true`
+3. A ghost sprite follows the mouse snapped to the tile grid
+4. Ghost tints **green** (valid) or **red** (invalid)
+5. **Valid zone:** town zone only (col ≥ 20), non-water rows (row ≥ 3), no physics overlap
+6. **Left-click** → confirm placement; **Right-click / Escape** → cancel
+7. On confirm or cancel, `unit_selection.disabled` is restored to `false`
+
+### `building_placer.gd`
+- `start_placement(id)` — enters placement mode, loads ghost texture, sizes ShapeCast2D to the texture (minus `FOOTPRINT_PADDING = Vector2(64, 128)`)
+- `cancel_placement()` — exits mode, emits `placement_cancelled`
+- Emits `building_placed(building_id, tile)` on confirm
+
+### `placed_building.gd` (StaticBody2D)
+- Created at runtime by `main.gd._on_building_placed()`
+- `setup(id, tile, units_layer)` — sets position to tile centre, loads sprite, creates collision sized to actual texture dimensions, creates click `Area2D`
+- Stores `building_id` (String) and tile in metadata (`get_meta("tile")`)
+- Emits `building_clicked(self)` on left-click → `main.gd._on_building_clicked()` (currently prints, future: open UI panel)
+- Calls `_attach_controller(id)` which adds building-specific child Node controllers
+- `get_controller()` — duck-typed lookup returning the first child with `get_live_pawns()`
+
+---
+
+## Buildings — Controllers
+
+### Castle (`castle.gd`)
+- Extends `Node`, attached as `CastleController` child of a placed castle building
+- Spawns up to **3 pawns**, one every **5 seconds**
+- Spawns at the tile directly **below** the castle (`tile.y + 1`)
+- Timer resets when at max capacity so next pawn spawns promptly after a death
+- Exposes `get_live_pawns()`, `get_max_pawns()`, `get_spawn_timer()` for future upgrade UI
+- `units_layer` injected by `placed_building.gd` after adding to tree
+
+---
+
+## Units — Pawn
+
+### Scene: `pawn.tscn`
+```
+Pawn (CharacterBody2D)    pawn.gd
+├── Sprite (AnimatedSprite2D)   sprite frames defined in scene
+├── Collision (CollisionShape2D) CircleShape2D radius=18, offset (0,10)
+└── SelectionCircle (Node2D)    selection_circle.gd, z=2, hidden by default
+```
+
+### Animations (all 192×192px frames, 8 fps, Black Units asset set)
+| Animation | Frames | Description |
+|---|---|---|
+| `idle` | 8 | Standing, no tool |
+| `run` | 6 | Running, no tool |
+| `idle_axe` | 8 | Idle holding axe |
+| `run_axe` | 6 | Running with axe |
+| `interact_axe` | 6 | Chopping with axe |
+| `idle_gold` | 8 | Idle holding gold |
+| `run_gold` | 6 | Running with gold |
+| `idle_hammer` | 8 | Idle holding hammer |
+| `run_hammer` | 6 | Running with hammer |
+| `interact_hammer` | 6 | Building with hammer |
+| `idle_knife` | 8 | Idle holding knife |
+| `run_knife` | 6 | Running with knife |
+| `interact_knife` | 6 | Attacking with knife |
+| `idle_meat` | 8 | Idle holding meat |
+| `run_meat` | 6 | Running with meat |
+| `idle_pickaxe` | 8 | Idle holding pickaxe |
+| `run_pickaxe` | 6 | Running with pickaxe |
+| `interact_pickaxe` | 6 | Mining with pickaxe |
+| `idle_wood` | 8 | Idle holding wood |
+| `run_wood` | 6 | Running with wood |
+
+### `pawn.gd` — State Machine
+| State | Description |
+|---|---|
+| `IDLE` | Plays `idle` animation, waits 1–3.5s then picks next state |
+| `MOVE` | Wanders randomly, biases back toward spawn if > 200px away |
+| `MOVE_TO` | Moves directly to a commanded target position, then returns to `IDLE` |
+
+- **`move_to(target: Vector2)`** — enters `MOVE_TO` state; on arrival (within 12px) returns to `IDLE`
+- **`set_selected(bool)`** — shows/hides `SelectionCircle`, emits `selected_changed`
+- **`take_damage(amount)`** / **`die()`** — emits `died` signal, calls `queue_free()`
+- **`request_push(direction, distance, requester_pos)`** — pushes pawn sideways when another unit collides during `MOVE_TO`
+- Speed: 50 px/sec. Wander radius: 200px.
+
+### Selection Circle (`selection_circle.gd`)
+- Draws a flat cyan ellipse at the unit's feet (offset `Vector2(0, 36)`)
+- Ellipse is scaled to 38% height to look grounded
+- Radius 28, filled at 20% alpha, rim fully opaque
+
+---
+
+## Unit Selection System
+
+### `unit_selection.gd` (Node2D in main scene)
+- **LMB click** — point-selects nearest unit within 32px of click in world space
+- **LMB drag** (> 6px travel) — box-selects all units whose screen position falls inside the drag rect
+- **Shift + click/drag** — additive selection (toggle individual unit or add to group)
+- **RMB** (units selected) — issues move order to all selected units
+- **RMB** (nothing selected) — deselects all
+- Formation: up to 4 units wide, 32px spacing, centred on the click point. Additional rows offset downward.
+- `disabled = true` while `BuildingPlacer` is active — set by `main.gd`
+
+### `selection_overlay.gd` (Node2D inside CanvasLayer)
+- Draws the drag-selection rectangle in screen space on top of everything
+- Reads `_pressing` and `_drag_active` from parent `UnitSelection` node
+- Cyan fill (8% alpha) + cyan border (70% alpha), 1.5px width
 
 ---
 
@@ -111,24 +219,31 @@ Built manually in the editor under the `wall` Node2D. **Do not remove or modify 
 
 | File | Purpose |
 |---|---|
-| `main.gd` | Camera setup, zoom/pan input, fullscreen toggle, HUD wiring |
-| `drawbridge.gd` | Toggles drawbridge animation on B key press |
-| `hud.gd` | Owns ActionBar, BuildMenu, ResourceDisplay — bubbles signals to main |
-| `build_menu.gd` | Banner stitching, dynamic building card grid, building_selected signal |
-| `resource_display.gd` | Exposes set_resources / set_gold / set_wood / set_meat |
-| `terrain.gd` | Builds TileSet in code, fills terrain, scatters decorations |
-| `resource_spawner.gd` | Spawns gold, trees, and sheep in the town zone |
-| `gold_stone.gd` | Gold stone behaviour — periodic one-shot glint animation |
-| `sheep.gd` | Sheep state machine — idle / graze / move |
+| `main.gd` | Camera, zoom/pan, fullscreen, wires all systems together |
+| `drawbridge.gd` | Toggles drawbridge on B key |
+| `hud.gd` | Owns ActionBar, BuildMenu, ResourceDisplay — bubbles signals |
+| `build_menu.gd` | Banner stitching, building card grid, building_selected signal |
+| `resource_display.gd` | set_resources / set_gold / set_wood / set_meat |
+| `terrain.gd` | Builds TileSet, fills terrain, scatters decorations |
+| `resource_spawner.gd` | Spawns gold stones, trees, sheep in town zone |
+| `gold_stone.gd` | Periodic glint animation |
+| `sheep.gd` | Sheep state machine: idle / graze / move |
+| `building_placer.gd` | Ghost preview, tile validity, placement confirmation |
+| `placed_building.gd` | Generic placed building — sprite, collision, click area, controller attachment |
+| `castle.gd` | Castle controller — pawn spawning timer, live pawn tracking |
+| `pawn.gd` | Player unit — wander AI, MOVE_TO, selection, push response, health |
+| `unit_selection.gd` | Click and drag-box selection, move order issuing |
+| `selection_circle.gd` | Draws flat ellipse indicator at unit feet |
+| `selection_overlay.gd` | Draws drag-select rectangle in screen space |
 
 ---
 
 ## Camera
 - Zoom calculated dynamically from window size — map always fills the window
-- `zoom_min` is set at runtime so the user can never zoom out beyond map bounds
+- `zoom_min` set at runtime; user cannot zoom out beyond map bounds
 - **Scroll wheel** — zoom toward mouse pointer
 - **Middle mouse drag** — pan
-- **Screen edge** — pan (24px margin)
+- **Screen edge** (24px margin) — pan at 600 px/sec
 - **F11** — toggle fullscreen
 
 ---
@@ -139,20 +254,21 @@ Built manually in the editor under the `wall` Node2D. **Do not remove or modify 
 |---|---|---|
 | 0 | Ground | WaterLayer, GroundLayer |
 | 1 | Decorations | Bushes, rocks, water rocks |
-| 2 | Gold | Gold stones |
-| 3 | Units | Sheep, future player/enemy units |
+| 2 | Gold / SelectionCircle | Gold stones, unit selection rings |
+| 3 | Units / Buildings | Sheep, pawns, placed buildings |
 | 4 | Trees | Trees (render in front of everything) |
 | 5 | Wall | Wall segments and bridge sprites |
 
 ---
 
 ## Collision System
-All collision uses Godot's built-in physics — no manual obstacle lists anywhere.
 
 | Node type | Used by | Notes |
 |---|---|---|
-| `StaticBody2D` + `CollisionShape2D` | Tree stumps, Gold stones, Wall | Impassable to all units |
-| `CharacterBody2D` | Sheep (and future units) | Uses `move_and_collide()` |
+| `StaticBody2D` + `CollisionShape2D` | Trees, gold stones, wall, placed buildings | Impassable |
+| `CharacterBody2D` | Sheep, pawns | Uses `move_and_collide()` |
+| `Area2D` | Placed buildings (click detection) | `input_pickable = true` |
+| `ShapeCast2D` | BuildingPlacer | Overlap check during ghost preview |
 
 ---
 
@@ -161,38 +277,35 @@ All resources share one `placed: Array[Vector2i]` so nothing overlaps across typ
 
 | Resource | Count | Script | Notes |
 |---|---|---|---|
-| Gold Stone 3 | 6 | `gold_stone.gd` | Static sprite + periodic 6-frame glint, seed 99 |
-| Tree1 / Tree2 | 10 | inline | 8-frame looping sway, random flip, seed 77 |
-| Sheep | 20 | `sheep.gd` | State machine: idle(40%) graze(40%) move(20%), seed 55 |
-
----
-
-## Decorations (terrain.gd)
-Scattered after terrain paint, skipping empty cells:
-- **Bushes** (4 variants, 8-frame animated) — town zone + deep wilds
-- **Rocks** (4 variants, static) — wilds + no-man's land
-- **Water rocks** (4 variants, 16-frame animated) — water strip
+| Gold Stone 3 | 6 | `gold_stone.gd` | Static + periodic 6-frame glint, seed 99 |
+| Tree1 / Tree2 | 10 | inline | 8-frame sway, random flip, seed 77 |
+| Sheep | 20 | `sheep.gd` | idle(40%) graze(40%) move(20%), seed 55 |
 
 ---
 
 ## Key Constants
 
-| Constant | File | Value | Notes |
-|---|---|---|---|
-| `MAP_COLS` / `MAP_ROWS` | terrain.gd | 48 / 27 | Change map size here |
-| `WORLD_WIDTH` / `WORLD_HEIGHT` | main.gd | 3072 / 1728 | Must equal MAP_* × 64 |
-| `COL_WILDS_END` | terrain.gd | 20 | Zone boundary — wall sits here |
-| `WATER_ROWS` | terrain.gd | 3 | Rows of water at top |
-| `ZOOM_MAX` | main.gd | 2.0 | Closest zoom level |
-| `Z_GOLD` | resource_spawner.gd | 2 | Z layer for gold stones |
-| `Z_TREES` | resource_spawner.gd | 4 | Z layer for trees |
-| `Z_UNITS` | resource_spawner.gd | 3 | Z layer for sheep, future units |
+| Constant | File | Value |
+|---|---|---|
+| `MAP_COLS` / `MAP_ROWS` | terrain.gd | 48 / 27 |
+| `WORLD_WIDTH` / `WORLD_HEIGHT` | main.gd | 3072 / 1728 |
+| `COL_WILDS_END` / `COL_TOWN_START` | terrain.gd / others | 20 |
+| `WATER_ROWS` | terrain.gd | 3 |
+| `TILE_SIZE` | all scripts | 64 |
+| `ZOOM_MAX` | main.gd | 2.0 |
+| `MOVE_SPEED` (pawn) | pawn.gd | 50 px/sec |
+| `WANDER_RADIUS` (pawn) | pawn.gd | 200 px |
+| `ARRIVAL_RADIUS` (pawn) | pawn.gd | 12 px |
+| `MAX_PAWNS` (castle) | castle.gd | 3 |
+| `SPAWN_INTERVAL` (castle) | castle.gd | 5.0 sec |
 
 ---
 
 ## What's Not Built Yet
 - Enemy units and spawning
-- Player units / combat system
-- Building placement (ghost preview → click to place)
-- Resource costs and collection mechanics
-- Game state management (win/lose)
+- Combat system (pawns attacking enemies)
+- Resource costs for building placement
+- Resource collection mechanics (pawns gathering gold/wood/meat)
+- Building upgrade UI (castle panel showing live pawns, upgrade options)
+- Win/lose game state
+- Other building controllers (barracks, tower, archery, monastery, house)
