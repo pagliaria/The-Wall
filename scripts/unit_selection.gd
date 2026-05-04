@@ -6,34 +6,42 @@ extends Node2D
 # Set `units_layer` from main.gd after _ready().
 # Set `disabled = true` while placement mode or other exclusive modes are active.
 
-# ── Tuning ────────────────────────────────────────────────────────────────────
+# -- Tuning -------------------------------------------------------------------
 const DRAG_THRESHOLD = 6.0   # px of mouse travel before it counts as a drag
 
-# ── Drag box visual ───────────────────────────────────────────────────────────
+# -- Drag box visual ----------------------------------------------------------
 const BOX_FILL    = Color(0.3, 0.85, 1.0, 0.08)
 const BOX_BORDER  = Color(0.3, 0.85, 1.0, 0.70)
 const BOX_WIDTH   = 1.5
 
-# ── State ─────────────────────────────────────────────────────────────────────
+# -- Cursors ------------------------------------------------------------------
+const CURSOR_DEFAULT := preload("res://assets/UI Elements/UI Elements/Cursors/Cursor_01.png")
+const CURSOR_GATHER  := preload("res://assets/UI Elements/UI Elements/Cursors/Cursor_02.png")
+const CURSOR_HOTSPOT := Vector2(20, 18)   # approximate centre of the cursor image
+
+# -- State --------------------------------------------------------------------
 var disabled       : bool    = false
-var selected_units : Array   = []   # Array[Node] — currently selected pawns
+var selected_units : Array   = []   # Array[Node] -- currently selected pawns
 
 var _pressing      : bool    = false
 var _press_screen  : Vector2 = Vector2.ZERO   # screen coords where LMB went down
 var _drag_active   : bool    = false
 var _drag_end      : Vector2 = Vector2.ZERO   # current mouse screen pos while dragging
 
+var _gather_cursor_active : bool = false   # true while Cursor_02 is showing
+
 # Injected by main.gd
 var units_layer    : Node2D  = null
 var camera         : Camera2D = null
 
-# ── Draw (drag rectangle, screen space) ───────────────────────────────────────
-# We use a CanvasLayer child for screen-space drawing — see UnitSelectionOverlay.
+# -- Input --------------------------------------------------------------------
 
-# ── Input ─────────────────────────────────────────────────────────────────────
+func _ready() -> void:
+	Input.set_custom_mouse_cursor(CURSOR_DEFAULT, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
 
 func _input(event: InputEvent) -> void:
 	if disabled:
+		_reset_cursor()
 		return
 
 	if event is InputEventMouseButton:
@@ -49,13 +57,15 @@ func _input(event: InputEvent) -> void:
 			else:
 				_deselect_all()
 
-	elif event is InputEventMouseMotion and _pressing:
-		_drag_end = event.position
-		var travelled : float = event.position.distance_to(_press_screen)
-		if travelled >= DRAG_THRESHOLD:
-			_drag_active = true
-		# Tell the overlay to redraw
-		_get_overlay().queue_redraw()
+	elif event is InputEventMouseMotion:
+		if _pressing:
+			_drag_end = event.position
+			var travelled : float = event.position.distance_to(_press_screen)
+			if travelled >= DRAG_THRESHOLD:
+				_drag_active = true
+			_get_overlay().queue_redraw()
+
+		_update_cursor(event.position)
 
 func _on_lmb_down(screen_pos: Vector2) -> void:
 	_pressing     = true
@@ -75,7 +85,38 @@ func _on_lmb_up(screen_pos: Vector2, additive: bool) -> void:
 	else:
 		_do_point_select(screen_pos, additive)
 
-# ── Selection logic ───────────────────────────────────────────────────────────
+# -- Cursor management --------------------------------------------------------
+
+func _update_cursor(screen_pos: Vector2) -> void:
+	if selected_units.size() == 0:
+		_reset_cursor()
+		return
+
+	var world_pos := _screen_to_world(screen_pos)
+	if _is_over_resource(world_pos):
+		if not _gather_cursor_active:
+			Input.set_custom_mouse_cursor(CURSOR_GATHER, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
+			_gather_cursor_active = true
+	else:
+		_reset_cursor()
+
+func _reset_cursor() -> void:
+	if _gather_cursor_active:
+		Input.set_custom_mouse_cursor(CURSOR_DEFAULT, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
+		_gather_cursor_active = false
+
+func _is_over_resource(world_pos: Vector2) -> bool:
+	for area in get_tree().get_nodes_in_group("resource_hover"):
+		if not area is Area2D:
+			continue
+		var circle := area.shape_owner_get_shape(0, 0) as CircleShape2D
+		if circle == null:
+			continue
+		if world_pos.distance_to(area.global_position) <= circle.radius:
+			return true
+	return false
+
+# -- Selection logic ----------------------------------------------------------
 
 func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 	var world_pos := _screen_to_world(screen_pos)
@@ -99,7 +140,6 @@ func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 			_select_unit(hit)
 
 func _do_box_select(additive: bool) -> void:
-	# Build a world-space rect from the two screen-space corners
 	var rect_screen := Rect2(_press_screen, _drag_end - _press_screen).abs()
 
 	if not additive:
@@ -118,7 +158,6 @@ func _select_unit(unit: Node) -> void:
 		return
 	selected_units.append(unit)
 	unit.set_selected(true)
-	# Clean up if the unit dies
 	if not unit.died.is_connected(_on_unit_died.bind(unit)):
 		unit.died.connect(_on_unit_died.bind(unit))
 
@@ -131,15 +170,16 @@ func _deselect_all() -> void:
 		if is_instance_valid(unit):
 			unit.set_selected(false)
 	selected_units.clear()
+	_reset_cursor()
 
 func _on_unit_died(unit: Node) -> void:
 	selected_units.erase(unit)
+	if selected_units.is_empty():
+		_reset_cursor()
 
 func _issue_move_order(screen_pos: Vector2) -> void:
 	var world_target := _screen_to_world(screen_pos)
 	var count        := selected_units.size()
-	# Spread units in a small grid so they don't all pile on the same pixel.
-	# Row width: up to 4 units side by side, 32px apart.
 	const SPACING    := 32.0
 	const ROW_WIDTH  := 4
 	for i in range(count):
@@ -154,10 +194,9 @@ func _issue_move_order(screen_pos: Vector2) -> void:
 		)
 		unit.move_to(world_target + offset)
 
-	# Show move-order ping at the click position
 	_get_overlay().show_ping(screen_pos)
 
-# ── Coordinate helpers ────────────────────────────────────────────────────────
+# -- Coordinate helpers -------------------------------------------------------
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
 	return get_viewport().get_canvas_transform().affine_inverse() * screen_pos
@@ -165,12 +204,12 @@ func _screen_to_world(screen_pos: Vector2) -> Vector2:
 func _world_to_screen(world_pos: Vector2) -> Vector2:
 	return get_viewport().get_canvas_transform() * world_pos
 
-# ── Overlay accessor ──────────────────────────────────────────────────────────
+# -- Overlay accessor ---------------------------------------------------------
 
 func _get_overlay() -> Node:
 	return get_node("Overlay/Draw")
 
-# ── Public ────────────────────────────────────────────────────────────────────
+# -- Public -------------------------------------------------------------------
 
 func get_selected() -> Array:
 	return selected_units
