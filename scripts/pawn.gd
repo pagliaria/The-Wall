@@ -53,7 +53,7 @@ const ANIM_FPS    = 8.0
 func _ready() -> void:
 	_rng.randomize()
 	_spawn_pos = position
-	_enter_state(State.IDLE)
+	_enter_state(State.MOVE)
 
 func _physics_process(delta: float) -> void:
 	_state_timer += delta
