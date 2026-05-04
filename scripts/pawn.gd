@@ -34,7 +34,9 @@ const IDLE_TIME_MIN  = 1.0
 const IDLE_TIME_MAX  = 3.5
 const MOVE_TIME_MIN  = 0.8
 const MOVE_TIME_MAX  = 2.0
-const MOVE_SPEED     = 35.0   # px/sec — slightly faster than sheep
+const MOVE_SPEED     = 50.0   # px/sec — slightly faster than sheep
+const PUSH_DISTANCE  = 10.0
+const PUSH_SPEED     = 10.0
 
 # How far a pawn will wander from its spawn point
 const WANDER_RADIUS  = 200.0
@@ -53,6 +55,8 @@ var _move_dir    : Vector2 = Vector2.ZERO
 var _move_target : Vector2 = Vector2.ZERO   # used by MOVE_TO state
 var _spawn_pos   : Vector2 = Vector2.ZERO   # set on first frame
 var _rng         := RandomNumberGenerator.new()
+var _push_target : Vector2 = Vector2.ZERO
+var _is_being_pushed := false
 
 @onready var _sprite            : AnimatedSprite2D = $Sprite
 @onready var _selection_circle  : Node2D           = $SelectionCircle
@@ -73,6 +77,9 @@ func _ready() -> void:
 	_enter_state(State.MOVE)
 
 func _physics_process(delta: float) -> void:
+	if _is_being_pushed:
+		_do_push_step(delta)
+		return
 	_state_timer += delta
 	if _state == State.MOVE:
 		_do_move(delta)
@@ -123,13 +130,45 @@ func _do_move_to(delta: float) -> void:
 	var motion    := _move_dir * MOVE_SPEED * delta
 	var collision := move_and_collide(motion)
 	if collision:
-		# Simple slide around obstacles
-		_move_dir = _move_dir.bounce(collision.get_normal()).normalized()
-		move_and_collide(_move_dir * MOVE_SPEED * delta)
+		var collider := collision.get_collider()
+		if collider != null and collider != self and collider.has_method("request_push"):
+			collider.request_push(_move_dir, PUSH_DISTANCE, position)
+			move_and_collide(motion)
+		else:
+			# Simple slide around obstacles
+			_move_dir = _move_dir.bounce(collision.get_normal()).normalized()
+			move_and_collide(_move_dir * MOVE_SPEED * delta)
 
 func move_to(target: Vector2) -> void:
 	_move_target = target
 	_enter_state(State.MOVE_TO)
+
+func request_push(direction: Vector2, distance: float, requester_pos: Vector2 = Vector2.ZERO) -> void:
+	var forward := direction.normalized()
+	if forward == Vector2.ZERO:
+		return
+	var side_a := Vector2(-forward.y, forward.x)
+	var side_b := -side_a
+	var preferred := side_a
+	if requester_pos != Vector2.ZERO:
+		var to_self := position - requester_pos
+		if to_self.dot(side_b) > to_self.dot(side_a):
+			preferred = side_b
+	_push_target = position + preferred * distance
+	_is_being_pushed = true
+
+func _do_push_step(delta: float) -> void:
+	var to_target := _push_target - position
+	if to_target.length() <= 2.0:
+		position = _push_target
+		_is_being_pushed = false
+		return
+	var step := to_target.normalized() * PUSH_SPEED * delta
+	if step.length() > to_target.length():
+		step = to_target
+	var collision := move_and_collide(step)
+	if collision:
+		_is_being_pushed = false
 
 func _do_move(delta: float) -> void:
 	# Map boundary clamp
