@@ -34,11 +34,6 @@ func setup(id: String, tile: Vector2i) -> void:
 	# ── Sprite ────────────────────────────────────────────────────────────────
 	var sprite        := Sprite2D.new()
 	sprite.texture     = load(BUILDING_TEXTURES[id]) as Texture2D
-	# Anchor the sprite so its bottom edge sits at the tile centre y-position,
-	# matching how the Tiny Swords buildings visually sit on the ground.
-	if sprite.texture:
-		var h : float = sprite.texture.get_height()
-		sprite.offset  = Vector2(0.0, -h * 0.5 + TILE_SIZE * 0.5)
 	add_child(sprite)
 
 	# ── Collision ─────────────────────────────────────────────────────────────
