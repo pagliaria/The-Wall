@@ -70,7 +70,7 @@ func spawn(ground_layer: TileMapLayer) -> void:
 	rng.seed = 99
 	_spawn_gold(ground_layer, rng, placed)
 
-	rng.seed = 77
+	rng.seed = 80
 	_spawn_trees(ground_layer, rng, placed)
 
 	rng.seed = 55

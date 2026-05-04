@@ -245,7 +245,3 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="BuildMenu" parent="HUD" instance=ExtResource("11_build_menu")]
-layout_mode = 3
-anchors_preset = 8
-grow_horizontal = 2
-grow_vertical = 2

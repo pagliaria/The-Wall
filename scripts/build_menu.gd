@@ -17,8 +17,8 @@ const BUILDINGS := [
 	{ "id": "barracks",  "name": "Barracks",       "gold": -1, "wood": -1 },
 	{ "id": "castle",    "name": "Castle",          "gold": -1, "wood": -1 },
 	{ "id": "house1",    "name": "House",           "gold": -1, "wood": -1 },
-	{ "id": "house2",    "name": "House II",        "gold": -1, "wood": -1 },
-	{ "id": "house3",    "name": "House III",       "gold": -1, "wood": -1 },
+	#{ "id": "house2",    "name": "House II",        "gold": -1, "wood": -1 },
+	#{ "id": "house3",    "name": "House III",       "gold": -1, "wood": -1 },
 	{ "id": "monastery", "name": "Monastery",       "gold": -1, "wood": -1 },
 	{ "id": "tower",     "name": "Tower",           "gold": -1, "wood": -1 },
 ]
@@ -199,8 +199,8 @@ func _load_building_texture(id: String) -> Texture2D:
 		"barracks":  "res://assets/Buildings/Black Buildings/Barracks.png",
 		"castle":    "res://assets/Buildings/Black Buildings/Castle.png",
 		"house1":    "res://assets/Buildings/Black Buildings/House1.png",
-		"house2":    "res://assets/Buildings/Black Buildings/House2.png",
-		"house3":    "res://assets/Buildings/Black Buildings/House3.png",
+		#"house2":    "res://assets/Buildings/Black Buildings/House2.png",
+		#"house3":    "res://assets/Buildings/Black Buildings/House3.png",
 		"monastery": "res://assets/Buildings/Black Buildings/Monastery.png",
 		"tower":     "res://assets/Buildings/Black Buildings/Tower.png",
 	}
