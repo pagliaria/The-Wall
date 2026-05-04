@@ -32,6 +32,7 @@ var _pan_start_cam    := Vector2.ZERO
 @onready var hud              : CanvasLayer    = $HUD
 @onready var building_placer  : Node2D         = $BuildingPlacer
 @onready var buildings_layer  : Node2D         = $BuildingsLayer
+@onready var units_layer      : Node2D         = $UnitsLayer
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -60,8 +61,13 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	var building := StaticBody2D.new()
 	building.set_script(load("res://scripts/placed_building.gd"))
 	buildings_layer.add_child(building)
-	building.setup(building_id, tile)
+	building.setup(building_id, tile, units_layer)
+	building.building_clicked.connect(_on_building_clicked)
 	print("Placed %s at tile %s" % [building_id, tile])
+
+func _on_building_clicked(building: Node) -> void:
+	print("Clicked building: ", building.building_id)
+	# Future: open building-specific UI panel here
 
 func _on_placement_cancelled() -> void:
 	print("Placement cancelled")

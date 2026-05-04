@@ -261,6 +261,9 @@ grow_horizontal = 0
 [node name="BuildingsLayer" type="Node2D" parent="."]
 z_index = 3
 
+[node name="UnitsLayer" type="Node2D" parent="."]
+z_index = 3
+
 [node name="BuildingPlacer" type="Node2D" parent="."]
 script = ExtResource("13_placer")
 

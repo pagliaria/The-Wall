@@ -1,12 +1,14 @@
 extends StaticBody2D
 
 # PlacedBuilding — a building that has been placed in the world.
-# Owns its own visual (Sprite2D) and collision (CollisionShape2D).
-# Created at runtime by main.gd when BuildingPlacer emits building_placed.
+# Generic container: creates its own sprite, collision, and click area.
+# For building-specific behaviour (e.g. Castle spawning pawns), a child
+# controller node is added based on building_id.
+
+signal building_clicked(building: Node)
 
 const TILE_SIZE = 64
 
-# Building texture map (mirrors building_placer.gd)
 const BUILDING_TEXTURES := {
 	"archery":   "res://assets/Buildings/Black Buildings/Archery.png",
 	"barracks":  "res://assets/Buildings/Black Buildings/Barracks.png",
@@ -16,34 +18,76 @@ const BUILDING_TEXTURES := {
 	"tower":     "res://assets/Buildings/Black Buildings/Tower.png",
 }
 
-# Approximate footprint half-extents used for the collision box.
-# Buildings are centred on a tile; the box covers one tile horizontally
-# and the bottom portion of the sprite vertically so units route around
-# the base rather than the full tall sprite.
-const COLLISION_HALF_W = 28.0   # px — just inside one tile (32px half)
-const COLLISION_HALF_H = 28.0   # px
-
+# The building type — readable by UI, other systems, and child controllers.
 var building_id : String = ""
 
-func setup(id: String, tile: Vector2i) -> void:
+# Injected by main.gd so child controllers (e.g. Castle) know where to add units.
+var units_layer : Node2D = null
+
+func setup(id: String, tile: Vector2i, p_units_layer: Node2D) -> void:
 	building_id = id
+	units_layer = p_units_layer
 	name        = "Building_%s_%d_%d" % [id, tile.x, tile.y]
 	position    = _tile_center(tile)
-	z_index     = 3   # same layer as units so it sorts correctly
+	z_index     = 3
 
 	# ── Sprite ────────────────────────────────────────────────────────────────
-	var sprite        := Sprite2D.new()
-	sprite.texture     = load(BUILDING_TEXTURES[id]) as Texture2D
+	var sprite       := Sprite2D.new()
+	var tex          := load(BUILDING_TEXTURES[id]) as Texture2D
+	sprite.texture    = tex
 	add_child(sprite)
 
-	# ── Collision ─────────────────────────────────────────────────────────────
-	var shape_node    := CollisionShape2D.new()
-	var rect          := RectangleShape2D.new()
-	rect.size          = Vector2(COLLISION_HALF_W * 2.0, COLLISION_HALF_H * 2.0)
-	shape_node.shape   = rect
-	# Offset the collision box to sit at ground level (bottom of sprite area)
-	shape_node.position = Vector2(0.0, 0.0)
+	# ── Collision sized to the actual texture ─────────────────────────────────
+	# Use the real pixel dimensions of the sprite so large buildings like the
+	# castle get a proper-sized box rather than a fixed tile-sized one.
+	var tex_size   := tex.get_size() if tex else Vector2(TILE_SIZE, TILE_SIZE)
+
+	var shape_node         := CollisionShape2D.new()
+	var rect               := RectangleShape2D.new()
+	rect.size               = tex_size - Vector2(64, 128)
+	shape_node.shape        = rect
 	add_child(shape_node)
+
+	# Expose the tile for child controllers (e.g. spawn-point calculation).
+	set_meta("tile", tile)
+
+	# ── Click area sized to match the collision ────────────────────────────────
+	var area              := Area2D.new()
+	area.name              = "ClickArea"
+	var area_shape         := CollisionShape2D.new()
+	var area_rect          := RectangleShape2D.new()
+	area_rect.size          = tex_size
+	area_shape.shape        = area_rect
+	area.add_child(area_shape)
+	area.input_pickable    = true
+	area.input_event.connect(_on_area_input_event)
+	add_child(area)
+
+	# ── Building-specific controller ───────────────────────────────────────────
+	_attach_controller(id)
+
+func _attach_controller(id: String) -> void:
+	match id:
+		"castle":
+			var ctrl          := Node.new()
+			ctrl.set_script(load("res://scripts/castle.gd"))
+			ctrl.name          = "CastleController"
+			add_child(ctrl)
+			# units_layer is set on this node; castle.gd reads it via get_parent()
+			# so we pass the reference after adding to tree
+			ctrl.units_layer   = units_layer
+		# Future: "barracks", "tower", etc.
+
+func _on_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		emit_signal("building_clicked", self)
+
+func get_controller() -> Node:
+	# Returns the building-specific controller child, if any.
+	for child in get_children():
+		if child.has_method("get_live_pawns"):   # duck-typed for now
+			return child
+	return null
 
 func _tile_center(tile: Vector2i) -> Vector2:
 	return Vector2(
