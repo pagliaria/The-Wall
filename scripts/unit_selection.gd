@@ -44,7 +44,10 @@ func _input(event: InputEvent) -> void:
 				_on_lmb_up(event.position, event.shift_pressed)
 
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			_deselect_all()
+			if selected_units.size() > 0:
+				_issue_move_order(event.position)
+			else:
+				_deselect_all()
 
 	elif event is InputEventMouseMotion and _pressing:
 		_drag_end = event.position
@@ -131,6 +134,25 @@ func _deselect_all() -> void:
 
 func _on_unit_died(unit: Node) -> void:
 	selected_units.erase(unit)
+
+func _issue_move_order(screen_pos: Vector2) -> void:
+	var world_target := _screen_to_world(screen_pos)
+	var count        := selected_units.size()
+	# Spread units in a small grid so they don't all pile on the same pixel.
+	# Row width: up to 4 units side by side, 32px apart.
+	const SPACING    := 32.0
+	const ROW_WIDTH  := 4
+	for i in range(count):
+		var unit : Node = selected_units[i]
+		if not is_instance_valid(unit):
+			continue
+		var col    := i % ROW_WIDTH
+		var row    := i / ROW_WIDTH
+		var offset := Vector2(
+			(col - (min(count, ROW_WIDTH) - 1) * 0.5) * SPACING,
+			row * SPACING
+		)
+		unit.move_to(world_target + offset)
 
 # ── Coordinate helpers ────────────────────────────────────────────────────────
 

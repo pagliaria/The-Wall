@@ -14,6 +14,7 @@ signal selected_changed(is_selected: bool)
 
 # ── Selection ─────────────────────────────────────────────────────────────────
 var is_selected : bool = false
+var has_moved : bool = false
 
 func set_selected(value: bool) -> void:
 	if is_selected == value:
@@ -41,12 +42,15 @@ const WANDER_RADIUS  = 200.0
 var max_hp    : int = 10
 var hp        : int = 10
 
-enum State { IDLE, MOVE }
+enum State { IDLE, MOVE, MOVE_TO }
+
+const ARRIVAL_RADIUS = 12.0   # px — close enough to count as arrived
 
 var _state       : State   = State.IDLE
 var _state_timer : float   = 0.0
 var _state_dur   : float   = 0.0
 var _move_dir    : Vector2 = Vector2.ZERO
+var _move_target : Vector2 = Vector2.ZERO   # used by MOVE_TO state
 var _spawn_pos   : Vector2 = Vector2.ZERO   # set on first frame
 var _rng         := RandomNumberGenerator.new()
 
@@ -72,7 +76,9 @@ func _physics_process(delta: float) -> void:
 	_state_timer += delta
 	if _state == State.MOVE:
 		_do_move(delta)
-	if _state_timer >= _state_dur:
+	elif _state == State.MOVE_TO:
+		_do_move_to(delta)
+	if !has_moved and _state != State.MOVE_TO and _state_timer >= _state_dur:
 		_enter_state(_pick_next_state())
 
 # ── State machine ─────────────────────────────────────────────────────────────
@@ -101,6 +107,29 @@ func _enter_state(new_state: State) -> void:
 			_move_dir       = _move_dir.normalized()
 			_sprite.flip_h  = _move_dir.x < 0
 			_sprite.play("run")
+		State.MOVE_TO:
+			_move_dir      = (_move_target - position).normalized()
+			_sprite.flip_h = _move_dir.x < 0
+			_sprite.play("run")
+
+func _do_move_to(delta: float) -> void:
+	if position.distance_to(_move_target) <= ARRIVAL_RADIUS:
+		has_moved = true
+		_enter_state(State.IDLE)
+		return
+	# Steer smoothly toward target each frame
+	_move_dir      = (_move_target - position).normalized()
+	_sprite.flip_h = _move_dir.x < 0
+	var motion    := _move_dir * MOVE_SPEED * delta
+	var collision := move_and_collide(motion)
+	if collision:
+		# Simple slide around obstacles
+		_move_dir = _move_dir.bounce(collision.get_normal()).normalized()
+		move_and_collide(_move_dir * MOVE_SPEED * delta)
+
+func move_to(target: Vector2) -> void:
+	_move_target = target
+	_enter_state(State.MOVE_TO)
 
 func _do_move(delta: float) -> void:
 	# Map boundary clamp
