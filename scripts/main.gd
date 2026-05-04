@@ -15,7 +15,6 @@ const ENEMY_SPAWN_RIGHT = WORLD_WIDTH * 0.34
 const ZOOM_STEP    = 0.1    # how much each scroll tick zooms
 const ZOOM_MAX     = 2.0    # closest in
 # ZOOM_MIN is calculated dynamically in _fit_camera_to_screen()
-# so the map can never appear smaller than the window
 var zoom_min       := 0.1   # updated at runtime — don't set this manually
 
 # ── Edge pan ──────────────────────────────────────────────────────────────────
@@ -27,34 +26,51 @@ var _panning          := false
 var _pan_start_mouse  := Vector2.ZERO
 var _pan_start_cam    := Vector2.ZERO
 
-@onready var camera          : Camera2D    = $Camera2D
-@onready var terrain         : Node2D      = $Terrain
-@onready var resource_layer  : Node2D      = $ResourceLayer
-@onready var hud             : CanvasLayer = $HUD
+@onready var camera           : Camera2D       = $Camera2D
+@onready var terrain          : Node2D         = $Terrain
+@onready var resource_layer   : Node2D         = $ResourceLayer
+@onready var hud              : CanvasLayer    = $HUD
+@onready var building_placer  : Node2D         = $BuildingPlacer
+@onready var buildings_layer  : Node2D         = $BuildingsLayer
 
 func _ready() -> void:
 	_fit_camera_to_screen()
-	# Terrain fills its TileMapLayer in its own _ready(), which runs before
-	# this call, so the ground_layer is fully painted by the time we spawn.
 	resource_layer.spawn($Terrain/GroundLayer)
+
+	# Give the placer a reference to the ground layer for tile validity checks
+	building_placer.ground_layer = $Terrain/GroundLayer
+
 	hud.build_pressed.connect(_on_build_pressed)
 	hud.building_selected.connect(_on_building_selected)
+	building_placer.building_placed.connect(_on_building_placed)
+	building_placer.placement_cancelled.connect(_on_placement_cancelled)
+
+	hud.resource_display.set_resources(100, 50, 25)
 	print("The Wall – world initialised  (%d × %d px)" % [WORLD_WIDTH, WORLD_HEIGHT])
 
 func _on_build_pressed() -> void:
 	pass  # hammer button toggled — build menu handles its own open/close
 
 func _on_building_selected(building_id: String) -> void:
-	print("Player wants to build: ", building_id)  # placeholder — place building logic goes here
+	# Build menu has already closed itself; enter placement mode
+	building_placer.start_placement(building_id)
+	print("Placement mode: ", building_id)
+
+func _on_building_placed(building_id: String, tile: Vector2i) -> void:
+	var building := StaticBody2D.new()
+	building.set_script(load("res://scripts/placed_building.gd"))
+	buildings_layer.add_child(building)
+	building.setup(building_id, tile)
+	print("Placed %s at tile %s" % [building_id, tile])
+
+func _on_placement_cancelled() -> void:
+	print("Placement cancelled")
 
 # ── Camera fit ────────────────────────────────────────────────────────────────
 func _fit_camera_to_screen() -> void:
 	var screen := Vector2(DisplayServer.window_get_size())
 	var zoom_x := screen.x / float(WORLD_WIDTH)
 	var zoom_y := screen.y / float(WORLD_HEIGHT)
-	# The fit-zoom is whichever axis is tighter — this becomes our minimum.
-	# At this zoom the world exactly fills the window on its tightest axis,
-	# so zooming out any further would show empty space outside the map.
 	zoom_min = maxf(zoom_x, zoom_y)
 
 	camera.zoom     = Vector2(zoom_min, zoom_min)

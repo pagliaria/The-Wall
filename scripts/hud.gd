@@ -6,8 +6,9 @@ extends CanvasLayer
 signal build_pressed
 signal building_selected(building_id: String)
 
-@onready var build_button : TextureButton = $ActionBar/BuildButton
-@onready var build_menu   : Control       = $BuildMenu
+@onready var build_button      : TextureButton   = $ActionBar/BuildButton
+@onready var build_menu        : Control         = $BuildMenu
+@onready var resource_display  : Control         = $ResourceDisplay
 
 func _ready() -> void:
 	build_button.pressed.connect(_on_build_button_pressed)

@@ -1,0 +1,139 @@
+[gd_scene load_steps=9 format=3 uid="uid://cjlmuqwcu1jlp"]
+
+[ext_resource type="Script" uid="uid://c78mapaowq8ug" path="res://scripts/resource_display.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://8iaiaw8shp6l" path="res://assets/UI Elements/UI Elements/Ribbons/SmallRibbons.png" id="2_ribbons"]
+[ext_resource type="Texture2D" uid="uid://bfpnu10q41c0j" path="res://assets/UI Elements/UI Elements/Icons/Icon_02.png" id="3_wood"]
+[ext_resource type="Texture2D" uid="uid://dq1ic0tl3o1wu" path="res://assets/UI Elements/UI Elements/Icons/Icon_03.png" id="4_gold"]
+[ext_resource type="Texture2D" uid="uid://b14k0s0yqu2jo" path="res://assets/UI Elements/UI Elements/Icons/Icon_04.png" id="5_meat"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_left"]
+atlas = ExtResource("2_ribbons")
+region = Rect2(1.57746, 580, 62.5418, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_centre"]
+atlas = ExtResource("2_ribbons")
+region = Rect2(128.285, 580, 63.7146, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_right"]
+atlas = ExtResource("2_ribbons")
+region = Rect2(256, 580, 62.0038, 54)
+
+[node name="ResourceDisplay" type="Control"]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 8.0
+offset_right = 220.0
+offset_bottom = 62.0
+script = ExtResource("1_script")
+
+[node name="Ribbon" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 130.0
+offset_top = 2.0
+offset_right = -10.0
+offset_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="LeftCap" type="TextureRect" parent="Ribbon"]
+custom_minimum_size = Vector2(56, 54)
+layout_mode = 2
+texture = SubResource("AtlasTexture_left")
+stretch_mode = 5
+
+[node name="Centre" type="TextureRect" parent="Ribbon"]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = SubResource("AtlasTexture_centre")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="Centre2" type="TextureRect" parent="Ribbon"]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = SubResource("AtlasTexture_centre")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="Centre3" type="TextureRect" parent="Ribbon"]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = SubResource("AtlasTexture_centre")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="RightCap" type="TextureRect" parent="Ribbon"]
+custom_minimum_size = Vector2(56, 54)
+layout_mode = 2
+texture = SubResource("AtlasTexture_right")
+stretch_mode = 5
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 56.0
+offset_right = 56.0
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="GoldGroup" type="HBoxContainer" parent="HBox"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 4
+
+[node name="GoldIcon" type="TextureRect" parent="HBox/GoldGroup"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("4_gold")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GoldLabel" type="Label" parent="HBox/GoldGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "0"
+
+[node name="WoodGroup" type="HBoxContainer" parent="HBox"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 4
+
+[node name="WoodIcon" type="TextureRect" parent="HBox/WoodGroup"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("3_wood")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WoodLabel" type="Label" parent="HBox/WoodGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "0"
+
+[node name="MeatGroup" type="HBoxContainer" parent="HBox"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 4
+
+[node name="MeatIcon" type="TextureRect" parent="HBox/MeatGroup"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("5_meat")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatLabel" type="Label" parent="HBox/MeatGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "0"
