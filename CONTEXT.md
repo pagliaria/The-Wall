@@ -53,9 +53,11 @@ Main (Node2D)                      main.gd
 ├── UnitSelection (Node2D)         unit_selection.gd
 │   └── Overlay (CanvasLayer)      always-on-top canvas for drag box
 │       └── Draw (Node2D)          selection_overlay.gd — draws the drag rect
-└── BuildingPlacer (Node2D)        building_placer.gd
-    ├── GhostSprite (Sprite2D)     ghost preview, hidden when not placing
-    └── ShapeCast2D                overlap check for placement validity
+├── BuildingPlacer (Node2D)        building_placer.gd
+│   ├── GhostSprite (Sprite2D)     ghost preview, hidden when not placing
+│   └── ShapeCast2D                overlap check for placement validity
+└── NavRegion (NavigationRegion2D) hand-drawn polygon covering town zone;
+                                   excludes wall strip and water rows
 ```
 
 ---
@@ -150,7 +152,8 @@ Built manually in the editor under the `wall` Node2D. **Do not remove or modify 
 Pawn (CharacterBody2D)    pawn.gd
 ├── Sprite (AnimatedSprite2D)   sprite frames defined in scene
 ├── Collision (CollisionShape2D) CircleShape2D radius=18, offset (0,10)
-└── SelectionCircle (Node2D)    selection_circle.gd, z=2, hidden by default
+├── SelectionCircle (Node2D)    selection_circle.gd, z=2, hidden by default
+└── NavAgent (NavigationAgent2D) path_desired_distance=8, target_desired_distance=16
 ```
 
 ### Animations (all 192×192px frames, 8 fps, Black Units asset set)
@@ -193,7 +196,9 @@ Pawn (CharacterBody2D)    pawn.gd
 - **`set_selected(bool)`** — shows/hides `SelectionCircle`, emits `selected_changed`
 - **`take_damage(amount)`** / **`die()`** — emits `died` signal, calls `queue_free()`
 - **`request_push(direction, distance, requester_pos)`** — pushes pawn sideways when another unit collides during `MOVE_TO`
+- Movement uses `NavigationAgent2D` for pathfinding — `_enter_state()` sets `nav_agent.target_position`; `_do_nav_move()` follows `get_next_path_position()` each frame
 - Arrival for gather/return is **collision-based** (`move_and_collide` result checked against target body) — no magic radius constants
+- `_ready()` defers first `_enter_state` call so nav mesh is ready before first path request
 - Speed: 50 px/sec. Wander radius: 200px.
 
 ### Selection Circle (`selection_circle.gd`)
@@ -306,6 +311,15 @@ All resources share one `placed: Array[Vector2i]` so nothing overlaps across typ
 | `ARRIVAL_RADIUS` (pawn) | pawn.gd | 12 px |
 | `MAX_PAWNS` (castle) | castle.gd | 3 |
 | `SPAWN_INTERVAL` (castle) | castle.gd | 5.0 sec |
+
+---
+
+## Navigation
+- `NavRegion` (NavigationRegion2D) in main scene covers the town zone with a hand-drawn polygon excluding the wall strip and water rows
+- After each building is placed, `main.gd._rebake_nav()` re-parses all `StaticBody2D` colliders in the scene tree and rebakes the nav mesh asynchronously using `NavigationServer2D.parse_source_geometry_data` + `bake_from_source_geometry_data`
+- `agent_radius = 32.0` on the polygon gives pawns a clearance buffer around buildings
+- Bake completion callback calls `NavigationServer2D.region_set_navigation_polygon()` to push the updated mesh to the live server
+- `placed_building.gd` exposes `get_nav_footprint() -> Rect2` (reads its own CollisionShape2D) — currently unused but available
 
 ---
 
