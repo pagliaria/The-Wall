@@ -14,6 +14,7 @@ signal resource_delivered(resource_type: String, amount: int)
 
 # -- Selection ----------------------------------------------------------------
 var is_selected : bool = false
+var has_moved : bool = false
 
 func set_selected(value: bool) -> void:
 	if is_selected == value:
@@ -115,7 +116,7 @@ func _physics_process(delta: float) -> void:
 		State.MOVE_TO:
 			_do_move_to_position(delta, _move_target, State.IDLE)
 		State.IDLE:
-			if _state_timer >= _state_dur:
+			if !has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.GATHER:
 			_do_move_to_body(delta, _resource_body, _resource_node.world_position, State.EXTRACTING)
@@ -182,6 +183,7 @@ func _enter_state(new_state: State) -> void:
 
 # Used for plain ground move orders — arrives by distance only.
 func _do_move_to_position(delta: float, target: Vector2, on_arrive: State) -> void:
+	has_moved = true
 	if position.distance_to(target) <= ARRIVAL_RADIUS:
 		_enter_state(on_arrive)
 		return
