@@ -43,7 +43,7 @@ var _meat_multiplier = 1
 
 func _ready() -> void:
 	_fit_camera_to_screen()
-	resource_layer.spawn($Terrain/GroundLayer)
+	resource_layer.spawn()
 
 	building_placer.ground_layer = $Terrain/GroundLayer
 

@@ -301,7 +301,7 @@ target_position = Vector2(0, 0)
 navigation_polygon = SubResource("NavigationPolygon_muem4")
 
 [node name="Timer" type="Timer" parent="."]
-wait_time = 5.0
+wait_time = 180.0
 autostart = true
 
 [connection signal="timeout" from="Timer" to="ResourceLayer" method="_on_timer_timeout"]

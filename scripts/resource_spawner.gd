@@ -59,33 +59,43 @@ const SHEEP_EXTRACT_TIME := 5.0 # seconds per chunk
 # Group name used by unit_selection.gd to find resource hover areas
 const RESOURCE_HOVER_GROUP := "resource_hover"
 
-var node_tracker : Array[Node] = []
+var tree_nodes : Array[Node] = []
+var sheep_nodes : Array[Node] = []
+var gold_nodes : Array[Node] = []
 
 func _ready() -> void:
 	pass
 
-func spawn(ground_layer: TileMapLayer) -> void:
+func add_all_nodes() -> Array[Vector2i]:
 	var placed: Array[Vector2i] = []
+	for node in gold_nodes:
+		placed.append(Vector2i(node.get_meta("col"), node.get_meta("row")))
+	for node in tree_nodes:
+		placed.append(Vector2i(node.get_meta("col"), node.get_meta("row")))
+	for node in sheep_nodes:
+		placed.append(Vector2i(node.get_meta("col"), node.get_meta("row")))
+	return placed
+
+func spawn() -> void:
+	var placed: Array[Vector2i] = add_all_nodes()
 	var rng := RandomNumberGenerator.new()
 
-	rng.seed = 99
-	_spawn_gold(ground_layer, rng, placed)
+	#rng.seed = 99
+	_spawn_gold(rng, placed)
 
-	rng.seed = 80
-	_spawn_trees(ground_layer, rng, placed)
+	#rng.seed = 80
+	_spawn_trees(rng, placed)
 
-	rng.seed = 55
-	_spawn_sheep(ground_layer, rng, placed)
+	#rng.seed = 55
+	_spawn_sheep(rng, placed)
 
-func _spawn_gold(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
+func _spawn_gold(rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var attempts := 0
-	while placed.size() < GOLD_COUNT and attempts < 500:
+	while gold_nodes.size() < GOLD_COUNT and attempts < 500:
 		attempts += 1
 		var col := rng.randi_range(COL_TOWN_START + 1, MAP_COLS - 2)
 		var row := rng.randi_range(WATER_ROWS + 1, MAP_ROWS - 2)
 
-		if ground_layer.get_cell_source_id(Vector2i(col, row)) == -1:
-			continue
 		if _too_close(placed, col, row, GOLD_SPACING):
 			continue
 			
@@ -97,6 +107,8 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 	node.name = "GoldStone_%d_%d" % [col, row]
 	node.position = _tile_center(col, row)
 	node.z_index = Z_GOLD
+	node.set_meta("col", col)
+	node.set_meta("row", row)
 
 	var base := Sprite2D.new()
 	base.texture = GOLD_BASE
@@ -128,23 +140,19 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 	_add_resource_node(node, "gold", GOLD_AMOUNT, GOLD_EXTRACT_TIME)
 	node.get_node("ResourceNode").collision_body = gold_collision
 	
-	node_tracker.append(node)
+	gold_nodes.append(node)
 
-func _spawn_trees(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
-	var tree_placed := 0
+func _spawn_trees(rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var attempts := 0
-	while tree_placed < TREE_COUNT and attempts < 500:
+	while tree_nodes.size() < TREE_COUNT and attempts < 500:
 		attempts += 1
 		var col := rng.randi_range(COL_TOWN_START + 1, MAP_COLS - 2)
 		var row := rng.randi_range(WATER_ROWS + 1, MAP_ROWS - 2)
 
-		if ground_layer.get_cell_source_id(Vector2i(col, row)) == -1:
-			continue
 		if _too_close(placed, col, row, TREE_SPACING):
 			continue
 
 		placed.append(Vector2i(col, row))
-		tree_placed += 1
 		_spawn_tree(col, row, rng)
 
 func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
@@ -159,6 +167,8 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	sprite.animation = "anim"
 	sprite.frame = rng.randi_range(0, TREE_FRAMES - 1)
 	sprite.play("anim")
+	sprite.set_meta("col", col)
+	sprite.set_meta("row", row)
 	add_child(sprite)
 
 	var stump_pos := _tile_center(col, row) + Vector2(0.0, 100.0)
@@ -180,23 +190,20 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	var rn := sprite.get_node("ResourceNode")
 	rn.collision_body  = stump
 	rn.world_position  = stump_pos   # navigate to the stump, not the canopy
-	node_tracker.append(sprite)
+	
+	tree_nodes.append(sprite)
 
-func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
-	var sheep_placed := 0
+func _spawn_sheep(rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var attempts := 0
-	while sheep_placed < SHEEP_COUNT and attempts < 500:
+	while sheep_nodes.size() < SHEEP_COUNT and attempts < 500:
 		attempts += 1
 		var col := rng.randi_range(COL_TOWN_START + 1, MAP_COLS - 2)
 		var row := rng.randi_range(WATER_ROWS + 1, MAP_ROWS - 2)
 
-		if ground_layer.get_cell_source_id(Vector2i(col, row)) == -1:
-			continue
 		if _too_close(placed, col, row, SHEEP_SPACING):
 			continue
 
 		placed.append(Vector2i(col, row))
-		sheep_placed += 1
 		_spawn_one_sheep(col, row)
 
 func _spawn_one_sheep(col: int, row: int) -> void:
@@ -204,6 +211,8 @@ func _spawn_one_sheep(col: int, row: int) -> void:
 	sheep.name = "Sheep_%d_%d" % [col, row]
 	sheep.position = _tile_center(col, row)
 	sheep.z_index = Z_UNITS
+	sheep.set_meta("col", col)
+	sheep.set_meta("row", row)
 
 	add_child(sheep)
 
@@ -212,7 +221,7 @@ func _spawn_one_sheep(col: int, row: int) -> void:
 	_add_resource_node(sheep, "meat", SHEEP_AMOUNT, SHEEP_EXTRACT_TIME)
 	sheep.get_node("ResourceNode").collision_body = sheep
 	
-	node_tracker.append(sheep)
+	sheep_nodes.append(sheep)
 
 func _add_frames_to_anim(sf: SpriteFrames, anim: String, texture: Texture2D, frame_count: int) -> void:
 	var frame_w: int = texture.get_width() / frame_count
@@ -287,9 +296,12 @@ func _add_resource_node(parent: Node2D, type: String, amt: int, extract_sec: flo
 	# own collision body. We tag the body on the ResourceNode after spawn.
 	# The spawner sets this immediately after calling _add_resource_node.
 
-
+func update_nodes():
+	sheep_nodes = sheep_nodes.filter(func(node): return is_instance_valid(node))
+	gold_nodes = gold_nodes.filter(func(node): return is_instance_valid(node))
+	tree_nodes = tree_nodes.filter(func(node): return is_instance_valid(node))
+	spawn()
+		
 func _on_timer_timeout() -> void:
 	print("Checking resources...")
-	print("Total Resources: " + str(node_tracker.size()))
-	for node in node_tracker:
-		print(str(node))
+	update_nodes()
