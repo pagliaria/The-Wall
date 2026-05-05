@@ -39,6 +39,12 @@ func unregister_gatherer(pawn: Node) -> void:
 # Called by a pawn when it finishes one extraction cycle.
 # Returns the resource_type string if successful, "" if depleted.
 func extract_one(pawn: Node) -> String:
+	# sheep death
+	var parent := get_parent()
+	if is_instance_valid(parent):
+		if parent.has_method("die"):
+			parent.die()
+		
 	if amount <= 0 or pawn not in _gatherers:
 		return ""
 	amount -= 1

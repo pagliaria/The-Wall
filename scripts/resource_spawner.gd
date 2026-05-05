@@ -200,30 +200,7 @@ func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	sheep.position = _tile_center(col, row)
 	sheep.z_index = Z_UNITS
 
-	var sf := SpriteFrames.new()
-	sf.remove_animation("default")
-
-	sf.add_animation("idle")
-	sf.set_animation_speed("idle", SHEEP_FPS)
-	sf.set_animation_loop("idle", true)
-	_add_frames_to_anim(sf, "idle", SHEEP_IDLE, SHEEP_IDLE_FRAMES)
-
-	sf.add_animation("graze")
-	sf.set_animation_speed("graze", SHEEP_FPS)
-	sf.set_animation_loop("graze", true)
-	_add_frames_to_anim(sf, "graze", SHEEP_GRAZE, SHEEP_GRAZE_FRAMES)
-
-	sf.add_animation("move")
-	sf.set_animation_speed("move", SHEEP_FPS)
-	sf.set_animation_loop("move", true)
-	_add_frames_to_anim(sf, "move", SHEEP_MOVE, SHEEP_MOVE_FRAMES)
-
 	add_child(sheep)
-
-	var sprite := sheep.get_node("Sprite") as AnimatedSprite2D
-	sprite.sprite_frames = sf
-	sprite.frame = rng.randi_range(0, SHEEP_IDLE_FRAMES - 1)
-	sprite.flip_h = rng.randf() > 0.5
 
 	_add_placement_blocker(sheep, Vector2.ZERO, SHEEP_PLACE_RADIUS)
 	_add_hover_area(sheep, Vector2.ZERO, SHEEP_HOVER_RADIUS)

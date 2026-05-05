@@ -30,7 +30,7 @@ const MOVE_TIME_MAX  = 2.5
 
 const MOVE_SPEED     = 25.0   # px/sec
 
-enum State { IDLE, GRAZE, MOVE }
+enum State { IDLE, GRAZE, MOVE , DEAD}
 
 var _state       : State   = State.IDLE
 var _state_timer : float   = 0.0
@@ -44,7 +44,12 @@ func _ready() -> void:
 	_rng.randomize()
 	#_enter_state(_pick_random_state())
 
+func die():
+	_enter_state(State.DEAD)
+
 func _physics_process(delta: float) -> void:
+	if _state == State.DEAD:
+		return
 	_state_timer += delta
 	if _state == State.MOVE:
 		_do_move(delta)
@@ -58,6 +63,8 @@ func _pick_random_state() -> State:
 	else:         return State.MOVE
 
 func _enter_state(new_state: State) -> void:
+	if _state == State.DEAD:
+		return
 	_state       = new_state
 	_state_timer = 0.0
 	match _state:
@@ -74,6 +81,9 @@ func _enter_state(new_state: State) -> void:
 			_move_dir    = Vector2(cos(angle) * sign_x, sin(angle)).normalized()
 			_sprite.flip_h = _move_dir.x < 0
 			_sprite.play("move")
+		State.DEAD:
+			_sprite.scale = Vector2(.3,.3)
+			_sprite.play("death")
 
 func _do_move(delta: float) -> void:
 	# ─ Map boundary bounce ───────────────────────────────────────────────────
