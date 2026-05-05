@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://odui54ldsa82"]
+[gd_scene load_steps=35 format=3 uid="uid://odui54ldsa82"]
 
 [ext_resource type="Script" uid="uid://cbuppeogdtf4m" path="res://scripts/sheep.gd" id="1_sheep"]
 [ext_resource type="Texture2D" uid="uid://cjn7qkwcej3yl" path="res://assets/Terrain/Resources/Meat/Sheep/sheep_death.png" id="2_6qn06"]
@@ -17,10 +17,6 @@ region = Rect2(0, 143, 244, 143)
 [sub_resource type="AtlasTexture" id="AtlasTexture_ujskf"]
 atlas = ExtResource("2_6qn06")
 region = Rect2(0, 286, 244, 143)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ycxms"]
-atlas = ExtResource("2_6qn06")
-region = Rect2(0, 429, 244, 143)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_wkjkd"]
 atlas = ExtResource("2_6qn06")
@@ -131,9 +127,6 @@ animations = [{
 "texture": SubResource("AtlasTexture_ujskf")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_ycxms")
-}, {
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_wkjkd")
 }, {
 "duration": 1.0,
@@ -234,7 +227,7 @@ script = ExtResource("1_sheep")
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_s32ju")
 animation = &"death"
-frame = 5
+frame = 4
 frame_progress = 1.0
 
 [node name="Collision" type="CollisionShape2D" parent="."]
