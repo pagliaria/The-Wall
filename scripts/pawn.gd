@@ -37,7 +37,7 @@ const IDLE_TIME_MAX = 3.5
 const MOVE_TIME_MIN = 0.8
 const MOVE_TIME_MAX = 2.0
 const MOVE_SPEED    = 50.0
-const PUSH_DISTANCE = 50.0
+const PUSH_DISTANCE = 25.0
 const PUSH_SPEED    = 100.0
 const WANDER_RADIUS = 200.0
 const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
@@ -390,3 +390,6 @@ func die() -> void:
 		_resource_node.unregister_gatherer(self)
 	emit_signal("died")
 	queue_free()
+
+func _on_timer_timeout() -> void:
+	print("Checking resources...")

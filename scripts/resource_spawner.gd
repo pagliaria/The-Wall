@@ -59,6 +59,8 @@ const SHEEP_EXTRACT_TIME := 5.0 # seconds per chunk
 # Group name used by unit_selection.gd to find resource hover areas
 const RESOURCE_HOVER_GROUP := "resource_hover"
 
+var node_tracker : Array[Node] = []
+
 func _ready() -> void:
 	pass
 
@@ -86,7 +88,7 @@ func _spawn_gold(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed:
 			continue
 		if _too_close(placed, col, row, GOLD_SPACING):
 			continue
-
+			
 		placed.append(Vector2i(col, row))
 		_spawn_gold_stone(col, row)
 
@@ -125,6 +127,8 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 	_add_hover_area(node, GOLD_HOVER_OFFSET, GOLD_HOVER_RADIUS)
 	_add_resource_node(node, "gold", GOLD_AMOUNT, GOLD_EXTRACT_TIME)
 	node.get_node("ResourceNode").collision_body = gold_collision
+	
+	node_tracker.append(node)
 
 func _spawn_trees(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var tree_placed := 0
@@ -176,6 +180,7 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	var rn := sprite.get_node("ResourceNode")
 	rn.collision_body  = stump
 	rn.world_position  = stump_pos   # navigate to the stump, not the canopy
+	node_tracker.append(sprite)
 
 func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var sheep_placed := 0
@@ -206,6 +211,8 @@ func _spawn_one_sheep(col: int, row: int) -> void:
 	_add_hover_area(sheep, Vector2.ZERO, SHEEP_HOVER_RADIUS)
 	_add_resource_node(sheep, "meat", SHEEP_AMOUNT, SHEEP_EXTRACT_TIME)
 	sheep.get_node("ResourceNode").collision_body = sheep
+	
+	node_tracker.append(sheep)
 
 func _add_frames_to_anim(sf: SpriteFrames, anim: String, texture: Texture2D, frame_count: int) -> void:
 	var frame_w: int = texture.get_width() / frame_count
@@ -279,3 +286,10 @@ func _add_resource_node(parent: Node2D, type: String, amt: int, extract_sec: flo
 	# the stump is also a sibling. Sheep are CharacterBody2D and act as their
 	# own collision body. We tag the body on the ResourceNode after spawn.
 	# The spawner sets this immediately after calling _add_resource_node.
+
+
+func _on_timer_timeout() -> void:
+	print("Checking resources...")
+	print("Total Resources: " + str(node_tracker.size()))
+	for node in node_tracker:
+		print(str(node))
