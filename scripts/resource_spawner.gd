@@ -124,6 +124,7 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 	_add_placement_blocker(node, GOLD_PLACE_OFFSET, GOLD_PLACE_RADIUS)
 	_add_hover_area(node, GOLD_HOVER_OFFSET, GOLD_HOVER_RADIUS)
 	_add_resource_node(node, "gold", GOLD_AMOUNT, GOLD_EXTRACT_TIME)
+	node.get_node("ResourceNode").collision_body = gold_collision
 
 func _spawn_trees(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var tree_placed := 0
@@ -170,6 +171,7 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	_add_placement_blocker(sprite, TREE_PLACE_OFFSET, TREE_PLACE_RADIUS)
 	_add_hover_area(sprite, TREE_HOVER_OFFSET, TREE_HOVER_RADIUS)
 	_add_resource_node(sprite, "wood", TREE_AMOUNT, TREE_EXTRACT_TIME)
+	sprite.get_node("ResourceNode").collision_body = stump
 
 func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var sheep_placed := 0
@@ -222,6 +224,7 @@ func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	_add_placement_blocker(sheep, Vector2.ZERO, SHEEP_PLACE_RADIUS)
 	_add_hover_area(sheep, Vector2.ZERO, SHEEP_HOVER_RADIUS)
 	_add_resource_node(sheep, "meat", SHEEP_AMOUNT, SHEEP_EXTRACT_TIME)
+	sheep.get_node("ResourceNode").collision_body = sheep
 
 func _add_frames_to_anim(sf: SpriteFrames, anim: String, texture: Texture2D, frame_count: int) -> void:
 	var frame_w: int = texture.get_width() / frame_count
@@ -286,8 +289,12 @@ func _add_resource_node(parent: Node2D, type: String, amt: int, extract_sec: flo
 	rn.name = "ResourceNode"
 	rn.set_script(load("res://scripts/resource_node.gd"))
 	parent.add_child(rn)
-	# Set after add_child so the node is in the tree
-	rn.resource_type   = type
-	rn.amount          = amt
-	rn.extract_time    = extract_sec
-	rn.world_position  = parent.global_position
+	rn.resource_type  = type
+	rn.amount         = amt
+	rn.extract_time   = extract_sec
+	rn.world_position = parent.global_position
+	# Store the collision body sibling so pawns can detect arrival by touch.
+	# For gold the StaticBody2D is a sibling added to the spawner; for trees
+	# the stump is also a sibling. Sheep are CharacterBody2D and act as their
+	# own collision body. We tag the body on the ResourceNode after spawn.
+	# The spawner sets this immediately after calling _add_resource_node.

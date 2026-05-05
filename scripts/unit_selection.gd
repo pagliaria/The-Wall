@@ -1,6 +1,6 @@
 extends Node2D
 
-# UnitSelection — handles single-click and drag-box selection of units.
+# UnitSelection -- handles single-click and drag-box selection of units.
 #
 # Attach to a Node2D in main.tscn.
 # Set `units_layer` from main.gd after _ready().
@@ -9,35 +9,32 @@ extends Node2D
 # -- Tuning -------------------------------------------------------------------
 const DRAG_THRESHOLD = 6.0   # px of mouse travel before it counts as a drag
 
-# -- Drag box visual ----------------------------------------------------------
-const BOX_FILL    = Color(0.3, 0.85, 1.0, 0.08)
-const BOX_BORDER  = Color(0.3, 0.85, 1.0, 0.70)
-const BOX_WIDTH   = 1.5
-
 # -- Cursors ------------------------------------------------------------------
 const CURSOR_DEFAULT := preload("res://assets/UI Elements/UI Elements/Cursors/Cursor_01.png")
 const CURSOR_GATHER  := preload("res://assets/UI Elements/UI Elements/Cursors/Cursor_02.png")
-const CURSOR_HOTSPOT := Vector2(20, 18)   # approximate centre of the cursor image
+const CURSOR_HOTSPOT := Vector2(20, 18)
 
 # -- State --------------------------------------------------------------------
-var disabled       : bool    = false
-var selected_units : Array   = []   # Array[Node] -- currently selected pawns
+var disabled       : bool  = false
+var selected_units : Array = []
 
-var _pressing      : bool    = false
-var _press_screen  : Vector2 = Vector2.ZERO   # screen coords where LMB went down
-var _drag_active   : bool    = false
-var _drag_end      : Vector2 = Vector2.ZERO   # current mouse screen pos while dragging
+var _pressing     : bool    = false
+var _press_screen : Vector2 = Vector2.ZERO
+var _drag_active  : bool    = false
+var _drag_end     : Vector2 = Vector2.ZERO
 
-var _gather_cursor_active : bool = false   # true while Cursor_02 is showing
+var _gather_cursor_active : bool = false
 
 # Injected by main.gd
-var units_layer    : Node2D  = null
-var camera         : Camera2D = null
+var units_layer : Node2D   = null
+var camera      : Camera2D = null
 
-# -- Input --------------------------------------------------------------------
+# -- Lifecycle ----------------------------------------------------------------
 
 func _ready() -> void:
 	Input.set_custom_mouse_cursor(CURSOR_DEFAULT, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
+
+# -- Input --------------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
 	if disabled:
@@ -53,18 +50,19 @@ func _input(event: InputEvent) -> void:
 
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			if selected_units.size() > 0:
-				_issue_move_order(event.position)
-			else:
-				_deselect_all()
+				var world_pos := _screen_to_world(event.position)
+				var resource  := _resource_at(world_pos)
+				if resource != null:
+					_issue_gather_order(resource, event.position)
+				else:
+					_issue_move_order(event.position)
 
 	elif event is InputEventMouseMotion:
 		if _pressing:
 			_drag_end = event.position
-			var travelled : float = event.position.distance_to(_press_screen)
-			if travelled >= DRAG_THRESHOLD:
+			if event.position.distance_to(_press_screen) >= DRAG_THRESHOLD:
 				_drag_active = true
 			_get_overlay().queue_redraw()
-
 		_update_cursor(event.position)
 
 func _on_lmb_down(screen_pos: Vector2) -> void:
@@ -77,7 +75,7 @@ func _on_lmb_up(screen_pos: Vector2, additive: bool) -> void:
 	if not _pressing:
 		return
 	_pressing = false
-	_get_overlay().queue_redraw()   # clear the box
+	_get_overlay().queue_redraw()
 
 	if _drag_active:
 		_drag_active = false
@@ -85,13 +83,38 @@ func _on_lmb_up(screen_pos: Vector2, additive: bool) -> void:
 	else:
 		_do_point_select(screen_pos, additive)
 
-# -- Cursor management --------------------------------------------------------
+# -- Orders -------------------------------------------------------------------
+
+func _issue_gather_order(resource_node: Node, screen_pos: Vector2) -> void:
+	for unit in selected_units:
+		if is_instance_valid(unit) and unit.has_method("gather_resource"):
+			unit.gather_resource(resource_node, resource_node.collision_body)
+	_get_overlay().show_ping(screen_pos)
+
+func _issue_move_order(screen_pos: Vector2) -> void:
+	var world_target := _screen_to_world(screen_pos)
+	var count        := selected_units.size()
+	const SPACING   := 32.0
+	const ROW_WIDTH := 4
+	for i in range(count):
+		var unit : Node = selected_units[i]
+		if not is_instance_valid(unit):
+			continue
+		var col    := i % ROW_WIDTH
+		var row    := i / ROW_WIDTH
+		var offset := Vector2(
+			(col - (min(count, ROW_WIDTH) - 1) * 0.5) * SPACING,
+			row * SPACING
+		)
+		unit.move_to(world_target + offset)
+	_get_overlay().show_ping(screen_pos)
+
+# -- Cursor -------------------------------------------------------------------
 
 func _update_cursor(screen_pos: Vector2) -> void:
 	if selected_units.size() == 0:
 		_reset_cursor()
 		return
-
 	var world_pos := _screen_to_world(screen_pos)
 	if _is_over_resource(world_pos):
 		if not _gather_cursor_active:
@@ -106,22 +129,31 @@ func _reset_cursor() -> void:
 		_gather_cursor_active = false
 
 func _is_over_resource(world_pos: Vector2) -> bool:
+	return _resource_at(world_pos) != null
+
+# Returns the ResourceNode (not the Area2D) if world_pos is inside any hover
+# area, or null if not.
+func _resource_at(world_pos: Vector2) -> Node:
 	for area in get_tree().get_nodes_in_group("resource_hover"):
 		if not area is Area2D:
 			continue
 		var circle := area.shape_owner_get_shape(0, 0) as CircleShape2D
 		if circle == null:
 			continue
-		if world_pos.distance_to(area.global_position) <= circle.radius:
-			return true
-	return false
+		if world_pos.distance_to(area.global_position) > circle.radius:
+			continue
+		# Walk up to the root Node2D of the resource and find its ResourceNode
+		var root := area.get_parent()
+		var rn   := root.get_node_or_null("ResourceNode")
+		if rn != null and not rn.is_depleted():
+			return rn
+	return null
 
-# -- Selection logic ----------------------------------------------------------
+# -- Selection ----------------------------------------------------------------
 
 func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 	var world_pos := _screen_to_world(screen_pos)
-	var hit       : Node = null
-
+	var hit : Node = null
 	if units_layer:
 		for unit in units_layer.get_children():
 			if not unit.has_method("set_selected"):
@@ -129,10 +161,8 @@ func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 			if unit.position.distance_to(world_pos) <= 32.0:
 				hit = unit
 				break
-
 	if not additive:
 		_deselect_all()
-
 	if hit:
 		if additive and hit.is_selected:
 			_deselect_unit(hit)
@@ -141,16 +171,13 @@ func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 
 func _do_box_select(additive: bool) -> void:
 	var rect_screen := Rect2(_press_screen, _drag_end - _press_screen).abs()
-
 	if not additive:
 		_deselect_all()
-
 	if units_layer:
 		for unit in units_layer.get_children():
 			if not unit.has_method("set_selected"):
 				continue
-			var unit_screen := _world_to_screen(unit.position)
-			if rect_screen.has_point(unit_screen):
+			if rect_screen.has_point(_world_to_screen(unit.position)):
 				_select_unit(unit)
 
 func _select_unit(unit: Node) -> void:
@@ -177,25 +204,6 @@ func _on_unit_died(unit: Node) -> void:
 	if selected_units.is_empty():
 		_reset_cursor()
 
-func _issue_move_order(screen_pos: Vector2) -> void:
-	var world_target := _screen_to_world(screen_pos)
-	var count        := selected_units.size()
-	const SPACING    := 32.0
-	const ROW_WIDTH  := 4
-	for i in range(count):
-		var unit : Node = selected_units[i]
-		if not is_instance_valid(unit):
-			continue
-		var col    := i % ROW_WIDTH
-		var row    := i / ROW_WIDTH
-		var offset := Vector2(
-			(col - (min(count, ROW_WIDTH) - 1) * 0.5) * SPACING,
-			row * SPACING
-		)
-		unit.move_to(world_target + offset)
-
-	_get_overlay().show_ping(screen_pos)
-
 # -- Coordinate helpers -------------------------------------------------------
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
@@ -204,7 +212,7 @@ func _screen_to_world(screen_pos: Vector2) -> Vector2:
 func _world_to_screen(world_pos: Vector2) -> Vector2:
 	return get_viewport().get_canvas_transform() * world_pos
 
-# -- Overlay accessor ---------------------------------------------------------
+# -- Overlay ------------------------------------------------------------------
 
 func _get_overlay() -> Node:
 	return get_node("Overlay/Draw")

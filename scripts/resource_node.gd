@@ -9,12 +9,11 @@ extends Node
 signal depleted(resource_node: Node)
 
 # -- Config (set by resource_spawner after attach) ----------------------------
-var resource_type : String = "gold"   # "gold" | "wood" | "meat"
-var amount        : int    = 0        # total chunks remaining
-var extract_time  : float  = 0.0      # seconds per chunk extraction
-
-# World position of this resource — callers use this for navigation.
+var resource_type  : String  = "gold"   # "gold" | "wood" | "meat"
+var amount         : int     = 0
+var extract_time   : float   = 0.0
 var world_position : Vector2 = Vector2.ZERO
+var collision_body : Node    = null   # the StaticBody2D/CharacterBody2D a pawn touches to arrive
 
 # Pawns currently assigned to extract from this node (capped to avoid crowding)
 const MAX_GATHERERS = 3

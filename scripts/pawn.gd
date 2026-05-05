@@ -10,8 +10,6 @@ extends CharacterBody2D
 
 signal died
 signal selected_changed(is_selected: bool)
-# Emitted when a pawn delivers resources to the castle.
-# main.gd listens to this to update the HUD.
 signal resource_delivered(resource_type: String, amount: int)
 
 # -- Selection ----------------------------------------------------------------
@@ -32,17 +30,17 @@ const MAP_ROWS       = 27
 const WATER_ROWS     = 3
 const COL_TOWN_START = 20
 
-const IDLE_TIME_MIN  = 1.0
-const IDLE_TIME_MAX  = 3.5
-const MOVE_TIME_MIN  = 0.8
-const MOVE_TIME_MAX  = 2.0
-const MOVE_SPEED     = 50.0
-const PUSH_DISTANCE  = 10.0
-const PUSH_SPEED     = 10.0
-const WANDER_RADIUS  = 200.0
-const ARRIVAL_RADIUS = 50.0
+const IDLE_TIME_MIN = 1.0
+const IDLE_TIME_MAX = 3.5
+const MOVE_TIME_MIN = 0.8
+const MOVE_TIME_MAX = 2.0
+const MOVE_SPEED    = 50.0
+const PUSH_DISTANCE = 10.0
+const PUSH_SPEED    = 10.0
+const WANDER_RADIUS = 200.0
+const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
 
-# -- Animation tool suffixes by resource type ---------------------------------
+# -- Animation mappings -------------------------------------------------------
 const ANIM_TOOL := {
 	"gold": "gold",
 	"wood": "axe",
@@ -74,14 +72,15 @@ var _push_target     : Vector2 = Vector2.ZERO
 var _is_being_pushed : bool    = false
 
 # -- Gathering ----------------------------------------------------------------
-# Set by gather_resource(); cleared when resource is depleted or task cancelled.
-var _resource_node    : Node    = null   # the ResourceNode being gathered
-var _extract_timer    : float   = 0.0   # counts up toward extract_time
-var _carrying         : String  = ""    # resource type currently held ("" = empty-handed)
-var _carrying_amount  : int     = 0     # always 1 for now; future: upgradeable
+var _resource_node   : Node   = null  # ResourceNode script instance
+var _resource_body   : Node   = null  # the StaticBody2D the pawn will physically touch
+var _extract_timer   : float  = 0.0
+var _carrying        : String = ""
+var _carrying_amount : int    = 0
 
-# Injected by castle.gd after spawning so the pawn knows where to return.
+# Injected by castle.gd — the PlacedBuilding StaticBody2D node itself
 var home_position : Vector2 = Vector2.ZERO
+var home_node     : Node    = null   # the PlacedBuilding StaticBody2D
 
 # -- Node refs ----------------------------------------------------------------
 @onready var _sprite           : AnimatedSprite2D = $Sprite
@@ -109,16 +108,16 @@ func _physics_process(delta: float) -> void:
 			if _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE_TO:
-			_do_move_to_target(delta, _move_target, State.IDLE)
+			_do_move_to_position(delta, _move_target, State.IDLE)
 		State.IDLE:
 			if _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.GATHER:
-			_do_move_to_target(delta, _resource_node.world_position, State.EXTRACTING)
+			_do_move_to_body(delta, _resource_body, _resource_node.world_position, State.EXTRACTING)
 		State.EXTRACTING:
 			_do_extracting(delta)
 		State.RETURN:
-			_do_move_to_target(delta, home_position, State.IDLE)
+			_do_move_to_body(delta, home_node, home_position, State.IDLE)
 
 # =========================================================================== #
 #  State transitions
@@ -134,13 +133,8 @@ func _enter_state(new_state: State) -> void:
 	match _state:
 		State.IDLE:
 			_state_dur = _rng.randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
-			# If carrying something, play the appropriate idle anim
+			_sprite.play("idle_" + ANIM_TOOL[_carrying] if _carrying != "" else "idle")
 			if _carrying != "":
-				_sprite.play("idle_" + ANIM_TOOL[_carrying])
-			else:
-				_sprite.play("idle")
-			# If we just returned home, deliver the goods
-			if _carrying != "" and position.distance_to(home_position) < ARRIVAL_RADIUS * 3.0:
 				_deliver()
 
 		State.MOVE:
@@ -162,65 +156,91 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 
 		State.GATHER:
-			# Walk to the resource carrying nothing
 			_move_dir      = (_resource_node.world_position - position).normalized()
 			_sprite.flip_h = _move_dir.x < 0
 			_sprite.play("run")
 
 		State.EXTRACTING:
 			_extract_timer = 0.0
-			var interact_anim : String = ANIM_INTERACT.get(_resource_node.resource_type, "interact_axe")
-			_sprite.play(interact_anim)
+			_sprite.play(ANIM_INTERACT.get(_resource_node.resource_type, "interact_axe"))
 
 		State.RETURN:
-			# Walk back to castle carrying the resource
 			_move_dir      = (home_position - position).normalized()
 			_sprite.flip_h = _move_dir.x < 0
-			var tool_suffix : String = ANIM_TOOL.get(_carrying, "")
-			_sprite.play("run_" + tool_suffix if tool_suffix != "" else "run")
+			var suffix : String = ANIM_TOOL.get(_carrying, "")
+			_sprite.play("run_" + suffix if suffix != "" else "run")
 
 # =========================================================================== #
-#  Per-state logic
+#  Per-state movement
 # =========================================================================== #
 
-func _do_move_to_target(delta: float, target: Vector2, on_arrive: State) -> void:
+# Used for plain ground move orders — arrives by distance only.
+func _do_move_to_position(delta: float, target: Vector2, on_arrive: State) -> void:
 	if position.distance_to(target) <= ARRIVAL_RADIUS:
 		_enter_state(on_arrive)
 		return
+	_steer_toward(target, delta, on_arrive, null)
+
+# Used for gather and return — arrives by touching the target physics body.
+# Falls back to a generous distance check in case collision is missed.
+func _do_move_to_body(delta: float, target_body: Node, target_pos: Vector2, on_arrive: State) -> void:
+	_steer_toward(target_pos, delta, on_arrive, target_body)
+
+func _steer_toward(target: Vector2, delta: float, on_arrive: State, arrive_on_body: Node) -> void:
 	_move_dir      = (target - position).normalized()
 	_sprite.flip_h = _move_dir.x < 0
 	var motion    := _move_dir * MOVE_SPEED * delta
 	var collision := move_and_collide(motion)
 	if collision:
 		var collider := collision.get_collider()
+		# Collision-based arrival: touching the exact target body means we're there
+		if arrive_on_body != null and _is_target(collider, arrive_on_body):
+			_enter_state(on_arrive)
+			return
+		# Pushable pawn — nudge it aside
 		if collider != null and collider != self and collider.has_method("request_push"):
 			collider.request_push(_move_dir, PUSH_DISTANCE, position)
 			move_and_collide(motion)
 		else:
+			# Slide around anything else (other buildings, terrain, etc.)
 			_move_dir = _move_dir.bounce(collision.get_normal()).normalized()
 			move_and_collide(_move_dir * MOVE_SPEED * delta)
 
+# Checks collider and its parent chain so children of the target body also match.
+func _is_target(collider: Node, target: Node) -> bool:
+	if collider == null or target == null:
+		return false
+	var node := collider
+	while node != null:
+		if node == target:
+			return true
+		node = node.get_parent()
+	return false
+
+# =========================================================================== #
+#  Extracting
+# =========================================================================== #
+
 func _do_extracting(delta: float) -> void:
-	# Sanity: if resource was freed under us, abort
 	if not is_instance_valid(_resource_node) or _resource_node.is_depleted():
 		_abort_gather()
 		return
-
 	_extract_timer += delta
 	if _extract_timer < _resource_node.extract_time:
 		return
-
-	# One chunk extracted
 	var got : String = _resource_node.extract_one(self)
 	if got == "":
-		# Someone else depleted it just now
 		_abort_gather()
 		return
-
 	_carrying        = got
 	_carrying_amount = 1
-	_resource_node.unregister_gatherer(self)
+	if _resource_node:
+		_resource_node.unregister_gatherer(self)
 	_enter_state(State.RETURN)
+
+# =========================================================================== #
+#  Wander movement
+# =========================================================================== #
 
 func _do_move(delta: float) -> void:
 	var min_x := float((COL_TOWN_START + 1) * TILE_SIZE)
@@ -251,33 +271,29 @@ func _deliver() -> void:
 	emit_signal("resource_delivered", _carrying, _carrying_amount)
 	_carrying        = ""
 	_carrying_amount = 0
-
-	# If the resource still has stock, go back for another round
+	# Loop back if resource still has stock
 	if is_instance_valid(_resource_node) and not _resource_node.is_depleted():
 		if _resource_node.register_gatherer(self):
 			_enter_state(State.GATHER)
 			return
-
-	# Resource gone or full — go idle and forget the task
 	_resource_node = null
+	_resource_body = null
 	_enter_state(State.IDLE)
 
 # =========================================================================== #
 #  Public API
 # =========================================================================== #
 
-# Called by unit_selection.gd when the player RMB-clicks a resource
-func gather_resource(resource_node: Node) -> void:
-	# Cancel any previous task cleanly
+func gather_resource(resource_node: Node, resource_body: Node) -> void:
 	if is_instance_valid(_resource_node):
 		_resource_node.unregister_gatherer(self)
 	_resource_node   = resource_node
+	_resource_body   = resource_body
 	_carrying        = ""
 	_carrying_amount = 0
 	if _resource_node.register_gatherer(self):
 		_enter_state(State.GATHER)
 
-# Called by ResourceNode when the resource runs out mid-gather
 func on_resource_depleted() -> void:
 	_abort_gather()
 
@@ -285,16 +301,16 @@ func _abort_gather() -> void:
 	if is_instance_valid(_resource_node):
 		_resource_node.unregister_gatherer(self)
 	_resource_node   = null
+	_resource_body   = null
 	_carrying        = ""
 	_carrying_amount = 0
 	_enter_state(State.IDLE)
 
-# Standard move order (used by unit_selection for plain RMB on ground)
 func move_to(target: Vector2) -> void:
-	# Cancel any gather task first
 	if is_instance_valid(_resource_node):
 		_resource_node.unregister_gatherer(self)
 	_resource_node = null
+	_resource_body = null
 	_move_target   = target
 	_enter_state(State.MOVE_TO)
 
