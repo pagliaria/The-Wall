@@ -106,3 +106,5 @@ func _do_move(delta: float) -> void:
 		_move_dir      = _move_dir.bounce(collision.get_normal()).normalized()
 		_sprite.flip_h = _move_dir.x < 0
 		move_and_collide(_move_dir * MOVE_SPEED * delta)
+		
+	get_node("ResourceNode").world_position = global_position
