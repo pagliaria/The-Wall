@@ -32,14 +32,17 @@ var _gold_multiplier = 10
 var _wood_multiplier = 10
 var _meat_multiplier = 1
 
-@onready var camera          : Camera2D    = $Camera2D
-@onready var terrain         : Node2D      = $Terrain
-@onready var resource_layer  : Node2D      = $ResourceLayer
-@onready var hud             : CanvasLayer = $HUD
-@onready var building_placer : Node2D      = $BuildingPlacer
-@onready var buildings_layer : Node2D      = $BuildingsLayer
-@onready var units_layer     : Node2D      = $UnitsLayer
-@onready var unit_selection  : Node2D      = $UnitSelection
+@onready var camera          : Camera2D             = $Camera2D
+@onready var terrain         : Node2D               = $Terrain
+@onready var resource_layer  : Node2D               = $ResourceLayer
+@onready var hud             : CanvasLayer           = $HUD
+@onready var building_placer : Node2D               = $BuildingPlacer
+@onready var buildings_layer : Node2D               = $BuildingsLayer
+@onready var units_layer     : Node2D               = $UnitsLayer
+@onready var unit_selection  : Node2D               = $UnitSelection
+@onready var nav_region      : NavigationRegion2D   = $NavRegion
+
+# Footprint rects no longer needed — nav bake reads scene colliders directly.
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -82,6 +85,27 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 		var ctrl : Node = building.get_controller()
 		if ctrl != null and ctrl.has_signal("pawn_delivered_resource"):
 			ctrl.connect("pawn_delivered_resource", _on_resource_delivered)
+
+	# Rebake nav mesh so units path around the new building.
+	_rebake_nav()
+
+func _rebake_nav() -> void:
+	var poly := nav_region.navigation_polygon
+	if poly == null:
+		return
+	# Use the modern parse + bake API. We tell it to parse static body colliders
+	# from the scene tree (which includes all placed buildings), then bake.
+	poly.parsed_geometry_type = NavigationPolygon.PARSED_GEOMETRY_STATIC_COLLIDERS
+	poly.source_geometry_mode = NavigationPolygon.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
+	poly.agent_radius = 32.0
+	var source_geometry := NavigationMeshSourceGeometryData2D.new()
+	NavigationServer2D.parse_source_geometry_data(poly, source_geometry, self)
+	NavigationServer2D.bake_from_source_geometry_data(poly, source_geometry, _on_nav_bake_complete)
+
+func _on_nav_bake_complete() -> void:
+	NavigationServer2D.region_set_navigation_polygon(
+		nav_region.get_region_rid(), nav_region.navigation_polygon
+	)
 
 func _on_building_clicked(_building: Node) -> void:
 	pass

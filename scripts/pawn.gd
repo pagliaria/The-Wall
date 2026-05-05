@@ -42,7 +42,7 @@ const PUSH_SPEED    = 100.0
 const WANDER_RADIUS = 200.0
 const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
 
-const STUCK_TIMEOUT = 5.0
+const STUCK_TIMEOUT = 10.0
 # Wander bounds (world space) — nav mesh keeps us inside, but we also
 # clamp the random target so we never pick a point in water or enemy wilds.
 const WANDER_MIN_X := float((COL_TOWN_START + 1) * TILE_SIZE)
@@ -128,7 +128,9 @@ func _physics_process(delta: float) -> void:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE_TO:
 			# stuck....go into idle state
+			print(_previous_pos == position)
 			if _state_timer >= _state_dur and _previous_pos == position:
+				print("STUCK")
 				_enter_state(State.IDLE)
 			_do_nav_move(delta)
 			# Final arrival: close enough to the click target
@@ -232,7 +234,7 @@ func _do_nav_move(delta: float) -> void:
 			move_and_collide(_move_dir * MOVE_SPEED * delta)
 			
 	# save off position so we can see if we are stuck
-	_previous_pos = position
+	_previous_pos = Vector2(position)
 
 # Nav-steered movement toward a physics body. Uses nav for steering, but
 # treats an actual collision with the target body as the arrival signal.

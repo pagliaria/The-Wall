@@ -82,6 +82,15 @@ func _on_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: in
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		emit_signal("building_clicked", self)
 
+func get_nav_footprint() -> Rect2:
+	# Returns the world-space rect used to carve the nav mesh for this building.
+	# Matches the collision shape size exactly.
+	var col := get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if col == null or col.shape == null:
+		return Rect2(position, Vector2.ZERO)
+	var half := (col.shape as RectangleShape2D).size * 0.5
+	return Rect2(position - half, (col.shape as RectangleShape2D).size)
+
 func get_controller() -> Node:
 	# Returns the building-specific controller child, if any.
 	for child in get_children():
