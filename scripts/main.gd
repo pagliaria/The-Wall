@@ -28,6 +28,10 @@ var _gold : int = 100
 var _wood : int = 50
 var _meat : int = 25
 
+var _gold_multiplier = 10
+var _wood_multiplier = 10
+var _meat_multiplier = 1
+
 @onready var camera          : Camera2D    = $Camera2D
 @onready var terrain         : Node2D      = $Terrain
 @onready var resource_layer  : Node2D      = $ResourceLayer
@@ -86,9 +90,9 @@ func _on_building_clicked(_building: Node) -> void:
 
 func _on_resource_delivered(resource_type: String, amount: int) -> void:
 	match resource_type:
-		"gold": _gold += amount
-		"wood": _wood += amount
-		"meat": _meat += amount
+		"gold": _gold += amount * _gold_multiplier
+		"wood": _wood += amount * _wood_multiplier
+		"meat": _meat += amount * _meat_multiplier
 	hud.resource_display.set_resources(_gold, _wood, _meat)
 
 # -- Camera -------------------------------------------------------------------
