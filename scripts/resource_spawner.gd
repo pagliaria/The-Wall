@@ -23,6 +23,8 @@ const GOLD_PLACE_RADIUS := 34.0
 const GOLD_PLACE_OFFSET := Vector2(0.0, -30.0)
 const GOLD_HOVER_RADIUS := 30.0
 const GOLD_HOVER_OFFSET := Vector2(0.0, -15.0)
+const GOLD_AMOUNT := 8         # chunks per gold stone
+const GOLD_EXTRACT_TIME := 3.0 # seconds per chunk
 
 const TREE_TEXTURES := [
 	preload("res://assets/Terrain/Resources/Wood/Trees/Tree1.png"),
@@ -36,6 +38,8 @@ const TREE_PLACE_RADIUS := 56.0
 const TREE_PLACE_OFFSET := Vector2(0.0, 0.0)
 const TREE_HOVER_RADIUS := 36.0
 const TREE_HOVER_OFFSET := Vector2(0.0, 40.0)   # trunk area
+const TREE_AMOUNT := 5          # chunks per tree
+const TREE_EXTRACT_TIME := 4.0  # seconds per chunk
 
 const SHEEP_SCENE = preload("res://scenes/sheep.tscn")
 const SHEEP_IDLE = preload("res://assets/Terrain/Resources/Meat/Sheep/Sheep_Idle.png")
@@ -49,6 +53,8 @@ const SHEEP_COUNT := 5
 const SHEEP_SPACING := 2
 const SHEEP_PLACE_RADIUS := 26.0
 const SHEEP_HOVER_RADIUS := 28.0
+const SHEEP_AMOUNT := 3         # chunks per sheep
+const SHEEP_EXTRACT_TIME := 5.0 # seconds per chunk
 
 # Group name used by unit_selection.gd to find resource hover areas
 const RESOURCE_HOVER_GROUP := "resource_hover"
@@ -117,6 +123,7 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 
 	_add_placement_blocker(node, GOLD_PLACE_OFFSET, GOLD_PLACE_RADIUS)
 	_add_hover_area(node, GOLD_HOVER_OFFSET, GOLD_HOVER_RADIUS)
+	_add_resource_node(node, "gold", GOLD_AMOUNT, GOLD_EXTRACT_TIME)
 
 func _spawn_trees(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var tree_placed := 0
@@ -162,6 +169,7 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 
 	_add_placement_blocker(sprite, TREE_PLACE_OFFSET, TREE_PLACE_RADIUS)
 	_add_hover_area(sprite, TREE_HOVER_OFFSET, TREE_HOVER_RADIUS)
+	_add_resource_node(sprite, "wood", TREE_AMOUNT, TREE_EXTRACT_TIME)
 
 func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var sheep_placed := 0
@@ -213,6 +221,7 @@ func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
 
 	_add_placement_blocker(sheep, Vector2.ZERO, SHEEP_PLACE_RADIUS)
 	_add_hover_area(sheep, Vector2.ZERO, SHEEP_HOVER_RADIUS)
+	_add_resource_node(sheep, "meat", SHEEP_AMOUNT, SHEEP_EXTRACT_TIME)
 
 func _add_frames_to_anim(sf: SpriteFrames, anim: String, texture: Texture2D, frame_count: int) -> void:
 	var frame_w: int = texture.get_width() / frame_count
@@ -258,12 +267,11 @@ func _add_hover_area(parent: Node2D, local_pos: Vector2, radius: float) -> void:
 	var area := Area2D.new()
 	area.name = "ResourceHover"
 	area.position = local_pos
-	# Collision layer 0, mask 0 — purely for point queries, no physics interaction
 	area.collision_layer = 0
 	area.collision_mask  = 0
 	area.monitorable     = true
 	area.monitoring      = false
-	area.add_to_group(RESOURCE_HOVER_GROUP)
+	area.add_to_group("resource_hover")
 
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
@@ -272,3 +280,14 @@ func _add_hover_area(parent: Node2D, local_pos: Vector2, radius: float) -> void:
 	area.add_child(shape)
 
 	parent.add_child(area)
+
+func _add_resource_node(parent: Node2D, type: String, amt: int, extract_sec: float) -> void:
+	var rn := Node.new()
+	rn.name = "ResourceNode"
+	rn.set_script(load("res://scripts/resource_node.gd"))
+	parent.add_child(rn)
+	# Set after add_child so the node is in the tree
+	rn.resource_type   = type
+	rn.amount          = amt
+	rn.extract_time    = extract_sec
+	rn.world_position  = parent.global_position
