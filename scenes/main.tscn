@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=25 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -85,6 +85,14 @@ size = Vector2(112, 686)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tipki"]
 size = Vector2(56, 188.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_muem4"]
+size = Vector2(3064, 176)
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_muem4"]
+vertices = PackedVector2Array(1384.03, 888.922, 1382.02, 194.031, 3054.01, 199.961, 3055.98, 1713.98, 1379, 1712.01, 1379, 1040.61, 1235.06, 890.078, 1228, 1046.37, 1228, 1716.02, 11.0313, 1718.97, 16.9609, 197.977, 1231.05, 196.008)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3), PackedInt32Array(0, 3, 4, 5), PackedInt32Array(6, 0, 5, 7), PackedInt32Array(8, 9, 10, 7), PackedInt32Array(7, 10, 11, 6)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(7, 188, 1241, 186, 1245, 880, 1374, 879, 1372, 184, 3064, 190, 3066, 1724, 1369, 1722, 1369, 1051, 1238, 1056, 1238, 1726, 1, 1729)])
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -173,6 +181,11 @@ shape = SubResource("RectangleShape2D_o6xl0")
 z_index = 5
 position = Vector2(94, 823)
 shape = SubResource("RectangleShape2D_tipki")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="wall/Wall_Collision"]
+z_index = 5
+position = Vector2(323, -51)
+shape = SubResource("RectangleShape2D_muem4")
 
 [node name="Terrain" parent="." instance=ExtResource("2_terrain")]
 
@@ -284,4 +297,5 @@ z_index = 10
 [node name="ShapeCast2D" type="ShapeCast2D" parent="BuildingPlacer"]
 target_position = Vector2(0, 0)
 
-[node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
+[node name="NavRegion" type="NavigationRegion2D" parent="."]
+navigation_polygon = SubResource("NavigationPolygon_muem4")

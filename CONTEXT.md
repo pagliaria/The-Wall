@@ -183,11 +183,17 @@ Pawn (CharacterBody2D)    pawn.gd
 | `IDLE` | Plays `idle` animation, waits 1–3.5s then picks next state |
 | `MOVE` | Wanders randomly, biases back toward spawn if > 200px away |
 | `MOVE_TO` | Moves directly to a commanded target position, then returns to `IDLE` |
+| `GATHER` | Walks to a resource's collision body; steers toward live `world_position` each frame |
+| `EXTRACTING` | Plays interact animation, counts down `extract_time`; on completion takes one chunk and enters `RETURN` |
+| `RETURN` | Walks back to castle collision body; on touch delivers resource, loops back to `GATHER` if stock remains |
 
 - **`move_to(target: Vector2)`** — enters `MOVE_TO` state; on arrival (within 12px) returns to `IDLE`
+- **`gather_resource(resource_node, resource_body)`** — assigns gather target and enters `GATHER`
+- **`on_resource_depleted()`** — called by `ResourceNode`; aborts gather and returns to `IDLE`
 - **`set_selected(bool)`** — shows/hides `SelectionCircle`, emits `selected_changed`
 - **`take_damage(amount)`** / **`die()`** — emits `died` signal, calls `queue_free()`
 - **`request_push(direction, distance, requester_pos)`** — pushes pawn sideways when another unit collides during `MOVE_TO`
+- Arrival for gather/return is **collision-based** (`move_and_collide` result checked against target body) — no magic radius constants
 - Speed: 50 px/sec. Wander radius: 200px.
 
 ### Selection Circle (`selection_circle.gd`)
@@ -203,7 +209,8 @@ Pawn (CharacterBody2D)    pawn.gd
 - **LMB click** — point-selects nearest unit within 32px of click in world space
 - **LMB drag** (> 6px travel) — box-selects all units whose screen position falls inside the drag rect
 - **Shift + click/drag** — additive selection (toggle individual unit or add to group)
-- **RMB** (units selected) — issues move order to all selected units
+- **RMB** (units selected, over resource) — issues gather order to all selected units; cursor changes to `Cursor_02` when hovering a resource with units selected
+- **RMB** (units selected, over ground) — issues move order to all selected units
 - **RMB** (nothing selected) — deselects all
 - Formation: up to 4 units wide, 32px spacing, centred on the click point. Additional rows offset downward.
 - `disabled = true` while `BuildingPlacer` is active — set by `main.gd`
@@ -225,7 +232,8 @@ Pawn (CharacterBody2D)    pawn.gd
 | `build_menu.gd` | Banner stitching, building card grid, building_selected signal |
 | `resource_display.gd` | set_resources / set_gold / set_wood / set_meat |
 | `terrain.gd` | Builds TileSet, fills terrain, scatters decorations |
-| `resource_spawner.gd` | Spawns gold stones, trees, sheep in town zone |
+| `resource_spawner.gd` | Spawns gold stones, trees, sheep in town zone; attaches ResourceNode to each |
+| `resource_node.gd` | Tracks resource amount/type/extract time; arbitrates gatherer slots; signals depletion |
 | `gold_stone.gd` | Periodic glint animation |
 | `sheep.gd` | Sheep state machine: idle / graze / move |
 | `building_placer.gd` | Ghost preview, tile validity, placement confirmation |
@@ -277,9 +285,9 @@ All resources share one `placed: Array[Vector2i]` so nothing overlaps across typ
 
 | Resource | Count | Script | Notes |
 |---|---|---|---|
-| Gold Stone 3 | 6 | `gold_stone.gd` | Static + periodic 6-frame glint, seed 99 |
-| Tree1 / Tree2 | 10 | inline | 8-frame sway, random flip, seed 77 |
-| Sheep | 20 | `sheep.gd` | idle(40%) graze(40%) move(20%), seed 55 |
+| Gold Stone 3 | 6 | `gold_stone.gd` | Static + periodic 6-frame glint, seed 99. 8 chunks, 3s/chunk |
+| Tree1 / Tree2 | 10 | inline | 8-frame sway, random flip, seed 77. 5 chunks, 4s/chunk. Pawn navigates to stump |
+| Sheep | 5 | `sheep.gd` | idle/graze/move/dead states, seed 55. 3 chunks, 5s/chunk. Dies on first extraction, stays harvestable. `world_position` updates every frame while alive |
 
 ---
 
@@ -305,7 +313,6 @@ All resources share one `placed: Array[Vector2i]` so nothing overlaps across typ
 - Enemy units and spawning
 - Combat system (pawns attacking enemies)
 - Resource costs for building placement
-- Resource collection mechanics (pawns gathering gold/wood/meat)
 - Building upgrade UI (castle panel showing live pawns, upgrade options)
 - Win/lose game state
 - Other building controllers (barracks, tower, archery, monastery, house)
