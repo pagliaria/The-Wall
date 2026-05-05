@@ -192,9 +192,9 @@ func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed
 
 		placed.append(Vector2i(col, row))
 		sheep_placed += 1
-		_spawn_one_sheep(col, row, rng)
+		_spawn_one_sheep(col, row)
 
-func _spawn_one_sheep(col: int, row: int, rng: RandomNumberGenerator) -> void:
+func _spawn_one_sheep(col: int, row: int) -> void:
 	var sheep := SHEEP_SCENE.instantiate()
 	sheep.name = "Sheep_%d_%d" % [col, row]
 	sheep.position = _tile_center(col, row)

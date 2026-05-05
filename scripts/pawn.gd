@@ -37,8 +37,8 @@ const IDLE_TIME_MAX = 3.5
 const MOVE_TIME_MIN = 0.8
 const MOVE_TIME_MAX = 2.0
 const MOVE_SPEED    = 50.0
-const PUSH_DISTANCE = 10.0
-const PUSH_SPEED    = 10.0
+const PUSH_DISTANCE = 50.0
+const PUSH_SPEED    = 100.0
 const WANDER_RADIUS = 200.0
 const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
 
@@ -132,7 +132,6 @@ func _physics_process(delta: float) -> void:
 				_enter_state(State.IDLE)
 			_do_nav_move(delta)
 			# Final arrival: close enough to the click target
-			print("Distance: " + str(position.distance_to(_move_target)))
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
 			#if position.distance_to(_move_target) <= ARRIVAL_RADIUS:
