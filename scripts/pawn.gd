@@ -42,6 +42,7 @@ const PUSH_SPEED    = 10.0
 const WANDER_RADIUS = 200.0
 const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
 
+const STUCK_TIMEOUT = 5.0
 # Wander bounds (world space) — nav mesh keeps us inside, but we also
 # clamp the random target so we never pick a point in water or enemy wilds.
 const WANDER_MIN_X := float((COL_TOWN_START + 1) * TILE_SIZE)
@@ -80,6 +81,8 @@ var _move_dir    : Vector2 = Vector2.ZERO
 var _move_target : Vector2 = Vector2.ZERO  # final destination for MOVE_TO
 var _spawn_pos   : Vector2 = Vector2.ZERO
 var _rng         := RandomNumberGenerator.new()
+
+var _previous_pos : Vector2 = Vector2.ZERO
 
 # -- Push ---------------------------------------------------------------------
 var _push_target     : Vector2 = Vector2.ZERO
@@ -124,10 +127,16 @@ func _physics_process(delta: float) -> void:
 			if _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE_TO:
+			# stuck....go into idle state
+			if _state_timer >= _state_dur and _previous_pos == position:
+				_enter_state(State.IDLE)
 			_do_nav_move(delta)
 			# Final arrival: close enough to the click target
-			if position.distance_to(_move_target) <= ARRIVAL_RADIUS:
+			print("Distance: " + str(position.distance_to(_move_target)))
+			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
+			#if position.distance_to(_move_target) <= ARRIVAL_RADIUS:
+				#_enter_state(State.IDLE)
 		State.IDLE:
 			if !has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
@@ -177,6 +186,7 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 
 		State.MOVE_TO:
+			_state_dur = STUCK_TIMEOUT
 			_nav_agent.target_position = _move_target
 			_sprite.flip_h = (_move_target - position).x < 0
 			_sprite.play("run")
@@ -204,6 +214,8 @@ func _enter_state(new_state: State) -> void:
 # General nav-steered movement. Moves along the computed path each frame.
 # Flips sprite and calls move_and_collide toward the next path point.
 func _do_nav_move(delta: float) -> void:
+	if _state != State.MOVE:
+		has_moved = true
 	if _nav_agent.is_navigation_finished():
 		return
 	var next_point := _nav_agent.get_next_path_position()
@@ -219,11 +231,15 @@ func _do_nav_move(delta: float) -> void:
 		else:
 			_move_dir = _move_dir.bounce(collision.get_normal()).normalized()
 			move_and_collide(_move_dir * MOVE_SPEED * delta)
+			
+	# save off position so we can see if we are stuck
+	_previous_pos = position
 
 # Nav-steered movement toward a physics body. Uses nav for steering, but
 # treats an actual collision with the target body as the arrival signal.
 # Also refreshes the nav target each frame so it tracks moving targets (sheep).
 func _do_nav_move_to_body(delta: float, target_body: Node, target_pos: Vector2, on_arrive: State) -> void:
+	has_moved = true
 	# Keep the nav target fresh (important for moving resources like sheep)
 	_nav_agent.target_position = target_pos
 
