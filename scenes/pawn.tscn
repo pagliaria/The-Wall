@@ -1051,7 +1051,7 @@ script = ExtResource("1_pawn")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("1_frames")
-animation = &"interact_axe"
+animation = &"idle_gold"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)

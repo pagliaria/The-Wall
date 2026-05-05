@@ -1,7 +1,32 @@
-[gd_scene load_steps=11 format=3 uid="uid://odui54ldsa82"]
+[gd_scene load_steps=18 format=3 uid="uid://odui54ldsa82"]
 
 [ext_resource type="Script" uid="uid://cbuppeogdtf4m" path="res://scripts/sheep.gd" id="1_sheep"]
+[ext_resource type="Texture2D" uid="uid://cjn7qkwcej3yl" path="res://assets/Terrain/Resources/Meat/Sheep/sheep_death.png" id="2_6qn06"]
 [ext_resource type="Texture2D" uid="uid://cdftsei6m5t27" path="res://assets/Terrain/Resources/Meat/Sheep/Sheep_Idle.png" id="2_gw4f6"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s32ju"]
+atlas = ExtResource("2_6qn06")
+region = Rect2(0, 0, 244, 143)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4uhln"]
+atlas = ExtResource("2_6qn06")
+region = Rect2(0, 143, 244, 143)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ujskf"]
+atlas = ExtResource("2_6qn06")
+region = Rect2(0, 286, 244, 143)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ycxms"]
+atlas = ExtResource("2_6qn06")
+region = Rect2(0, 429, 244, 143)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wkjkd"]
+atlas = ExtResource("2_6qn06")
+region = Rect2(0, 572, 244, 143)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jjfva"]
+atlas = ExtResource("2_6qn06")
+region = Rect2(0, 715, 244, 143)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6qn06"]
 atlas = ExtResource("2_gw4f6")
@@ -29,6 +54,29 @@ region = Rect2(640, 0, 128, 128)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_s32ju"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s32ju")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4uhln")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ujskf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ycxms")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wkjkd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jjfva")
+}],
+"loop": true,
+"name": &"death",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_6qn06")
@@ -61,6 +109,7 @@ script = ExtResource("1_sheep")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_s32ju")
+animation = &"death"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, -3)

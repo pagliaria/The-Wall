@@ -44,7 +44,12 @@ const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
 const ANIM_TOOL := {
 	"gold": "gold",
 	"wood": "axe",
-	"meat": "meat",
+	"meat": "knife",
+}
+const GATHER_TOOL := {
+	"gold": "run_pickaxe",
+	"wood": "run_axe",
+	"meat": "run_knife",
 }
 const ANIM_INTERACT := {
 	"gold": "interact_pickaxe",
@@ -158,7 +163,8 @@ func _enter_state(new_state: State) -> void:
 		State.GATHER:
 			_move_dir      = (_resource_node.world_position - position).normalized()
 			_sprite.flip_h = _move_dir.x < 0
-			_sprite.play("run")
+			_sprite.play(GATHER_TOOL.get(_resource_node.resource_type, "run"))
+			#_sprite.play("run")
 
 		State.EXTRACTING:
 			_extract_timer = 0.0
@@ -168,7 +174,7 @@ func _enter_state(new_state: State) -> void:
 			_move_dir      = (home_position - position).normalized()
 			_sprite.flip_h = _move_dir.x < 0
 			var suffix : String = ANIM_TOOL.get(_carrying, "")
-			_sprite.play("run_" + suffix if suffix != "" else "run")
+			_sprite.play("run_" + _carrying if _carrying != "" else "run")
 
 # =========================================================================== #
 #  Per-state movement

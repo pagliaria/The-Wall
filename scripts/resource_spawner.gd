@@ -157,9 +157,11 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	sprite.play("anim")
 	add_child(sprite)
 
+	var stump_pos := _tile_center(col, row) + Vector2(0.0, 100.0)
+
 	var stump := StaticBody2D.new()
 	stump.name = "Stump_%d_%d" % [col, row]
-	stump.position = _tile_center(col, row) + Vector2(0.0, 100.0)
+	stump.position = stump_pos
 
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
@@ -171,7 +173,9 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	_add_placement_blocker(sprite, TREE_PLACE_OFFSET, TREE_PLACE_RADIUS)
 	_add_hover_area(sprite, TREE_HOVER_OFFSET, TREE_HOVER_RADIUS)
 	_add_resource_node(sprite, "wood", TREE_AMOUNT, TREE_EXTRACT_TIME)
-	sprite.get_node("ResourceNode").collision_body = stump
+	var rn := sprite.get_node("ResourceNode")
+	rn.collision_body  = stump
+	rn.world_position  = stump_pos   # navigate to the stump, not the canopy
 
 func _spawn_sheep(ground_layer: TileMapLayer, rng: RandomNumberGenerator, placed: Array[Vector2i]) -> void:
 	var sheep_placed := 0
