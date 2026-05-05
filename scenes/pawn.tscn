@@ -1061,3 +1061,7 @@ shape = SubResource("1_circle")
 visible = false
 z_index = 2
 script = ExtResource("2_selcircle")
+
+[node name="NavAgent" type="NavigationAgent2D" parent="."]
+path_desired_distance = 8.0
+target_desired_distance = 16.0
