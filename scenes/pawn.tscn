@@ -23,35 +23,35 @@
 [ext_resource type="Texture2D" uid="uid://coapb0dx8pjjl" path="res://assets/Units/Black Units/Pawn/Pawn_Run Pickaxe.png" id="tex_run_pickaxe"]
 [ext_resource type="Texture2D" uid="uid://je8p61ytdy5p" path="res://assets/Units/Black Units/Pawn/Pawn_Run Wood.png" id="tex_run_wood"]
 
-[sub_resource type="AtlasTexture" id="Atlas_0"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_4hrlu"]
 atlas = ExtResource("tex_idle")
 region = Rect2(0, 0, 192, 192)
 
-[sub_resource type="AtlasTexture" id="Atlas_1"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_outdx"]
 atlas = ExtResource("tex_idle")
 region = Rect2(192, 0, 192, 192)
 
-[sub_resource type="AtlasTexture" id="Atlas_2"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_yhwah"]
 atlas = ExtResource("tex_idle")
 region = Rect2(384, 0, 192, 192)
 
-[sub_resource type="AtlasTexture" id="Atlas_3"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_h1om1"]
 atlas = ExtResource("tex_idle")
 region = Rect2(576, 0, 192, 192)
 
-[sub_resource type="AtlasTexture" id="Atlas_4"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_ldq0g"]
 atlas = ExtResource("tex_idle")
 region = Rect2(768, 0, 192, 192)
 
-[sub_resource type="AtlasTexture" id="Atlas_5"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_85cqe"]
 atlas = ExtResource("tex_idle")
 region = Rect2(960, 0, 192, 192)
 
-[sub_resource type="AtlasTexture" id="Atlas_6"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_se7s4"]
 atlas = ExtResource("tex_idle")
 region = Rect2(1152, 0, 192, 192)
 
-[sub_resource type="AtlasTexture" id="Atlas_7"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_h5pfm"]
 atlas = ExtResource("tex_idle")
 region = Rect2(1344, 0, 192, 192)
 
@@ -551,28 +551,28 @@ region = Rect2(960, 0, 192, 192)
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("Atlas_0")
+"texture": SubResource("AtlasTexture_4hrlu")
 }, {
 "duration": 1.0,
-"texture": SubResource("Atlas_1")
+"texture": SubResource("AtlasTexture_outdx")
 }, {
 "duration": 1.0,
-"texture": SubResource("Atlas_2")
+"texture": SubResource("AtlasTexture_yhwah")
 }, {
 "duration": 1.0,
-"texture": SubResource("Atlas_3")
+"texture": SubResource("AtlasTexture_h1om1")
 }, {
 "duration": 1.0,
-"texture": SubResource("Atlas_4")
+"texture": SubResource("AtlasTexture_ldq0g")
 }, {
 "duration": 1.0,
-"texture": SubResource("Atlas_5")
+"texture": SubResource("AtlasTexture_85cqe")
 }, {
 "duration": 1.0,
-"texture": SubResource("Atlas_6")
+"texture": SubResource("AtlasTexture_se7s4")
 }, {
 "duration": 1.0,
-"texture": SubResource("Atlas_7")
+"texture": SubResource("AtlasTexture_h5pfm")
 }],
 "loop": true,
 "name": &"idle",
@@ -1051,7 +1051,7 @@ script = ExtResource("1_pawn")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("1_frames")
-animation = &"idle_gold"
+animation = &"idle"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)

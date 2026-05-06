@@ -37,7 +37,7 @@ var _castle_placed := false
 @onready var units_layer     : Node2D             = $UnitsLayer
 @onready var unit_selection  : Node2D             = $UnitSelection
 @onready var nav_region      : NavigationRegion2D = $NavRegion
-@onready var drawbridge      : Node2D             = $Drawbridge
+@onready var drawbridge      : Node2D             = $wall
 
 var _castle_prompt : CanvasLayer = null
 var _wave_manager  : Node        = null
@@ -72,9 +72,10 @@ func _setup_wave_manager() -> void:
 	_wave_manager.name = "WaveManager"
 	add_child(_wave_manager)
 
-	_wave_manager.units_layer  = units_layer
-	_wave_manager.drawbridge   = drawbridge
-	_wave_manager.enemy_scene  = load("res://scenes/enemy.tscn")
+	# wave_manager loads its own scenes via WAVE_COMPOSITIONS — just inject
+	# the shared references it needs to spawn into and control.
+	_wave_manager.units_layer = units_layer
+	_wave_manager.drawbridge  = drawbridge
 
 	_wave_manager.wave_countdown_changed.connect(_on_wave_countdown_changed)
 	_wave_manager.wave_started.connect(_on_wave_started)
