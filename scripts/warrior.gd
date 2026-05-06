@@ -19,6 +19,7 @@ signal selected_changed(is_selected: bool)
 
 # -- Selection ----------------------------------------------------------------
 var is_selected : bool = false
+var has_moved : bool = false
 
 func set_selected(value: bool) -> void:
 	if is_selected == value:
@@ -42,6 +43,9 @@ const MOVE_TIME_MAX   = 2.5
 const MOVE_SPEED      = 60.0
 const PUSH_DISTANCE   = 25.0
 const PUSH_SPEED      = 100.0
+const YIELD_TIME      = 0.2
+const STALEMATE_RESET_TIME = 0.6
+const STALEMATE_COLLISIONS = 3
 const PATROL_RADIUS   = 160.0   # wander distance from barracks
 const ARRIVAL_RADIUS  = 12.0
 const STUCK_TIMEOUT   = 5.0
@@ -56,7 +60,7 @@ var max_hp : int = 20
 var hp     : int = 20
 
 # -- State machine ------------------------------------------------------------
-enum State { IDLE, MOVE, MOVE_TO }
+enum State { IDLE, MOVE, MOVE_TO, ATTACK }
 
 var _state       : State   = State.IDLE
 var _state_timer : float   = 0.0
@@ -68,6 +72,10 @@ var _rng         := RandomNumberGenerator.new()
 # -- Push ---------------------------------------------------------------------
 var _push_target     : Vector2 = Vector2.ZERO
 var _is_being_pushed : bool    = false
+var _yield_timer     : float   = 0.0
+var _last_blocker_id : int     = -1
+var _block_count     : int     = 0
+var _block_timer     : float   = 0.0
 
 # Injected by barracks.gd after adding to tree
 var home_position : Vector2 = Vector2.ZERO
@@ -88,6 +96,16 @@ func _ready() -> void:
 	call_deferred("_enter_state", State.IDLE)
 
 func _physics_process(delta: float) -> void:
+	if _yield_timer > 0.0:
+		_yield_timer = maxf(0.0, _yield_timer - delta)
+		return
+
+	if _block_timer > 0.0:
+		_block_timer = maxf(0.0, _block_timer - delta)
+		if _block_timer == 0.0:
+			_last_blocker_id = -1
+			_block_count = 0
+
 	if _is_being_pushed:
 		_do_push_step(delta)
 		return
@@ -112,6 +130,9 @@ func _physics_process(delta: float) -> void:
 # =========================================================================== #
 
 func _pick_next_wander_state() -> State:
+	if has_moved:
+		return State.IDLE
+		
 	return State.MOVE if _rng.randf() > 0.4 else State.IDLE
 
 func _enter_state(new_state: State) -> void:
@@ -148,6 +169,7 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 
 		State.MOVE_TO:
+			has_moved = true
 			_state_dur = STUCK_TIMEOUT
 			_nav_agent.target_position = _move_target
 			_sprite.flip_h = (_move_target - position).x < 0
@@ -166,11 +188,7 @@ func _do_nav_move(delta: float) -> void:
 	var motion     := move_dir * MOVE_SPEED * delta
 	var collision  := move_and_collide(motion)
 	if collision:
-		var collider := collision.get_collider()
-		if collider != null and collider != self and collider.has_method("request_push"):
-			collider.request_push(move_dir, PUSH_DISTANCE, position)
-			move_and_collide(motion)
-		else:
+		if not _handle_unit_collision(collision, move_dir, motion):
 			var bounce := move_dir.bounce(collision.get_normal()).normalized()
 			move_and_collide(bounce * MOVE_SPEED * delta)
 
@@ -195,6 +213,7 @@ func request_push(direction: Vector2, distance: float, requester_pos: Vector2 = 
 			preferred = side_b
 	_push_target     = position + preferred * distance
 	_is_being_pushed = true
+	_yield_timer     = YIELD_TIME
 
 func _do_push_step(delta: float) -> void:
 	var to_target := _push_target - position
@@ -208,6 +227,31 @@ func _do_push_step(delta: float) -> void:
 	var collision := move_and_collide(step)
 	if collision:
 		_is_being_pushed = false
+
+func _handle_unit_collision(collision: KinematicCollision2D, move_dir: Vector2, motion: Vector2) -> bool:
+	var collider := collision.get_collider()
+	if collider == null or collider == self or not collider.has_method("request_push"):
+		return false
+
+	var collider_id := collider.get_instance_id()
+	if collider_id == _last_blocker_id and _block_timer > 0.0:
+		_block_count += 1
+	else:
+		_last_blocker_id = collider_id
+		_block_count = 1
+	_block_timer = STALEMATE_RESET_TIME
+
+	collider.request_push(move_dir, PUSH_DISTANCE, position)
+
+	if _block_count >= STALEMATE_COLLISIONS:
+		request_push(-move_dir, PUSH_DISTANCE * 0.75, collider.global_position)
+		_yield_timer = YIELD_TIME
+		_block_count = 0
+		_last_blocker_id = -1
+		return true
+
+	move_and_collide(motion)
+	return true
 
 # -- Combat / health ----------------------------------------------------------
 

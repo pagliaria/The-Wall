@@ -94,7 +94,7 @@ func _issue_gather_order(resource_node: Node, screen_pos: Vector2) -> void:
 func _issue_move_order(screen_pos: Vector2) -> void:
 	var world_target := _screen_to_world(screen_pos)
 	var count        := selected_units.size()
-	const SPACING   := 32.0
+	const SPACING   := 42.0
 	const ROW_WIDTH := 4
 	for i in range(count):
 		var unit : Node = selected_units[i]
@@ -102,8 +102,10 @@ func _issue_move_order(screen_pos: Vector2) -> void:
 			continue
 		var col    := i % ROW_WIDTH
 		var row    := i / ROW_WIDTH
+		var row_width : Variant = min(count - row * ROW_WIDTH, ROW_WIDTH)
+		var row_shift := SPACING * 0.5 if row % 2 == 1 else 0.0
 		var offset := Vector2(
-			(col - (min(count, ROW_WIDTH) - 1) * 0.5) * SPACING,
+			(col - (row_width - 1) * 0.5) * SPACING + row_shift,
 			row * SPACING
 		)
 		unit.move_to(world_target + offset)
