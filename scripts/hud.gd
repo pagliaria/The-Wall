@@ -22,6 +22,9 @@ func _on_build_button_pressed() -> void:
 		build_menu.open()
 	emit_signal("build_pressed")
 
+func set_build_button_enabled(enabled: bool):
+	build_button.disabled = !enabled
+
 func _on_building_selected(building_id: String) -> void:
 	emit_signal("building_selected", building_id)
 

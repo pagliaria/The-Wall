@@ -8,7 +8,7 @@ signal closed
 # Single source of truth — building_placer.gd and main.gd both reference this.
 # ---------------------------------------------------------------------------
 const BUILDING_COSTS: Dictionary = {
-	"castle":    { "gold": 100,   "wood": 50,  "meat": 0  },
+	"castle":    { "gold": 0,   "wood": 0,  "meat": 0  },
 	"barracks":  { "gold": 80,  "wood": 40, "meat": 0  },
 	"archery":   { "gold": 60,  "wood": 60, "meat": 0  },
 	"monastery": { "gold": 50,  "wood": 30, "meat": 0 },
@@ -21,7 +21,6 @@ const BUILDING_COSTS: Dictionary = {
 @onready var build_buttons: Array[Button] = [
 	$Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/BuildButton,
 	$Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/BuildButton,
-	$Panel/MarginContainer/VBox/Grid/CastleCard/VBox/BuildButton,
 	$Panel/MarginContainer/VBox/Grid/HouseCard/VBox/BuildButton,
 	$Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/BuildButton,
 	$Panel/MarginContainer/VBox/Grid/TowerCard/VBox/BuildButton,
@@ -29,7 +28,6 @@ const BUILDING_COSTS: Dictionary = {
 @onready var cost_labels: Array[Label] = [
 	$Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/Cost,
 	$Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/Cost,
-	$Panel/MarginContainer/VBox/Grid/CastleCard/VBox/Cost,
 	$Panel/MarginContainer/VBox/Grid/HouseCard/VBox/Cost,
 	$Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/Cost,
 	$Panel/MarginContainer/VBox/Grid/TowerCard/VBox/Cost,

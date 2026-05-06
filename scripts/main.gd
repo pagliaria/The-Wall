@@ -26,11 +26,14 @@ var _pan_start_cam   := Vector2.ZERO
 # -- Resources ----------------------------------------------------------------
 var _gold : int = 100
 var _wood : int = 50
-var _meat : int = 10
+var _meat : int = 25
 
 var _gold_multiplier = 10
 var _wood_multiplier = 10
 var _meat_multiplier = 1
+
+# -- Game state ---------------------------------------------------------------
+var _castle_placed := false
 
 @onready var camera          : Camera2D             = $Camera2D
 @onready var terrain         : Node2D               = $Terrain
@@ -41,6 +44,8 @@ var _meat_multiplier = 1
 @onready var units_layer     : Node2D               = $UnitsLayer
 @onready var unit_selection  : Node2D               = $UnitSelection
 @onready var nav_region      : NavigationRegion2D   = $NavRegion
+
+var _castle_prompt : CanvasLayer = null
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -59,6 +64,22 @@ func _ready() -> void:
 
 	_push_resources()
 
+	# Show castle prompt and lock the build button until castle is placed.
+	hud.set_build_button_enabled(false)
+	_show_castle_prompt()
+
+# -- Castle prompt ------------------------------------------------------------
+
+func _show_castle_prompt() -> void:
+	var scene := load("res://scenes/castle_prompt.tscn") as PackedScene
+	_castle_prompt = scene.instantiate()
+	add_child(_castle_prompt)
+	_castle_prompt.castle_placement_requested.connect(_on_castle_placement_requested)
+
+func _on_castle_placement_requested() -> void:
+	building_placer.start_placement("castle")
+	unit_selection.disabled = true
+
 # -- Building events ----------------------------------------------------------
 
 func _on_build_pressed() -> void:
@@ -70,9 +91,20 @@ func _on_building_selected(building_id: String) -> void:
 
 func _on_placement_cancelled() -> void:
 	unit_selection.disabled = false
+	# If castle still hasn't been placed, re-show the prompt.
+	if not _castle_placed:
+		_castle_prompt.show()
 
 func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	unit_selection.disabled = false
+
+	# First castle placement unlocks the rest of the game.
+	if building_id == "castle" and not _castle_placed:
+		_castle_placed = true
+		hud.set_build_button_enabled(true)
+		if _castle_prompt != null:
+			_castle_prompt.queue_free()
+			_castle_prompt = null
 
 	# Deduct the building cost.
 	_spend_building_cost(building_id)
@@ -89,11 +121,9 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 		if ctrl != null and ctrl.has_signal("pawn_delivered_resource"):
 			ctrl.connect("pawn_delivered_resource", _on_resource_delivered)
 
-	# Rebake nav mesh so units path around the new building.
 	_rebake_nav()
 
 func _spend_building_cost(building_id: String) -> void:
-	# Import costs from build_menu — single source of truth lives there.
 	var costs: Dictionary = load("res://scripts/build_menu.gd").BUILDING_COSTS
 	if not costs.has(building_id):
 		return

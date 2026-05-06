@@ -37,12 +37,12 @@ const IDLE_TIME_MAX = 3.5
 const MOVE_TIME_MIN = 0.8
 const MOVE_TIME_MAX = 2.0
 const MOVE_SPEED    = 50.0
-const PUSH_DISTANCE = 25.0
-const PUSH_SPEED    = 100.0
+const PUSH_DISTANCE   = 10.0
+const PUSH_SPEED      = 300.0
 const YIELD_TIME    = 0.2
 const STALEMATE_RESET_TIME = 0.6
-const STALEMATE_COLLISIONS = 3
-const WANDER_RADIUS = 200.0
+const STALEMATE_COLLISIONS = 1
+const WANDER_RADIUS = 160.0
 const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
 
 const STUCK_TIMEOUT = 5.0

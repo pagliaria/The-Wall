@@ -241,7 +241,7 @@ script = ExtResource("1_warrior")
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("warrior_frames")
 animation = &"run"
-frame_progress = 0.40941
+frame_progress = 0.249037
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)

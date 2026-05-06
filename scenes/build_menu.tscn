@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://cwgtv3300cseo"]
+[gd_scene load_steps=14 format=3 uid="uid://cwgtv3300cseo"]
 
 [ext_resource type="Script" uid="uid://b3x0ps32eev6x" path="res://scripts/build_menu.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://03hji3qdk0hb" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Regular.png" id="3_red_reg"]
@@ -7,7 +7,6 @@
 [ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="5_4h3qg"]
 [ext_resource type="Texture2D" uid="uid://sycpf7s12rqd" path="res://assets/Buildings/Black Buildings/Archery.png" id="6_archery"]
 [ext_resource type="Texture2D" uid="uid://e6r3gfhdmlno" path="res://assets/Buildings/Black Buildings/Barracks.png" id="7_barracks"]
-[ext_resource type="Texture2D" uid="uid://cautf2bh2ydse" path="res://assets/Buildings/Black Buildings/Castle.png" id="8_castle"]
 [ext_resource type="Texture2D" uid="uid://bftuw36baylsj" path="res://assets/Buildings/Black Buildings/House1.png" id="9_house"]
 [ext_resource type="Texture2D" uid="uid://dwn4h1harq5uc" path="res://assets/Buildings/Black Buildings/Monastery.png" id="10_monastery"]
 [ext_resource type="Texture2D" uid="uid://c2w6klqgyq3jb" path="res://assets/Buildings/Black Buildings/Tower.png" id="11_tower"]
@@ -138,44 +137,6 @@ custom_minimum_size = Vector2(70, 24)
 layout_mode = 2
 text = "Build"
 metadata/building_id = "barracks"
-
-[node name="CastleCard" type="PanelContainer" parent="Panel/MarginContainer/VBox/Grid"]
-custom_minimum_size = Vector2(90, 150)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-
-[node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer/VBox/Grid/CastleCard"]
-layout_mode = 2
-theme_override_constants/separation = 6
-alignment = 1
-
-[node name="Preview" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/CastleCard/VBox"]
-custom_minimum_size = Vector2(80, 80)
-layout_mode = 2
-texture = ExtResource("8_castle")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Name" type="Label" parent="Panel/MarginContainer/VBox/Grid/CastleCard/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 11
-text = "Castle"
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="Cost" type="Label" parent="Panel/MarginContainer/VBox/Grid/CastleCard/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 10
-text = "Gold: ??  Wood: ??"
-horizontal_alignment = 1
-
-[node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/CastleCard/VBox"]
-custom_minimum_size = Vector2(70, 24)
-layout_mode = 2
-text = "Build"
-metadata/building_id = "castle"
 
 [node name="HouseCard" type="PanelContainer" parent="Panel/MarginContainer/VBox/Grid"]
 custom_minimum_size = Vector2(90, 150)

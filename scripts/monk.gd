@@ -28,11 +28,11 @@ const IDLE_TIME_MAX := 4.0
 const MOVE_TIME_MIN := 1.0
 const MOVE_TIME_MAX := 2.5
 const MOVE_SPEED := 58.0
-const PUSH_DISTANCE := 25.0
-const PUSH_SPEED := 100.0
+const PUSH_DISTANCE   = 10.0
+const PUSH_SPEED      = 300.0
 const YIELD_TIME := 0.2
 const STALEMATE_RESET_TIME := 0.6
-const STALEMATE_COLLISIONS := 3
+const STALEMATE_COLLISIONS := 1
 const PATROL_RADIUS := 170.0
 const STUCK_TIMEOUT := 5.0
 
