@@ -1,7 +1,5 @@
 extends Node2D
 
-# Main game controller for "The Wall"
-
 const WORLD_WIDTH  = 3072
 const WORLD_HEIGHT = 1728
 
@@ -9,21 +7,17 @@ const TOWN_ZONE_LEFT    = WORLD_WIDTH * 0.625
 const ENEMY_SPAWN_LEFT  = 0
 const ENEMY_SPAWN_RIGHT = WORLD_WIDTH * 0.34
 
-# -- Zoom ---------------------------------------------------------------------
 const ZOOM_STEP = 0.1
 const ZOOM_MAX  = 2.0
 var zoom_min    := 0.1
 
-# -- Edge pan -----------------------------------------------------------------
 const EDGE_MARGIN = 24
 const EDGE_SPEED  = 600.0
 
-# -- Middle-mouse pan ---------------------------------------------------------
 var _panning         := false
 var _pan_start_mouse := Vector2.ZERO
 var _pan_start_cam   := Vector2.ZERO
 
-# -- Resources ----------------------------------------------------------------
 var _gold : int = 100
 var _wood : int = 50
 var _meat : int = 25
@@ -32,20 +26,21 @@ var _gold_multiplier = 10
 var _wood_multiplier = 10
 var _meat_multiplier = 1
 
-# -- Game state ---------------------------------------------------------------
 var _castle_placed := false
 
-@onready var camera          : Camera2D             = $Camera2D
-@onready var terrain         : Node2D               = $Terrain
-@onready var resource_layer  : Node2D               = $ResourceLayer
-@onready var hud             : CanvasLayer           = $HUD
-@onready var building_placer : Node2D               = $BuildingPlacer
-@onready var buildings_layer : Node2D               = $BuildingsLayer
-@onready var units_layer     : Node2D               = $UnitsLayer
-@onready var unit_selection  : Node2D               = $UnitSelection
-@onready var nav_region      : NavigationRegion2D   = $NavRegion
+@onready var camera          : Camera2D           = $Camera2D
+@onready var terrain         : Node2D             = $Terrain
+@onready var resource_layer  : Node2D             = $ResourceLayer
+@onready var hud             : CanvasLayer         = $HUD
+@onready var building_placer : Node2D             = $BuildingPlacer
+@onready var buildings_layer : Node2D             = $BuildingsLayer
+@onready var units_layer     : Node2D             = $UnitsLayer
+@onready var unit_selection  : Node2D             = $UnitSelection
+@onready var nav_region      : NavigationRegion2D = $NavRegion
+@onready var drawbridge      : Node2D             = $Drawbridge
 
 var _castle_prompt : CanvasLayer = null
+var _wave_manager  : Node        = null
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -63,12 +58,40 @@ func _ready() -> void:
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
 	_push_resources()
-
-	# Show castle prompt and lock the build button until castle is placed.
 	hud.set_build_button_enabled(false)
 	_show_castle_prompt()
+	_setup_wave_manager()
 
-# -- Castle prompt ------------------------------------------------------------
+# =========================================================================== #
+#  Wave manager
+# =========================================================================== #
+
+func _setup_wave_manager() -> void:
+	_wave_manager = Node.new()
+	_wave_manager.set_script(load("res://scripts/wave_manager.gd"))
+	_wave_manager.name = "WaveManager"
+	add_child(_wave_manager)
+
+	_wave_manager.units_layer  = units_layer
+	_wave_manager.drawbridge   = drawbridge
+	_wave_manager.enemy_scene  = load("res://scenes/enemy.tscn")
+
+	_wave_manager.wave_countdown_changed.connect(_on_wave_countdown_changed)
+	_wave_manager.wave_started.connect(_on_wave_started)
+	_wave_manager.wave_ended.connect(_on_wave_ended)
+
+func _on_wave_countdown_changed(seconds: float) -> void:
+	hud.set_wave_countdown(seconds)
+
+func _on_wave_started(wave_number: int) -> void:
+	hud.set_wave_active(wave_number)
+
+func _on_wave_ended(player_won: bool) -> void:
+	hud.set_wave_ended(player_won)
+
+# =========================================================================== #
+#  Castle prompt
+# =========================================================================== #
 
 func _show_castle_prompt() -> void:
 	var scene := load("res://scenes/castle_prompt.tscn") as PackedScene
@@ -80,7 +103,9 @@ func _on_castle_placement_requested() -> void:
 	building_placer.start_placement("castle")
 	unit_selection.disabled = true
 
-# -- Building events ----------------------------------------------------------
+# =========================================================================== #
+#  Building events
+# =========================================================================== #
 
 func _on_build_pressed() -> void:
 	pass
@@ -91,14 +116,12 @@ func _on_building_selected(building_id: String) -> void:
 
 func _on_placement_cancelled() -> void:
 	unit_selection.disabled = false
-	# If castle still hasn't been placed, re-show the prompt.
 	if not _castle_placed:
 		_castle_prompt.show()
 
 func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	unit_selection.disabled = false
 
-	# First castle placement unlocks the rest of the game.
 	if building_id == "castle" and not _castle_placed:
 		_castle_placed = true
 		hud.set_build_button_enabled(true)
@@ -106,7 +129,6 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 			_castle_prompt.queue_free()
 			_castle_prompt = null
 
-	# Deduct the building cost.
 	_spend_building_cost(building_id)
 
 	var building := StaticBody2D.new()
@@ -115,7 +137,6 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	building.setup(building_id, tile, units_layer)
 	building.building_clicked.connect(_on_building_clicked)
 
-	# Wire castle resource deliveries into the HUD.
 	if building_id == "castle":
 		var ctrl : Node = building.get_controller()
 		if ctrl != null and ctrl.has_signal("pawn_delivered_resource"):
@@ -155,7 +176,9 @@ func _on_nav_bake_complete() -> void:
 func _on_building_clicked(_building: Node) -> void:
 	pass
 
-# -- Resource delivery --------------------------------------------------------
+# =========================================================================== #
+#  Resource delivery
+# =========================================================================== #
 
 func _on_resource_delivered(resource_type: String, amount: int) -> void:
 	match resource_type:
@@ -167,7 +190,9 @@ func _on_resource_delivered(resource_type: String, amount: int) -> void:
 func _on_resource_depleted() -> void:
 	_rebake_nav()
 
-# -- Camera -------------------------------------------------------------------
+# =========================================================================== #
+#  Camera
+# =========================================================================== #
 
 func _fit_camera_to_screen() -> void:
 	var screen := Vector2(DisplayServer.window_get_size())
@@ -195,10 +220,10 @@ func _handle_edge_pan(delta: float) -> void:
 	var screen := Vector2(DisplayServer.window_get_size())
 	var move   := Vector2.ZERO
 	var speed  := EDGE_SPEED / camera.zoom.x * delta
-	if mouse.x < EDGE_MARGIN:              move.x = -speed
-	elif mouse.x > screen.x - EDGE_MARGIN: move.x =  speed
-	if mouse.y < EDGE_MARGIN:              move.y = -speed
-	elif mouse.y > screen.y - EDGE_MARGIN: move.y =  speed
+	if mouse.x < EDGE_MARGIN:               move.x = -speed
+	elif mouse.x > screen.x - EDGE_MARGIN:  move.x =  speed
+	if mouse.y < EDGE_MARGIN:               move.y = -speed
+	elif mouse.y > screen.y - EDGE_MARGIN:  move.y =  speed
 	camera.position = _clamped(camera.position + move)
 
 func _handle_middle_mouse_pan() -> void:
