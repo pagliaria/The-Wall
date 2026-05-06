@@ -96,6 +96,7 @@ var _carrying_amount : int    = 0
 # Injected by castle.gd — the PlacedBuilding StaticBody2D node itself
 var home_position : Vector2 = Vector2.ZERO
 var home_node     : Node    = null
+var home_radius   : float   = 28.0
 
 # -- Node refs ----------------------------------------------------------------
 @onready var _sprite           : AnimatedSprite2D  = $Sprite
@@ -135,11 +136,17 @@ func _physics_process(delta: float) -> void:
 			if !has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.GATHER:
-			_do_nav_move_to_body(delta, _resource_body, _resource_node.world_position, State.EXTRACTING)
+			_do_nav_move_to_body(
+				delta,
+				_resource_body,
+				_resource_node.interact_position,
+				_resource_node.interact_radius,
+				State.EXTRACTING
+			)
 		State.EXTRACTING:
 			_do_extracting(delta)
 		State.RETURN:
-			_do_nav_move_to_body(delta, home_node, home_position, State.IDLE)
+			_do_nav_move_to_body(delta, home_node, home_position, home_radius, State.IDLE)
 
 # =========================================================================== #
 #  State transitions
@@ -186,8 +193,8 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 
 		State.GATHER:
-			_nav_agent.target_position = _resource_node.world_position
-			var dir : Vector2 = (_resource_node.world_position - position)
+			_nav_agent.target_position = _resource_node.interact_position
+			var dir : Vector2 = (_resource_node.interact_position - position)
 			_sprite.flip_h = dir.x < 0
 			_sprite.play(GATHER_TOOL.get(_resource_node.resource_type, "run"))
 
@@ -229,14 +236,17 @@ func _do_nav_move(delta: float) -> void:
 # Nav-steered movement toward a physics body. Uses nav for steering, but
 # treats an actual collision with the target body as the arrival signal.
 # Also refreshes the nav target each frame so it tracks moving targets (sheep).
-func _do_nav_move_to_body(delta: float, target_body: Node, target_pos: Vector2, on_arrive: State) -> void:
+func _do_nav_move_to_body(delta: float, target_body: Node, target_pos: Vector2, arrival_radius: float, on_arrive: State) -> void:
 	has_moved = true
 	# Keep the nav target fresh (important for moving resources like sheep)
 	_nav_agent.target_position = target_pos
 
+	if position.distance_to(target_pos) <= arrival_radius:
+		_enter_state(on_arrive)
+		return
+
 	if _nav_agent.is_navigation_finished():
-		# Nav says we're there — confirm with a generous distance check
-		if position.distance_to(target_pos) <= 48.0:
+		if position.distance_to(target_pos) <= arrival_radius:
 			_enter_state(on_arrive)
 		return
 

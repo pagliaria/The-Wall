@@ -107,4 +107,4 @@ func _do_move(delta: float) -> void:
 		_sprite.flip_h = _move_dir.x < 0
 		move_and_collide(_move_dir * MOVE_SPEED * delta)
 		
-	get_node("ResourceNode").world_position = global_position
+	get_node("ResourceNode").interact_position = global_position

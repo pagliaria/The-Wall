@@ -13,6 +13,8 @@ var resource_type  : String  = "gold"   # "gold" | "wood" | "meat"
 var amount         : int     = 0
 var extract_time   : float   = 0.0
 var world_position : Vector2 = Vector2.ZERO
+var interact_position : Vector2 = Vector2.ZERO
+var interact_radius   : float   = 24.0
 var collision_body : Node    = null   # the StaticBody2D/CharacterBody2D a pawn touches to arrive
 
 # Pawns currently assigned to extract from this node (capped to avoid crowding)

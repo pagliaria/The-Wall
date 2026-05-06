@@ -9,6 +9,8 @@ signal pawn_delivered_resource(resource_type: String, amount: int)
 const MAX_PAWNS      = 3
 const SPAWN_INTERVAL = 5.0
 const TILE_SIZE      = 64
+const HOME_INTERACT_OFFSET := Vector2(0.0, 96.0)
+const HOME_INTERACT_RADIUS := 28.0
 
 const PAWN_SCENE = preload("res://scenes/pawn.tscn")
 
@@ -41,8 +43,9 @@ func _spawn_pawn() -> void:
 	pawn.z_index  = 3
 
 	# Tell the pawn where home is so it can return after gathering
-	pawn.home_position = parent.position
+	pawn.home_position = parent.position + HOME_INTERACT_OFFSET
 	pawn.home_node     = parent   # PlacedBuilding StaticBody2D — arrival detected by collision
+	pawn.home_radius   = HOME_INTERACT_RADIUS
 
 	units_layer.add_child(pawn)
 	_live_pawns += 1

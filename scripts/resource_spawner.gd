@@ -23,6 +23,8 @@ const GOLD_PLACE_RADIUS := 34.0
 const GOLD_PLACE_OFFSET := Vector2(0.0, -30.0)
 const GOLD_HOVER_RADIUS := 30.0
 const GOLD_HOVER_OFFSET := Vector2(0.0, -15.0)
+const GOLD_INTERACT_OFFSET := Vector2(0.0, 0.0)
+const GOLD_INTERACT_RADIUS := 64.0
 const GOLD_AMOUNT := 8         # chunks per gold stone
 const GOLD_EXTRACT_TIME := 3.0 # seconds per chunk
 
@@ -38,6 +40,8 @@ const TREE_PLACE_RADIUS := 56.0
 const TREE_PLACE_OFFSET := Vector2(0.0, 0.0)
 const TREE_HOVER_RADIUS := 36.0
 const TREE_HOVER_OFFSET := Vector2(0.0, 40.0)   # trunk area
+const TREE_INTERACT_OFFSET := Vector2(0.0, 64.0)
+const TREE_INTERACT_RADIUS := 64.0
 const TREE_AMOUNT := 5          # chunks per tree
 const TREE_EXTRACT_TIME := 4.0  # seconds per chunk
 
@@ -53,6 +57,7 @@ const SHEEP_COUNT := 5
 const SHEEP_SPACING := 2
 const SHEEP_PLACE_RADIUS := 26.0
 const SHEEP_HOVER_RADIUS := 28.0
+const SHEEP_INTERACT_RADIUS := 24.0
 const SHEEP_AMOUNT := 3         # chunks per sheep
 const SHEEP_EXTRACT_TIME := 5.0 # seconds per chunk
 
@@ -138,7 +143,10 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 	_add_placement_blocker(node, GOLD_PLACE_OFFSET, GOLD_PLACE_RADIUS)
 	_add_hover_area(node, GOLD_HOVER_OFFSET, GOLD_HOVER_RADIUS)
 	_add_resource_node(node, "gold", GOLD_AMOUNT, GOLD_EXTRACT_TIME)
-	node.get_node("ResourceNode").collision_body = gold_collision
+	var gold_resource := node.get_node("ResourceNode")
+	gold_resource.collision_body = gold_collision
+	gold_resource.interact_position = node.global_position + GOLD_INTERACT_OFFSET
+	gold_resource.interact_radius = GOLD_INTERACT_RADIUS
 	
 	gold_nodes.append(node)
 
@@ -190,6 +198,8 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	var rn := sprite.get_node("ResourceNode")
 	rn.collision_body  = stump
 	rn.world_position  = stump_pos   # navigate to the stump, not the canopy
+	rn.interact_position = sprite.global_position + TREE_INTERACT_OFFSET
+	rn.interact_radius = TREE_INTERACT_RADIUS
 	
 	tree_nodes.append(sprite)
 
@@ -219,7 +229,10 @@ func _spawn_one_sheep(col: int, row: int) -> void:
 	_add_placement_blocker(sheep, Vector2.ZERO, SHEEP_PLACE_RADIUS)
 	_add_hover_area(sheep, Vector2.ZERO, SHEEP_HOVER_RADIUS)
 	_add_resource_node(sheep, "meat", SHEEP_AMOUNT, SHEEP_EXTRACT_TIME)
-	sheep.get_node("ResourceNode").collision_body = sheep
+	var sheep_resource := sheep.get_node("ResourceNode")
+	sheep_resource.collision_body = sheep
+	sheep_resource.interact_position = sheep.global_position
+	sheep_resource.interact_radius = SHEEP_INTERACT_RADIUS
 	
 	sheep_nodes.append(sheep)
 
@@ -290,6 +303,7 @@ func _add_resource_node(parent: Node2D, type: String, amt: int, extract_sec: flo
 	rn.amount         = amt
 	rn.extract_time   = extract_sec
 	rn.world_position = parent.global_position
+	rn.interact_position = parent.global_position
 	# Store the collision body sibling so pawns can detect arrival by touch.
 	# For gold the StaticBody2D is a sibling added to the spawner; for trees
 	# the stump is also a sibling. Sheep are CharacterBody2D and act as their
