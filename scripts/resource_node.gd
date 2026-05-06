@@ -66,6 +66,10 @@ func _on_depleted() -> void:
 			pawn.on_resource_depleted()
 	_gatherers.clear()
 	emit_signal("depleted", self)
+	if is_instance_valid(collision_body):
+		var parent := get_parent()
+		if collision_body != parent:
+			collision_body.queue_free()
 	# Remove the visual resource node from the scene
 	var parent := get_parent()
 	if is_instance_valid(parent):

@@ -47,6 +47,7 @@ var _meat_multiplier = 1
 func _ready() -> void:
 	_fit_camera_to_screen()
 	resource_layer.spawn()
+	resource_layer.resource_depleted.connect(_on_resource_depleted)
 
 	building_placer.ground_layer = $Terrain/GroundLayer
 
@@ -118,6 +119,9 @@ func _on_resource_delivered(resource_type: String, amount: int) -> void:
 		"wood": _wood += amount * _wood_multiplier
 		"meat": _meat += amount * _meat_multiplier
 	hud.resource_display.set_resources(_gold, _wood, _meat)
+
+func _on_resource_depleted() -> void:
+	_rebake_nav()
 
 # -- Camera -------------------------------------------------------------------
 

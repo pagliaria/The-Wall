@@ -1,5 +1,7 @@
 extends Node2D
 
+signal resource_depleted
+
 const TILE_SIZE := 64
 const MAP_COLS := 48
 const MAP_ROWS := 27
@@ -304,11 +306,16 @@ func _add_resource_node(parent: Node2D, type: String, amt: int, extract_sec: flo
 	rn.extract_time   = extract_sec
 	rn.world_position = parent.global_position
 	rn.interact_position = parent.global_position
+	rn.depleted.connect(_on_resource_depleted)
 	# Store the collision body sibling so pawns can detect arrival by touch.
 	# For gold the StaticBody2D is a sibling added to the spawner; for trees
 	# the stump is also a sibling. Sheep are CharacterBody2D and act as their
 	# own collision body. We tag the body on the ResourceNode after spawn.
 	# The spawner sets this immediately after calling _add_resource_node.
+
+func _on_resource_depleted(_resource_node: Node) -> void:
+	call_deferred("update_nodes")
+	emit_signal("resource_depleted")
 
 func update_nodes():
 	sheep_nodes = sheep_nodes.filter(func(node): return is_instance_valid(node))
