@@ -1,0 +1,232 @@
+[gd_scene load_steps=34 format=3 uid="uid://bwarrior00001"]
+
+[ext_resource type="Script" uid="uid://bq4jpm1ulyyhm" path="res://scripts/warrior.gd" id="1_warrior"]
+[ext_resource type="Script" uid="uid://j5v5w444d8s7" path="res://scripts/selection_circle.gd" id="2_selcircle"]
+[ext_resource type="Texture2D" uid="uid://dgyad75c1tqaw" path="res://assets/Units/Black Units/Warrior/Warrior_Attack1.png" id="tex_attack1"]
+[ext_resource type="Texture2D" uid="uid://domoayqfaj5f1" path="res://assets/Units/Black Units/Warrior/Warrior_Attack2.png" id="tex_attack2"]
+[ext_resource type="Texture2D" uid="uid://dky1pmw7hys0g" path="res://assets/Units/Black Units/Warrior/Warrior_Guard.png" id="tex_guard"]
+[ext_resource type="Texture2D" uid="uid://ceacwdv3ug52r" path="res://assets/Units/Black Units/Warrior/Warrior_Idle.png" id="tex_idle"]
+[ext_resource type="Texture2D" uid="uid://dfhepc3qpi5s8" path="res://assets/Units/Black Units/Warrior/Warrior_Run.png" id="tex_run"]
+
+[sub_resource type="AtlasTexture" id="atk1_0"]
+atlas = ExtResource("tex_attack1")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="atk1_1"]
+atlas = ExtResource("tex_attack1")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="atk1_2"]
+atlas = ExtResource("tex_attack1")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="atk1_3"]
+atlas = ExtResource("tex_attack1")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="atk2_0"]
+atlas = ExtResource("tex_attack2")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="atk2_1"]
+atlas = ExtResource("tex_attack2")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="atk2_2"]
+atlas = ExtResource("tex_attack2")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="atk2_3"]
+atlas = ExtResource("tex_attack2")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_0"]
+atlas = ExtResource("tex_guard")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_1"]
+atlas = ExtResource("tex_guard")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_2"]
+atlas = ExtResource("tex_guard")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_3"]
+atlas = ExtResource("tex_guard")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_0"]
+atlas = ExtResource("tex_idle")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_1"]
+atlas = ExtResource("tex_idle")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_2"]
+atlas = ExtResource("tex_idle")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_3"]
+atlas = ExtResource("tex_idle")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_4"]
+atlas = ExtResource("tex_idle")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_5"]
+atlas = ExtResource("tex_idle")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_0"]
+atlas = ExtResource("tex_run")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_1"]
+atlas = ExtResource("tex_run")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_2"]
+atlas = ExtResource("tex_run")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_3"]
+atlas = ExtResource("tex_run")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_4"]
+atlas = ExtResource("tex_run")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_5"]
+atlas = ExtResource("tex_run")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="SpriteFrames" id="warrior_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("atk1_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("atk1_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("atk1_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("atk1_3")
+}],
+"loop": false,
+"name": &"attack1",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("atk2_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("atk2_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("atk2_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("atk2_3")
+}],
+"loop": false,
+"name": &"attack2",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("guard_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("guard_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("guard_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("guard_3")
+}],
+"loop": true,
+"name": &"guard",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("idle_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_5")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("run_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_5")
+}],
+"loop": true,
+"name": &"run",
+"speed": 8.0
+}]
+
+[sub_resource type="CircleShape2D" id="warrior_circle"]
+radius = 18.0
+
+[node name="Warrior" type="CharacterBody2D"]
+script = ExtResource("1_warrior")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("warrior_frames")
+animation = &"attack1"
+frame = 3
+frame_progress = 1.0
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 10)
+shape = SubResource("warrior_circle")
+
+[node name="SelectionCircle" type="Node2D" parent="."]
+visible = false
+z_index = 2
+script = ExtResource("2_selcircle")
+
+[node name="NavAgent" type="NavigationAgent2D" parent="."]
+path_desired_distance = 8.0
+target_desired_distance = 16.0
+radius = 64.0
+debug_enabled = true

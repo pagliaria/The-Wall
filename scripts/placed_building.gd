@@ -73,10 +73,14 @@ func _attach_controller(id: String) -> void:
 			ctrl.set_script(load("res://scripts/castle.gd"))
 			ctrl.name          = "CastleController"
 			add_child(ctrl)
-			# units_layer is set on this node; castle.gd reads it via get_parent()
-			# so we pass the reference after adding to tree
 			ctrl.units_layer   = units_layer
-		# Future: "barracks", "tower", etc.
+		"barracks":
+			var ctrl          := Node.new()
+			ctrl.set_script(load("res://scripts/barracks.gd"))
+			ctrl.name          = "BarracksController"
+			add_child(ctrl)
+			ctrl.units_layer   = units_layer
+		# Future: "tower", "archery", "monastery", "house1"
 
 func _on_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -94,7 +98,7 @@ func get_nav_footprint() -> Rect2:
 func get_controller() -> Node:
 	# Returns the building-specific controller child, if any.
 	for child in get_children():
-		if child.has_method("get_live_pawns"):   # duck-typed for now
+		if child.has_method("get_live_pawns"):   # duck-typed for castle
 			return child
 	return null
 

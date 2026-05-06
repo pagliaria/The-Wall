@@ -49,7 +49,7 @@ Main (Node2D)                      main.gd
 │   ├── BuildMenu (Control)        build_menu.gd — centred popup
 │   └── ResourceDisplay (Control)  resource_display.gd — top-right ribbon
 ├── BuildingsLayer (Node2D)        z=3 — container for all placed buildings
-├── UnitsLayer (Node2D)            z=3 — container for all spawned units (pawns etc.)
+├── UnitsLayer (Node2D)            z=3 — container for all spawned units (pawns, warriors etc.)
 ├── UnitSelection (Node2D)         unit_selection.gd
 │   └── Overlay (CanvasLayer)      always-on-top canvas for drag box
 │       └── Draw (Node2D)          selection_overlay.gd — draws the drag rect
@@ -143,6 +143,14 @@ Built manually in the editor under the `wall` Node2D. **Do not remove or modify 
 - Exposes `get_live_pawns()`, `get_max_pawns()`, `get_spawn_timer()` for future upgrade UI
 - `units_layer` injected by `placed_building.gd` after adding to tree
 
+### Barracks (`barracks.gd`)
+- Extends `Node`, attached as `BarracksController` child of a placed barracks building
+- Spawns up to **4 warriors**, one every **8 seconds**
+- Spawns at the tile directly **below** the barracks (`tile.y + 1`)
+- Timer resets when at max capacity
+- Exposes `get_live_warriors()`, `get_max_warriors()`, `get_spawn_timer()`
+- `units_layer` injected by `placed_building.gd` after adding to tree
+
 ---
 
 ## Units — Pawn
@@ -201,7 +209,45 @@ Pawn (CharacterBody2D)    pawn.gd
 - `_ready()` defers first `_enter_state` call so nav mesh is ready before first path request
 - Speed: 50 px/sec. Wander radius: 200px.
 
-### Selection Circle (`selection_circle.gd`)
+---
+
+## Units — Warrior
+
+### Scene: `warrior.tscn`
+```
+Warrior (CharacterBody2D)    warrior.gd
+├── Sprite (AnimatedSprite2D)   sprite frames defined in scene
+├── Collision (CollisionShape2D) CircleShape2D radius=18, offset (0,10)
+├── SelectionCircle (Node2D)    selection_circle.gd, z=2, hidden by default
+└── NavAgent (NavigationAgent2D) path_desired_distance=8, target_desired_distance=16
+```
+
+### Animations (all 192×192px frames, Black Units/Warrior asset set)
+| Animation | Frames | FPS | Loop | Description |
+|---|---|---|---|---|
+| `idle` | 6 | 8 | yes | Standing at ease |
+| `run` | 6 | 8 | yes | Running |
+| `attack1` | 6 | 10 | no | First attack swing |
+| `attack2` | 6 | 10 | no | Second attack swing |
+| `guard` | 4 | 8 | yes | Guard/shield stance |
+
+### `warrior.gd` — State Machine
+| State | Description |
+|---|---|
+| `IDLE` | Plays `idle` or `guard` animation (random), waits 1.5–4s |
+| `MOVE` | Patrols within 160px of barracks spawn point, biases home if too far |
+| `MOVE_TO` | Player-commanded move via RMB; on arrival returns to `IDLE` |
+
+- **`move_to(target: Vector2)`** — enters `MOVE_TO` state
+- **`set_selected(bool)`** — shows/hides `SelectionCircle`, emits `selected_changed`
+- **`take_damage(amount)`** / **`die()`** — emits `died` signal, calls `queue_free()`
+- **`request_push(...)`** — same push-aside logic as pawn
+- Speed: 60 px/sec. Patrol radius: 160px. Max HP: 20.
+- Warriors do NOT gather resources — gather cursor does not appear when only warriors are selected.
+
+---
+
+## Selection Circle (`selection_circle.gd`)
 - Draws a flat cyan ellipse at the unit's feet (offset `Vector2(0, 36)`)
 - Ellipse is scaled to 38% height to look grounded
 - Radius 28, filled at 20% alpha, rim fully opaque
@@ -214,10 +260,11 @@ Pawn (CharacterBody2D)    pawn.gd
 - **LMB click** — point-selects nearest unit within 32px of click in world space
 - **LMB drag** (> 6px travel) — box-selects all units whose screen position falls inside the drag rect
 - **Shift + click/drag** — additive selection (toggle individual unit or add to group)
-- **RMB** (units selected, over resource) — issues gather order to all selected units; cursor changes to `Cursor_02` when hovering a resource with units selected
+- **RMB** (units selected, over resource) — issues gather order to all selected units that have `gather_resource`; cursor changes to `Cursor_02` when hovering a resource with units selected
 - **RMB** (units selected, over ground) — issues move order to all selected units
 - **RMB** (nothing selected) — deselects all
 - Formation: up to 4 units wide, 32px spacing, centred on the click point. Additional rows offset downward.
+- Works generically on anything in UnitsLayer with `set_selected` / `move_to` methods — handles both pawns and warriors.
 - `disabled = true` while `BuildingPlacer` is active — set by `main.gd`
 
 ### `selection_overlay.gd` (Node2D inside CanvasLayer)
@@ -244,8 +291,10 @@ Pawn (CharacterBody2D)    pawn.gd
 | `building_placer.gd` | Ghost preview, tile validity, placement confirmation |
 | `placed_building.gd` | Generic placed building — sprite, collision, click area, controller attachment |
 | `castle.gd` | Castle controller — pawn spawning timer, live pawn tracking |
-| `pawn.gd` | Player unit — wander AI, MOVE_TO, selection, push response, health |
-| `unit_selection.gd` | Click and drag-box selection, move order issuing |
+| `barracks.gd` | Barracks controller — warrior spawning timer, live warrior tracking |
+| `pawn.gd` | Player unit — wander AI, MOVE_TO, gather/return loop, selection, push, health |
+| `warrior.gd` | Combat unit — patrol AI, MOVE_TO, selection, push, health |
+| `unit_selection.gd` | Click and drag-box selection, move/gather order issuing |
 | `selection_circle.gd` | Draws flat ellipse indicator at unit feet |
 | `selection_overlay.gd` | Draws drag-select rectangle in screen space |
 
@@ -268,7 +317,7 @@ Pawn (CharacterBody2D)    pawn.gd
 | 0 | Ground | WaterLayer, GroundLayer |
 | 1 | Decorations | Bushes, rocks, water rocks |
 | 2 | Gold / SelectionCircle | Gold stones, unit selection rings |
-| 3 | Units / Buildings | Sheep, pawns, placed buildings |
+| 3 | Units / Buildings | Sheep, pawns, warriors, placed buildings |
 | 4 | Trees | Trees (render in front of everything) |
 | 5 | Wall | Wall segments and bridge sprites |
 
@@ -279,7 +328,7 @@ Pawn (CharacterBody2D)    pawn.gd
 | Node type | Used by | Notes |
 |---|---|---|
 | `StaticBody2D` + `CollisionShape2D` | Trees, gold stones, wall, placed buildings | Impassable |
-| `CharacterBody2D` | Sheep, pawns | Uses `move_and_collide()` |
+| `CharacterBody2D` | Sheep, pawns, warriors | Uses `move_and_collide()` |
 | `Area2D` | Placed buildings (click detection) | `input_pickable = true` |
 | `ShapeCast2D` | BuildingPlacer | Overlap check during ghost preview |
 
@@ -307,10 +356,14 @@ All resources share one `placed: Array[Vector2i]` so nothing overlaps across typ
 | `TILE_SIZE` | all scripts | 64 |
 | `ZOOM_MAX` | main.gd | 2.0 |
 | `MOVE_SPEED` (pawn) | pawn.gd | 50 px/sec |
+| `MOVE_SPEED` (warrior) | warrior.gd | 60 px/sec |
 | `WANDER_RADIUS` (pawn) | pawn.gd | 200 px |
-| `ARRIVAL_RADIUS` (pawn) | pawn.gd | 12 px |
+| `PATROL_RADIUS` (warrior) | warrior.gd | 160 px |
+| `ARRIVAL_RADIUS` | pawn.gd / warrior.gd | 12 px |
 | `MAX_PAWNS` (castle) | castle.gd | 3 |
 | `SPAWN_INTERVAL` (castle) | castle.gd | 5.0 sec |
+| `MAX_WARRIORS` (barracks) | barracks.gd | 4 |
+| `SPAWN_INTERVAL` (barracks) | barracks.gd | 8.0 sec |
 
 ---
 
@@ -325,8 +378,8 @@ All resources share one `placed: Array[Vector2i]` so nothing overlaps across typ
 
 ## What's Not Built Yet
 - Enemy units and spawning
-- Combat system (pawns attacking enemies)
+- Combat system (warriors attacking enemies, pawns defending)
 - Resource costs for building placement
-- Building upgrade UI (castle panel showing live pawns, upgrade options)
+- Building upgrade UI (castle panel showing live pawns, barracks panel showing live warriors)
 - Win/lose game state
-- Other building controllers (barracks, tower, archery, monastery, house)
+- Other building controllers (tower, archery, monastery, house)
