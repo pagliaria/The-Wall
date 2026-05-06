@@ -93,7 +93,7 @@ func _issue_gather_order(resource_node: Node, screen_pos: Vector2) -> void:
 
 func contains_pawns() -> bool:
 	for unit in selected_units:
-		print(unit.name)
+		#print(unit.name)
 		if unit.name.contains("Pawn"):
 			return true
 	return false

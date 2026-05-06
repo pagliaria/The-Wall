@@ -47,7 +47,7 @@ func _spawn_pawn() -> void:
 	pawn.home_node     = parent   # PlacedBuilding StaticBody2D — arrival detected by collision
 	pawn.home_radius   = HOME_INTERACT_RADIUS
 
-	units_layer.add_child(pawn)
+	units_layer.add_child(pawn, true)
 	_live_pawns += 1
 
 	pawn.died.connect(_on_pawn_died)
