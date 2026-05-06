@@ -26,7 +26,7 @@ var _pan_start_cam   := Vector2.ZERO
 # -- Resources ----------------------------------------------------------------
 var _gold : int = 100
 var _wood : int = 50
-var _meat : int = 25
+var _meat : int = 10
 
 var _gold_multiplier = 10
 var _wood_multiplier = 10
@@ -41,8 +41,6 @@ var _meat_multiplier = 1
 @onready var units_layer     : Node2D               = $UnitsLayer
 @onready var unit_selection  : Node2D               = $UnitSelection
 @onready var nav_region      : NavigationRegion2D   = $NavRegion
-
-# Footprint rects no longer needed — nav bake reads scene colliders directly.
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -59,7 +57,7 @@ func _ready() -> void:
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
-	hud.resource_display.set_resources(_gold, _wood, _meat)
+	_push_resources()
 
 # -- Building events ----------------------------------------------------------
 
@@ -75,13 +73,17 @@ func _on_placement_cancelled() -> void:
 
 func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	unit_selection.disabled = false
+
+	# Deduct the building cost.
+	_spend_building_cost(building_id)
+
 	var building := StaticBody2D.new()
 	building.set_script(load("res://scripts/placed_building.gd"))
 	buildings_layer.add_child(building)
 	building.setup(building_id, tile, units_layer)
 	building.building_clicked.connect(_on_building_clicked)
 
-	# Wire castle resource deliveries into the HUD
+	# Wire castle resource deliveries into the HUD.
 	if building_id == "castle":
 		var ctrl : Node = building.get_controller()
 		if ctrl != null and ctrl.has_signal("pawn_delivered_resource"):
@@ -90,12 +92,24 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	# Rebake nav mesh so units path around the new building.
 	_rebake_nav()
 
+func _spend_building_cost(building_id: String) -> void:
+	# Import costs from build_menu — single source of truth lives there.
+	var costs: Dictionary = load("res://scripts/build_menu.gd").BUILDING_COSTS
+	if not costs.has(building_id):
+		return
+	var cost: Dictionary = costs[building_id]
+	_gold -= cost.get("gold", 0)
+	_wood -= cost.get("wood", 0)
+	_meat -= cost.get("meat", 0)
+	_push_resources()
+
+func _push_resources() -> void:
+	hud.update_resources(_gold, _wood, _meat)
+
 func _rebake_nav() -> void:
 	var poly := nav_region.navigation_polygon
 	if poly == null:
 		return
-	# Use the modern parse + bake API. We tell it to parse static body colliders
-	# from the scene tree (which includes all placed buildings), then bake.
 	poly.parsed_geometry_type = NavigationPolygon.PARSED_GEOMETRY_STATIC_COLLIDERS
 	poly.source_geometry_mode = NavigationPolygon.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
 	poly.agent_radius = 32.0
@@ -118,7 +132,7 @@ func _on_resource_delivered(resource_type: String, amount: int) -> void:
 		"gold": _gold += amount * _gold_multiplier
 		"wood": _wood += amount * _wood_multiplier
 		"meat": _meat += amount * _meat_multiplier
-	hud.resource_display.set_resources(_gold, _wood, _meat)
+	_push_resources()
 
 func _on_resource_depleted() -> void:
 	_rebake_nav()
@@ -151,9 +165,9 @@ func _handle_edge_pan(delta: float) -> void:
 	var screen := Vector2(DisplayServer.window_get_size())
 	var move   := Vector2.ZERO
 	var speed  := EDGE_SPEED / camera.zoom.x * delta
-	if mouse.x < EDGE_MARGIN:             move.x = -speed
+	if mouse.x < EDGE_MARGIN:              move.x = -speed
 	elif mouse.x > screen.x - EDGE_MARGIN: move.x =  speed
-	if mouse.y < EDGE_MARGIN:             move.y = -speed
+	if mouse.y < EDGE_MARGIN:              move.y = -speed
 	elif mouse.y > screen.y - EDGE_MARGIN: move.y =  speed
 	camera.position = _clamped(camera.position + move)
 

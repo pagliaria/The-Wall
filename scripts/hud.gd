@@ -27,3 +27,9 @@ func _on_building_selected(building_id: String) -> void:
 
 func _on_build_menu_closed() -> void:
 	pass  # hook here if HUD needs to react to close (e.g. depress button)
+
+# Called by main.gd whenever resources change — forwards to both the display
+# and the build menu so affordability stays in sync.
+func update_resources(gold: int, wood: int, meat: int) -> void:
+	resource_display.set_resources(gold, wood, meat)
+	build_menu.set_resources(gold, wood, meat)

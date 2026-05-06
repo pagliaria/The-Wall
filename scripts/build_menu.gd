@@ -3,6 +3,19 @@ extends Control
 signal building_selected(building_id: String)
 signal closed
 
+# ---------------------------------------------------------------------------
+# Building costs  { building_id: { gold, wood, meat } }
+# Single source of truth — building_placer.gd and main.gd both reference this.
+# ---------------------------------------------------------------------------
+const BUILDING_COSTS: Dictionary = {
+	"castle":    { "gold": 100,   "wood": 50,  "meat": 0  },
+	"barracks":  { "gold": 80,  "wood": 40, "meat": 0  },
+	"archery":   { "gold": 60,  "wood": 60, "meat": 0  },
+	"monastery": { "gold": 50,  "wood": 30, "meat": 0 },
+	"house1":    { "gold": 20,  "wood": 30, "meat": 0  },
+	"tower":     { "gold": 100, "wood": 20, "meat": 0  },
+}
+
 @onready var panel: NinePatchRect = $Panel
 @onready var close_button: TextureButton = $Panel/CloseButton
 @onready var build_buttons: Array[Button] = [
@@ -13,13 +26,27 @@ signal closed
 	$Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/BuildButton,
 	$Panel/MarginContainer/VBox/Grid/TowerCard/VBox/BuildButton,
 ]
+@onready var cost_labels: Array[Label] = [
+	$Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/Cost,
+	$Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/Cost,
+	$Panel/MarginContainer/VBox/Grid/CastleCard/VBox/Cost,
+	$Panel/MarginContainer/VBox/Grid/HouseCard/VBox/Cost,
+	$Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/Cost,
+	$Panel/MarginContainer/VBox/Grid/TowerCard/VBox/Cost,
+]
 
 var _banner_src: Image
+
+# Current player resources — updated by main.gd via hud.gd before the menu opens.
+var _gold: int = 0
+var _wood: int = 0
+var _meat: int = 0
 
 func _ready() -> void:
 	_build_banner_panel()
 	close_button.pressed.connect(_on_close_pressed)
 	_wire_buttons()
+	_populate_cost_labels()
 	await get_tree().process_frame
 	var margin: MarginContainer = $Panel/MarginContainer
 	var content_size := margin.get_combined_minimum_size()
@@ -31,7 +58,16 @@ func _ready() -> void:
 	hide()
 
 func open() -> void:
+	_refresh_affordability()
 	show()
+
+# Called by hud.gd (which gets it from main.gd) whenever resources change.
+func set_resources(gold: int, wood: int, meat: int) -> void:
+	_gold = gold
+	_wood = wood
+	_meat = meat
+	if visible:
+		_refresh_affordability()
 
 func _on_close_pressed() -> void:
 	hide()
@@ -43,6 +79,47 @@ func _wire_buttons() -> void:
 		if building_id.is_empty():
 			continue
 		button.pressed.connect(func(): _on_build_pressed(building_id))
+
+func _populate_cost_labels() -> void:
+	for i in build_buttons.size():
+		var id := String(build_buttons[i].get_meta("building_id", ""))
+		if id.is_empty() or not BUILDING_COSTS.has(id):
+			continue
+		var cost: Dictionary = BUILDING_COSTS[id]
+		cost_labels[i].text = _format_cost(cost)
+
+func _format_cost(cost: Dictionary) -> String:
+	var parts: Array[String] = []
+	if cost.get("gold", 0) > 0:
+		parts.append("G:%d" % cost["gold"])
+	if cost.get("wood", 0) > 0:
+		parts.append("W:%d" % cost["wood"])
+	if cost.get("meat", 0) > 0:
+		parts.append("M:%d" % cost["meat"])
+	if parts.is_empty():
+		return "Free"
+	return "  ".join(parts)
+
+func _refresh_affordability() -> void:
+	for i in build_buttons.size():
+		var id := String(build_buttons[i].get_meta("building_id", ""))
+		var affordable := _can_afford(id)
+		build_buttons[i].disabled = not affordable
+		# Dim the cost label red when unaffordable.
+		if affordable:
+			cost_labels[i].modulate = Color.WHITE
+		else:
+			cost_labels[i].modulate = Color(1.0, 0.4, 0.4)
+
+func _can_afford(building_id: String) -> bool:
+	if not BUILDING_COSTS.has(building_id):
+		return true
+	var cost: Dictionary = BUILDING_COSTS[building_id]
+	return (
+		_gold >= cost.get("gold", 0) and
+		_wood >= cost.get("wood", 0) and
+		_meat >= cost.get("meat", 0)
+	)
 
 func _build_banner_panel() -> void:
 	var src_tex := load("res://assets/UI Elements/UI Elements/Banners/Banner.png") as Texture2D
