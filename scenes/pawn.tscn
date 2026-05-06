@@ -1066,4 +1066,3 @@ script = ExtResource("2_selcircle")
 path_desired_distance = 8.0
 target_desired_distance = 16.0
 radius = 64.0
-debug_enabled = true

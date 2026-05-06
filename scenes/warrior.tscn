@@ -241,7 +241,7 @@ script = ExtResource("1_warrior")
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("warrior_frames")
 animation = &"run"
-frame_progress = 0.474496
+frame_progress = 0.40941
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
@@ -256,4 +256,3 @@ script = ExtResource("2_selcircle")
 path_desired_distance = 8.0
 target_desired_distance = 16.0
 radius = 64.0
-debug_enabled = true

@@ -1,0 +1,197 @@
+[gd_scene load_steps=29 format=3 uid="uid://dy5hnu75ehgdh"]
+
+[ext_resource type="Script" uid="uid://j4eftjusn1mn" path="res://scripts/monk.gd" id="1_monk"]
+[ext_resource type="Script" uid="uid://j5v5w444d8s7" path="res://scripts/selection_circle.gd" id="2_selcircle"]
+[ext_resource type="Texture2D" uid="uid://ghqqd2n0sr8e" path="res://assets/Units/Black Units/Monk/Idle.png" id="3_idle"]
+[ext_resource type="Texture2D" uid="uid://dc3imwrl1dgwn" path="res://assets/Units/Black Units/Monk/Run.png" id="4_run"]
+[ext_resource type="Texture2D" uid="uid://dy2u6jqffv4bj" path="res://assets/Units/Black Units/Monk/Heal.png" id="5_heal"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pa8bx"]
+atlas = ExtResource("5_heal")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lynu3"]
+atlas = ExtResource("5_heal")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ye332"]
+atlas = ExtResource("5_heal")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6kcii"]
+atlas = ExtResource("5_heal")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ocwry"]
+atlas = ExtResource("5_heal")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_po621"]
+atlas = ExtResource("5_heal")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jhnc8"]
+atlas = ExtResource("5_heal")
+region = Rect2(1152, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_512te"]
+atlas = ExtResource("5_heal")
+region = Rect2(1344, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1wixi"]
+atlas = ExtResource("5_heal")
+region = Rect2(1536, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5x47c"]
+atlas = ExtResource("5_heal")
+region = Rect2(1728, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3wdkf"]
+atlas = ExtResource("5_heal")
+region = Rect2(1920, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_0"]
+atlas = ExtResource("3_idle")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_1"]
+atlas = ExtResource("3_idle")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_2"]
+atlas = ExtResource("3_idle")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_3"]
+atlas = ExtResource("3_idle")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_4"]
+atlas = ExtResource("3_idle")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="idle_5"]
+atlas = ExtResource("3_idle")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_0"]
+atlas = ExtResource("4_run")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_1"]
+atlas = ExtResource("4_run")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_2"]
+atlas = ExtResource("4_run")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="run_3"]
+atlas = ExtResource("4_run")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="SpriteFrames" id="monk_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pa8bx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lynu3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ye332")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6kcii")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ocwry")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_po621")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jhnc8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_512te")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1wixi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5x47c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3wdkf")
+}],
+"loop": false,
+"name": &"heal",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("idle_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("idle_5")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("run_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("run_3")
+}],
+"loop": true,
+"name": &"run",
+"speed": 8.0
+}]
+
+[sub_resource type="CircleShape2D" id="monk_circle"]
+radius = 18.0
+
+[node name="Monk" type="CharacterBody2D"]
+script = ExtResource("1_monk")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("monk_frames")
+animation = &"run"
+frame_progress = 0.972969
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 10)
+shape = SubResource("monk_circle")
+
+[node name="SelectionCircle" type="Node2D" parent="."]
+visible = false
+z_index = 2
+script = ExtResource("2_selcircle")
+
+[node name="NavAgent" type="NavigationAgent2D" parent="."]
+path_desired_distance = 8.0
+target_desired_distance = 16.0
+radius = 64.0

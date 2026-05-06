@@ -86,7 +86,13 @@ func _attach_controller(id: String) -> void:
 			ctrl.name          = "ArcheryController"
 			add_child(ctrl)
 			ctrl.units_layer   = units_layer
-		# Future: "tower", "monastery", "house1"
+		"monastery":
+			var ctrl          := Node.new()
+			ctrl.set_script(load("res://scripts/monastery.gd"))
+			ctrl.name          = "MonasteryController"
+			add_child(ctrl)
+			ctrl.units_layer   = units_layer
+		# Future: "tower", "house1"
 
 func _on_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:

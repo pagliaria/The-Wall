@@ -36,7 +36,7 @@ func _spawn_warrior() -> void:
 	var below    := Vector2i(tile.x, tile.y + 1)
 	warrior.position = Vector2(
 		below.x * TILE_SIZE + TILE_SIZE * 0.5,
-		below.y * TILE_SIZE + TILE_SIZE * 0.5
+		below.y * TILE_SIZE + TILE_SIZE * 1
 	)
 	warrior.z_index = 3
 

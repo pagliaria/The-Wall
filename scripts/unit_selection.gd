@@ -91,6 +91,13 @@ func _issue_gather_order(resource_node: Node, screen_pos: Vector2) -> void:
 			unit.gather_resource(resource_node, resource_node.collision_body)
 	_get_overlay().show_ping(screen_pos)
 
+func contains_pawns() -> bool:
+	for unit in selected_units:
+		print(unit.name)
+		if unit.name.contains("Pawn"):
+			return true
+	return false
+
 func _issue_move_order(screen_pos: Vector2) -> void:
 	var world_target := _screen_to_world(screen_pos)
 	var count        := selected_units.size()
@@ -118,7 +125,7 @@ func _update_cursor(screen_pos: Vector2) -> void:
 		_reset_cursor()
 		return
 	var world_pos := _screen_to_world(screen_pos)
-	if _is_over_resource(world_pos):
+	if contains_pawns() and _is_over_resource(world_pos):
 		if not _gather_cursor_active:
 			Input.set_custom_mouse_cursor(CURSOR_GATHER, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
 			_gather_cursor_active = true
