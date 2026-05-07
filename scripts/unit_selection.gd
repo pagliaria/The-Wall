@@ -208,6 +208,9 @@ func _deselect_all() -> void:
 	selected_units.clear()
 	_reset_cursor()
 
+func clear_selection() -> void:
+	_deselect_all()
+
 func _on_unit_died(unit: Node) -> void:
 	selected_units.erase(unit)
 	if selected_units.is_empty():

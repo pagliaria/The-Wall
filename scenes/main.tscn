@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=31 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -19,6 +19,7 @@
 [ext_resource type="Texture2D" uid="uid://c5fkle31ll17f" path="res://assets/UI Elements/UI Elements/Ribbons/BigRibbons.png" id="15_0ld40"]
 [ext_resource type="Script" uid="uid://spnm5nytjrqx" path="res://scripts/selection_overlay.gd" id="15_overlay"]
 [ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="16_gqmmt"]
+[ext_resource type="Script" uid="uid://bari6wkicm3ly" path="res://scripts/battlefield_overlay.gd" id="17_battlefield"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -207,6 +208,16 @@ shape = SubResource("RectangleShape2D_muem4")
 z_index = 3
 script = ExtResource("3_spawner")
 
+[node name="BattlefieldOverlay" type="Node2D" parent="."]
+z_index = 1
+script = ExtResource("17_battlefield")
+
+[node name="EnemyZone" type="Polygon2D" parent="BattlefieldOverlay"]
+color = Color(0.72, 0.22, 0.22, 0.12)
+
+[node name="FriendlyZone" type="Polygon2D" parent="BattlefieldOverlay"]
+color = Color(0.22, 0.56, 0.24, 0.1)
+
 [node name="TownZone" type="Node2D" parent="."]
 position = Vector2(1280, 576)
 
@@ -327,6 +338,7 @@ offset_bottom = 47.0
 texture = SubResource("AtlasTexture_yc10j")
 
 [node name="ribbon_mid5" type="TextureRect" parent="HUD/Ribbon2"]
+layout_mode = 0
 offset_left = -60.0
 offset_top = -54.0
 offset_right = 3.0
@@ -350,6 +362,7 @@ offset_bottom = 47.0
 texture = SubResource("AtlasTexture_yc10j")
 
 [node name="ribbon_mid6" type="TextureRect" parent="HUD/Ribbon2"]
+layout_mode = 0
 offset_left = -112.0
 offset_top = -54.0
 offset_right = -49.0

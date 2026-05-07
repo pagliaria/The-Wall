@@ -86,9 +86,13 @@ func _on_wave_countdown_changed(seconds: float) -> void:
 
 func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
+	unit_selection.clear_selection()
+	unit_selection.disabled = true
 
 func _on_wave_ended(player_won: bool) -> void:
 	hud.set_wave_ended(player_won)
+	if not building_placer.is_placing():
+		unit_selection.disabled = false
 
 # =========================================================================== #
 #  Castle prompt

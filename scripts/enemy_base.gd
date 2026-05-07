@@ -26,7 +26,7 @@ const WANDER_MAX_Y = 1520.0
 var faction : String = "enemy"
 var hp      : int    = 0
 
-enum State { IDLE, MILL, BATTLE, ATTACKING, DEAD }
+enum State { IDLE, BATTLE, ATTACKING, DEAD }
 
 var _state        : State   = State.IDLE
 var _state_timer  : float   = 0.0
@@ -64,7 +64,7 @@ func _initial_state() -> void:
 	# If start_battle() already fired before this deferred call, stay in BATTLE.
 	if _battle_ready:
 		return
-	_enter_state(State.MILL)
+	_enter_state(State.IDLE)
 
 func _physics_process(delta: float) -> void:
 	if _state == State.DEAD:
@@ -88,13 +88,7 @@ func _physics_process(delta: float) -> void:
 
 	match _state:
 		State.IDLE:
-			if _state_timer >= _state_dur:
-				_enter_state(State.MILL)
-
-		State.MILL:
-			_do_nav_move(delta)
-			if _nav.is_navigation_finished() or _state_timer >= _state_dur:
-				_enter_state(State.IDLE if _rng.randf() > 0.5 else State.MILL)
+			return
 
 		State.BATTLE:
 			_do_battle(delta)
@@ -125,22 +119,6 @@ func _enter_state(new_state: State) -> void:
 		State.IDLE:
 			_state_dur = _rng.randf_range(idle_time_min, idle_time_max)
 			_on_enter_idle_state()
-
-		State.MILL:
-			_state_dur = _rng.randf_range(move_time_min, move_time_max)
-			var to_home := _spawn_pos - position
-			var dist    := to_home.length()
-			var dir     : Vector2
-			if dist > patrol_radius:
-				dir = to_home.normalized().rotated(_rng.randf_range(-0.5, 0.5))
-			else:
-				dir = Vector2.RIGHT.rotated(_rng.randf_range(-PI, PI))
-			var raw := position + dir * _rng.randf_range(64.0, patrol_radius)
-			_nav.target_position = Vector2(
-				clampf(raw.x, WANDER_MIN_X, WANDER_MAX_X),
-				clampf(raw.y, WANDER_MIN_Y, WANDER_MAX_Y)
-			)
-			_on_enter_mill_state()
 
 		State.BATTLE:
 			_on_enter_battle_state()

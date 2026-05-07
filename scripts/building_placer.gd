@@ -57,6 +57,9 @@ func cancel_placement() -> void:
 	_building_id = ""
 	emit_signal("placement_cancelled")
 
+func is_placing() -> bool:
+	return _active
+
 func _process(_delta: float) -> void:
 	if not _active:
 		return
