@@ -334,9 +334,7 @@ script = ExtResource("1_warrior")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("warrior_frames")
-animation = &"death"
-frame = 9
-frame_progress = 1.0
+animation = &"idle"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
@@ -356,10 +354,10 @@ radius = 64.0
 visible = false
 layout_mode = 3
 anchors_preset = 0
-offset_left = -17.0
-offset_top = -63.0
-offset_right = 23.0
-offset_bottom = -23.0
+offset_left = -9.0
+offset_top = -61.0
+offset_right = 31.0
+offset_bottom = -21.0
 scale = Vector2(0.75, 0.75)
 
 [node name="left" type="TextureRect" parent="HpBar"]
