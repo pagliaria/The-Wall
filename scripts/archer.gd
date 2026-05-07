@@ -34,7 +34,7 @@ var _shooting     : bool  = false  # true while shoot animation is playing
 func _on_unit_ready() -> void:
 	max_hp = 10
 	hp     = 10
-	_sprite.animation_finished.connect(_on_shoot_animation_finished)
+	#_sprite.animation_finished.connect(_on_shoot_animation_finished)
 	_enter_state(State.IDLE)
 
 func _process_state(delta: float) -> void:
@@ -129,7 +129,7 @@ func update_battle_target(enemies: Array) -> void:
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
-		_sprite.play("idle")
+		_enter_state(State.BATTLE)
 		return
 
 	var dist := position.distance_to(_target.position)
@@ -161,20 +161,29 @@ func _do_shoot() -> void:
 		_shooting = false
 		return
 	_sprite.flip_h = _target.position.x < position.x
-	_sprite.play("shoot")
+	var anim_name = "shoot"
+	_sprite.play(anim_name)
+	# Get frames and fps to calculate duration
+	var frames = _sprite.sprite_frames.get_frame_count(anim_name)
+	var fps = _sprite.sprite_frames.get_animation_speed(anim_name)
+	var total_duration = frames / fps
+	
+	# Wait for half the animation
+	await get_tree().create_timer(total_duration / 2.0).timeout
+	_on_shoot_animation_finished()
 
 func _on_shoot_animation_finished() -> void:
 	if _state != State.SHOOTING or not _shooting:
 		return
 	# Spawn the arrow at the archer's position aimed at the target
 	if is_instance_valid(_target) and _target.hp > 0:
-		var arrow      := ARROW_SCENE.instantiate()
-		var dir        : Vector2 = ((_target.position) - position).normalized()
+		var arrow := ARROW_SCENE.instantiate()
 		get_parent().add_child(arrow)
 		arrow.global_position = global_position
-		arrow.init(_target, dir, ATTACK_DAMAGE)
+		arrow.init(_target, ATTACK_DAMAGE)
 	_shooting     = false
 	_attack_timer = ATTACK_RATE
+	await _sprite.animation_finished
 	_sprite.play("idle")
 
 func _pick_target(enemies: Array) -> void:

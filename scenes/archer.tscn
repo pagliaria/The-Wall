@@ -252,7 +252,9 @@ script = ExtResource("1_archer")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("archer_frames")
-animation = &"idle"
+animation = &"shoot"
+frame = 7
+frame_progress = 1.0
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
