@@ -12,8 +12,8 @@ signal died
 @export var move_time_min : float = 1.0
 @export var move_time_max : float = 2.5
 
-const SEPARATION_RADIUS = 22.0
-const SEPARATION_FORCE  = 180.0
+const SEPARATION_RADIUS := 20.0
+const SEPARATION_FORCE  := 30.0
 
 const WANDER_MIN_X = 32.0
 const WANDER_MAX_X = 580.0
@@ -68,6 +68,7 @@ func _physics_process(delta: float) -> void:
 
 	match _state:
 		State.IDLE:
+			_apply_separation(delta)
 			return
 
 		State.BATTLE:
