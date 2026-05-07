@@ -179,8 +179,8 @@ func _is_in_enemy_battlefield(pos: Vector2) -> bool:
 	return pos.x >= BATTLEFIELD_LEFT and pos.x < BATTLEFIELD_RIGHT
 
 func _do_retarget() -> void:
-	_enemies = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0 and _is_in_enemy_battlefield(e.global_position))
-	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0 and _is_in_player_battlefield(u.global_position))
+	_enemies = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
+	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	for e in _enemies:
 		e.update_target(_player_units)
 	for u in _player_units:
@@ -188,8 +188,8 @@ func _do_retarget() -> void:
 			u.update_battle_target(_enemies)
 
 func _check_battle_over() -> void:
-	_enemies = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0 and _is_in_enemy_battlefield(e.global_position))
-	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0 and _is_in_player_battlefield(u.global_position))
+	_enemies = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
+	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	if _enemies.is_empty():
 		_end_wave(true)
 	elif _player_units.is_empty():

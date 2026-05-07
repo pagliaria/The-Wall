@@ -298,14 +298,29 @@ offset_right = 0.0
 offset_bottom = 54.0
 grow_horizontal = 0
 
-[node name="Ribbon2" type="Panel" parent="HUD"]
-offset_left = 1326.0
+[node name="WaveTimer" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_right = 180.0
+offset_bottom = 64.0
+grow_horizontal = 2
+
+[node name="Ribbon2" type="Panel" parent="HUD/WaveTimer"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -65.0
 offset_top = 27.0
-offset_right = 1456.0
+offset_right = 65.0
 offset_bottom = 61.0
+grow_horizontal = 2
 scale = Vector2(0.5, 0.5)
 
-[node name="ribbon_left" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_left" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = -212.0
 offset_top = -62.0
@@ -313,7 +328,7 @@ offset_right = -108.0
 offset_bottom = 61.0
 texture = SubResource("AtlasTexture_0ld40")
 
-[node name="ribbon_right" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_right" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = 249.0
 offset_top = -53.0
@@ -321,7 +336,7 @@ offset_right = 356.0
 offset_bottom = 56.0
 texture = SubResource("AtlasTexture_gqmmt")
 
-[node name="ribbon_mid1" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_mid1" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = 2.0
 offset_top = -53.0
@@ -329,7 +344,7 @@ offset_right = 65.0
 offset_bottom = 47.0
 texture = SubResource("AtlasTexture_yc10j")
 
-[node name="ribbon_mid2" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_mid2" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = 64.0
 offset_top = -53.0
@@ -337,7 +352,7 @@ offset_right = 127.0
 offset_bottom = 47.0
 texture = SubResource("AtlasTexture_yc10j")
 
-[node name="ribbon_mid5" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_mid5" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = -60.0
 offset_top = -54.0
@@ -345,7 +360,7 @@ offset_right = 3.0
 offset_bottom = 46.0
 texture = SubResource("AtlasTexture_yc10j")
 
-[node name="ribbon_mid3" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_mid3" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = 126.0
 offset_top = -53.0
@@ -353,7 +368,7 @@ offset_right = 189.0
 offset_bottom = 47.0
 texture = SubResource("AtlasTexture_yc10j")
 
-[node name="ribbon_mid4" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_mid4" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = 188.0
 offset_top = -53.0
@@ -361,7 +376,7 @@ offset_right = 251.0
 offset_bottom = 47.0
 texture = SubResource("AtlasTexture_yc10j")
 
-[node name="ribbon_mid6" type="TextureRect" parent="HUD/Ribbon2"]
+[node name="ribbon_mid6" type="TextureRect" parent="HUD/WaveTimer/Ribbon2"]
 layout_mode = 0
 offset_left = -112.0
 offset_top = -54.0
@@ -369,11 +384,16 @@ offset_right = -49.0
 offset_bottom = 46.0
 texture = SubResource("AtlasTexture_yc10j")
 
-[node name="WaveLabel" type="Label" parent="HUD"]
-offset_left = 1266.0
+[node name="WaveLabel" type="Label" parent="HUD/WaveTimer"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -123.0
 offset_top = 1.0
-offset_right = 1454.0
+offset_right = 65.0
 offset_bottom = 49.0
+grow_horizontal = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)

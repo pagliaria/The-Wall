@@ -180,7 +180,7 @@ script = ExtResource("1_monk")
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("monk_frames")
 animation = &"run"
-frame_progress = 0.912627
+frame_progress = 0.024861
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
