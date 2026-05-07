@@ -170,9 +170,9 @@ func _do_shoot() -> void:
 	
 	# Wait for half the animation
 	await get_tree().create_timer(total_duration / 2.0).timeout
-	_on_shoot_animation_finished()
+	_spawn_arrow()
 
-func _on_shoot_animation_finished() -> void:
+func _spawn_arrow() -> void:
 	if _state != State.SHOOTING or not _shooting:
 		return
 	# Spawn the arrow at the archer's position aimed at the target
