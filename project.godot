@@ -22,3 +22,7 @@ window/size/viewport_height=1080
 window/size/mode=3
 mouse_cursor/custom_image="uid://bnhogala7vd0d"
 mouse_cursor/custom_image_hotspot=Vector2(20, 18)
+
+[autoload]
+
+ResourceManager="*res://scripts/resource_manager.gd"

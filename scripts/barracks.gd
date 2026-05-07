@@ -6,6 +6,7 @@ extends Node
 
 const MAX_WARRIORS    = 4
 const SPAWN_INTERVAL  = 8.0
+const MEAT_COST       = 3
 const TILE_SIZE       = 64
 
 const WARRIOR_SCENE = preload("res://scenes/warrior.tscn")
@@ -20,6 +21,8 @@ func _process(delta: float) -> void:
 	if _live_warriors >= MAX_WARRIORS:
 		_spawn_timer = 0.0
 		return
+	if not ResourceManager.has_meat(MEAT_COST):
+		return
 	_spawn_timer += delta
 	if _spawn_timer >= SPAWN_INTERVAL:
 		_spawn_timer = 0.0
@@ -29,6 +32,8 @@ func _spawn_warrior() -> void:
 	if units_layer == null:
 		push_error("Barracks: units_layer not set")
 		return
+	if not ResourceManager.spend_meat(MEAT_COST):
+		return  # not enough meat — try again next interval
 
 	var warrior  := WARRIOR_SCENE.instantiate() as CharacterBody2D
 	var parent   := get_parent()

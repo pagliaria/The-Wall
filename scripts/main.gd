@@ -18,14 +18,6 @@ var _panning         := false
 var _pan_start_mouse := Vector2.ZERO
 var _pan_start_cam   := Vector2.ZERO
 
-var _gold : int = 100
-var _wood : int = 50
-var _meat : int = 10
-
-var _gold_multiplier = 10
-var _wood_multiplier = 10
-var _meat_multiplier = 1
-
 var _castle_placed := false
 
 @onready var camera          : Camera2D           = $Camera2D
@@ -60,6 +52,7 @@ func _ready() -> void:
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
 	_push_resources()
+	ResourceManager.resources_changed.connect(_on_resources_changed)
 	hud.set_build_button_enabled(false)
 	_show_castle_prompt()
 	_setup_wave_manager()
@@ -160,14 +153,11 @@ func _spend_building_cost(building_id: String) -> void:
 	var costs: Dictionary = load("res://scripts/build_menu.gd").BUILDING_COSTS
 	if not costs.has(building_id):
 		return
-	var cost: Dictionary = costs[building_id]
-	_gold -= cost.get("gold", 0)
-	_wood -= cost.get("wood", 0)
-	_meat -= cost.get("meat", 0)
+	ResourceManager.spend(costs[building_id])
 	_push_resources()
 
 func _push_resources() -> void:
-	hud.update_resources(_gold, _wood, _meat)
+	hud.update_resources(ResourceManager.gold, ResourceManager.wood, ResourceManager.meat)
 
 func _rebake_nav() -> void:
 	var poly := nav_region.navigation_polygon
@@ -193,10 +183,10 @@ func _on_building_clicked(_building: Node) -> void:
 # =========================================================================== #
 
 func _on_resource_delivered(resource_type: String, amount: int) -> void:
-	match resource_type:
-		"gold": _gold += amount * _gold_multiplier
-		"wood": _wood += amount * _wood_multiplier
-		"meat": _meat += amount * _meat_multiplier
+	ResourceManager.add(resource_type, amount)
+	_push_resources()
+
+func _on_resources_changed(_gold: int, _wood: int, _meat: int) -> void:
 	_push_resources()
 
 func _on_resource_depleted() -> void:
