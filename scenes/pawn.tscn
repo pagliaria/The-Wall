@@ -1047,6 +1047,7 @@ animations = [{
 radius = 18.0
 
 [node name="Pawn" type="CharacterBody2D"]
+collision_layer = 4
 script = ExtResource("1_pawn")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]

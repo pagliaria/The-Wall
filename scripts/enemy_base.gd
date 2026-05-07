@@ -12,11 +12,8 @@ signal died
 @export var move_time_min : float = 1.0
 @export var move_time_max : float = 2.5
 
-const PUSH_DISTANCE        = 10.0
-const PUSH_SPEED           = 300.0
-const YIELD_TIME           = 0.2
-const STALEMATE_RESET_TIME = 0.6
-const STALEMATE_COLLISIONS = 1
+const SEPARATION_RADIUS = 22.0
+const SEPARATION_FORCE  = 180.0
 
 const WANDER_MIN_X = 32.0
 const WANDER_MAX_X = 580.0
@@ -38,15 +35,12 @@ var _battle_ready : bool    = false   # set true once start_battle() is called
 var _target       : Node  = null
 var _attack_timer : float = 0.0
 
-var _push_target     : Vector2 = Vector2.ZERO
-var _is_being_pushed : bool    = false
-var _yield_timer     : float   = 0.0
-var _last_blocker_id : int     = -1
-var _block_count     : int     = 0
-var _block_timer     : float   = 0.0
+@onready var _sprite  : AnimatedSprite2D  = $Sprite
+@onready var _nav     : NavigationAgent2D = $NavAgent
+@onready var _hp_bar  : Control           = $HpBar
+@onready var _hp_fill : TextureRect       = $HpBar/health
 
-@onready var _sprite : AnimatedSprite2D  = $Sprite
-@onready var _nav    : NavigationAgent2D = $NavAgent
+const HP_FILL_FULL_SCALE_X := 1.3
 
 # =========================================================================== #
 #  Lifecycle
@@ -68,20 +62,6 @@ func _initial_state() -> void:
 
 func _physics_process(delta: float) -> void:
 	if _state == State.DEAD:
-		return
-
-	if _yield_timer > 0.0:
-		_yield_timer = maxf(0.0, _yield_timer - delta)
-		return
-
-	if _block_timer > 0.0:
-		_block_timer = maxf(0.0, _block_timer - delta)
-		if _block_timer == 0.0:
-			_last_blocker_id = -1
-			_block_count = 0
-
-	if _is_being_pushed:
-		_do_push_step(delta)
 		return
 
 	_state_timer += delta
@@ -176,13 +156,11 @@ func _pick_target(units: Array) -> void:
 # =========================================================================== #
 
 func _do_nav_move(delta: float) -> void:
-	# In battle mode, ignore nav_finished — the target keeps moving so we
-	# always want to be steering. Only skip if we literally have no path yet.
 	if _state != State.BATTLE and _nav.is_navigation_finished():
+		_apply_separation(delta)
 		return
 
 	var next   := _nav.get_next_path_position()
-	# If nav has no path, next == position; fall back to direct movement toward target
 	var dir : Vector2
 	if next.distance_to(position) < 2.0 and _target != null and is_instance_valid(_target):
 		dir = (position.direction_to(_target.position))
@@ -193,64 +171,27 @@ func _do_nav_move(delta: float) -> void:
 		return
 
 	_sprite.flip_h = dir.x < 0
-	var motion    := dir * move_speed * delta
-	var collision := move_and_collide(motion)
-	if collision:
-		if not _handle_unit_collision(collision, dir, motion):
-			move_and_collide(dir.bounce(collision.get_normal()).normalized() * move_speed * delta)
+	move_and_collide(dir * move_speed * delta)
+	_apply_separation(delta)
 
 # =========================================================================== #
-#  Push
+#  Separation
 # =========================================================================== #
 
-func request_push(direction: Vector2, distance: float, requester_pos: Vector2 = Vector2.ZERO) -> void:
-	var forward := direction.normalized()
-	if forward == Vector2.ZERO:
+func _apply_separation(delta: float) -> void:
+	var parent := get_parent()
+	if parent == null:
 		return
-	var side_a    := Vector2(-forward.y, forward.x)
-	var side_b    := -side_a
-	var preferred := side_a
-	if requester_pos != Vector2.ZERO:
-		var to_self := position - requester_pos
-		if to_self.dot(side_b) > to_self.dot(side_a):
-			preferred = side_b
-	_push_target     = position + preferred * distance
-	_is_being_pushed = true
-	_yield_timer     = YIELD_TIME
-
-func _do_push_step(delta: float) -> void:
-	var to_target := _push_target - position
-	if to_target.length() <= 2.0:
-		position         = _push_target
-		_is_being_pushed = false
-		return
-	var step := to_target.normalized() * PUSH_SPEED * delta
-	if step.length() > to_target.length():
-		step = to_target
-	var collision := move_and_collide(step)
-	if collision:
-		_is_being_pushed = false
-
-func _handle_unit_collision(collision: KinematicCollision2D, move_dir: Vector2, motion: Vector2) -> bool:
-	var collider := collision.get_collider()
-	if collider == null or collider == self or not collider.has_method("request_push"):
-		return false
-	var collider_id := collider.get_instance_id()
-	if collider_id == _last_blocker_id and _block_timer > 0.0:
-		_block_count += 1
-	else:
-		_last_blocker_id = collider_id
-		_block_count = 1
-	_block_timer = STALEMATE_RESET_TIME
-	collider.request_push(move_dir, PUSH_DISTANCE, position)
-	if _block_count >= STALEMATE_COLLISIONS:
-		request_push(-move_dir, PUSH_DISTANCE * 0.75, collider.global_position)
-		_yield_timer = YIELD_TIME
-		_block_count = 0
-		_last_blocker_id = -1
-		return true
-	move_and_collide(motion)
-	return true
+	var sep := Vector2.ZERO
+	for sibling in parent.get_children():
+		if sibling == self or not sibling is CharacterBody2D:
+			continue
+		var diff : Vector2 = position - sibling.position
+		var dist := diff.length()
+		if dist > 0.0 and dist < SEPARATION_RADIUS:
+			sep += diff.normalized() * (SEPARATION_RADIUS - dist)
+	if sep != Vector2.ZERO:
+		move_and_collide(sep.normalized() * SEPARATION_FORCE * delta)
 
 # =========================================================================== #
 #  Health
@@ -260,8 +201,16 @@ func take_damage(amount: int) -> void:
 	if _state == State.DEAD:
 		return
 	hp -= amount
+	_update_hp_bar()
 	if hp <= 0:
 		die()
+
+func _update_hp_bar() -> void:
+	if not is_instance_valid(_hp_bar):
+		return
+	var ratio := clampf(float(hp) / float(max_hp), 0.0, 1.0)
+	_hp_bar.visible = ratio < 1.0
+	_hp_fill.scale.x = HP_FILL_FULL_SCALE_X * ratio
 
 func die() -> void:
 	_state = State.DEAD

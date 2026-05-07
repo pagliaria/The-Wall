@@ -37,17 +37,9 @@ const IDLE_TIME_MAX = 3.5
 const MOVE_TIME_MIN = 0.8
 const MOVE_TIME_MAX = 2.0
 const MOVE_SPEED    = 50.0
-const PUSH_DISTANCE   = 10.0
-const PUSH_SPEED      = 300.0
-const YIELD_TIME    = 0.2
-const STALEMATE_RESET_TIME = 0.6
-const STALEMATE_COLLISIONS = 1
-const WANDER_RADIUS = 160.0
-const ARRIVAL_RADIUS = 12.0  # used only for plain MOVE_TO (ground clicks)
-
 const STUCK_TIMEOUT = 5.0
-# Wander bounds (world space) — nav mesh keeps us inside, but we also
-# clamp the random target so we never pick a point in water or enemy wilds.
+const WANDER_RADIUS  = 160.0
+const ARRIVAL_RADIUS = 12.0
 const WANDER_MIN_X := float((COL_TOWN_START + 1) * TILE_SIZE)
 const WANDER_MAX_X := float((MAP_COLS - 2)       * TILE_SIZE)
 const WANDER_MIN_Y := float((WATER_ROWS + 1)     * TILE_SIZE)
@@ -86,12 +78,8 @@ var _spawn_pos   : Vector2 = Vector2.ZERO
 var _rng         := RandomNumberGenerator.new()
 
 # -- Push ---------------------------------------------------------------------
-var _push_target     : Vector2 = Vector2.ZERO
-var _is_being_pushed : bool    = false
-var _yield_timer     : float   = 0.0
-var _last_blocker_id : int     = -1
-var _block_count     : int     = 0
-var _block_timer     : float   = 0.0
+const SEPARATION_RADIUS := 20.0
+const SEPARATION_FORCE  := 30.0
 
 # -- Gathering ----------------------------------------------------------------
 var _resource_node   : Node   = null  # ResourceNode script instance
@@ -121,20 +109,6 @@ func _ready() -> void:
 	call_deferred("_enter_state", State.MOVE)
 
 func _physics_process(delta: float) -> void:
-	if _yield_timer > 0.0:
-		_yield_timer = maxf(0.0, _yield_timer - delta)
-		return
-
-	if _block_timer > 0.0:
-		_block_timer = maxf(0.0, _block_timer - delta)
-		if _block_timer == 0.0:
-			_last_blocker_id = -1
-			_block_count = 0
-
-	if _is_being_pushed:
-		_do_push_step(delta)
-		return
-
 	_state_timer += delta
 
 	match _state:
@@ -150,6 +124,7 @@ func _physics_process(delta: float) -> void:
 			#if position.distance_to(_move_target) <= ARRIVAL_RADIUS:
 				#_enter_state(State.IDLE)
 		State.IDLE:
+			_apply_separation(delta)
 			if !has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.GATHER:
@@ -235,23 +210,19 @@ func _do_nav_move(delta: float) -> void:
 	if _state != State.MOVE:
 		has_moved = true
 	if _nav_agent.is_navigation_finished():
+		_apply_separation(delta)
 		return
 	var next_point := _nav_agent.get_next_path_position()
 	_move_dir      = (next_point - position).normalized()
 	_sprite.flip_h = _move_dir.x < 0
-	var motion := _move_dir * MOVE_SPEED * delta
-	var collision := move_and_collide(motion)
-	if collision:
-		if not _handle_unit_collision(collision, motion):
-			_move_dir = _move_dir.bounce(collision.get_normal()).normalized()
-			move_and_collide(_move_dir * MOVE_SPEED * delta)
+	move_and_collide(_move_dir * MOVE_SPEED * delta)
+	_apply_separation(delta)
 			
 # Nav-steered movement toward a physics body. Uses nav for steering, but
 # treats an actual collision with the target body as the arrival signal.
 # Also refreshes the nav target each frame so it tracks moving targets (sheep).
 func _do_nav_move_to_body(delta: float, target_body: Node, target_pos: Vector2, arrival_radius: float, on_arrive: State) -> void:
 	has_moved = true
-	# Keep the nav target fresh (important for moving resources like sheep)
 	_nav_agent.target_position = target_pos
 
 	if position.distance_to(target_pos) <= arrival_radius:
@@ -266,17 +237,13 @@ func _do_nav_move_to_body(delta: float, target_body: Node, target_pos: Vector2, 
 	var next_point := _nav_agent.get_next_path_position()
 	_move_dir      = (next_point - position).normalized()
 	_sprite.flip_h = _move_dir.x < 0
-	var motion    := _move_dir * MOVE_SPEED * delta
-	var collision := move_and_collide(motion)
+	var collision  := move_and_collide(_move_dir * MOVE_SPEED * delta)
 	if collision:
 		var collider := collision.get_collider()
-		# Collision-based arrival: physically touching the target body
 		if target_body != null and _is_target(collider, target_body):
 			_enter_state(on_arrive)
 			return
-		if not _handle_unit_collision(collision, motion):
-			_move_dir = _move_dir.bounce(collision.get_normal()).normalized()
-			move_and_collide(_move_dir * MOVE_SPEED * delta)
+	_apply_separation(delta)
 
 # Checks collider and its parent chain so children of the target body also match.
 func _is_target(collider: Node, target: Node) -> bool:
@@ -363,58 +330,20 @@ func move_to(target: Vector2) -> void:
 	_move_target   = target
 	_enter_state(State.MOVE_TO)
 
-func request_push(direction: Vector2, distance: float, requester_pos: Vector2 = Vector2.ZERO) -> void:
-	var forward := direction.normalized()
-	if forward == Vector2.ZERO:
+func _apply_separation(delta: float) -> void:
+	var parent := get_parent()
+	if parent == null:
 		return
-	var side_a    := Vector2(-forward.y, forward.x)
-	var side_b    := -side_a
-	var preferred := side_a
-	if requester_pos != Vector2.ZERO:
-		var to_self := position - requester_pos
-		if to_self.dot(side_b) > to_self.dot(side_a):
-			preferred = side_b
-	_push_target     = position + preferred * distance
-	_is_being_pushed = true
-	_yield_timer     = YIELD_TIME
-
-func _do_push_step(delta: float) -> void:
-	var to_target := _push_target - position
-	if to_target.length() <= 2.0:
-		position         = _push_target
-		_is_being_pushed = false
-		return
-	var step := to_target.normalized() * PUSH_SPEED * delta
-	if step.length() > to_target.length():
-		step = to_target
-	var collision := move_and_collide(step)
-	if collision:
-		_is_being_pushed = false
-
-func _handle_unit_collision(collision: KinematicCollision2D, motion: Vector2) -> bool:
-	var collider := collision.get_collider()
-	if collider == null or collider == self or not collider.has_method("request_push"):
-		return false
-
-	var collider_id := collider.get_instance_id()
-	if collider_id == _last_blocker_id and _block_timer > 0.0:
-		_block_count += 1
-	else:
-		_last_blocker_id = collider_id
-		_block_count = 1
-	_block_timer = STALEMATE_RESET_TIME
-
-	collider.request_push(_move_dir, PUSH_DISTANCE, position)
-
-	if _block_count >= STALEMATE_COLLISIONS:
-		request_push(-_move_dir, PUSH_DISTANCE * 0.75, collider.global_position)
-		_yield_timer = YIELD_TIME
-		_block_count = 0
-		_last_blocker_id = -1
-		return true
-
-	move_and_collide(motion)
-	return true
+	var sep := Vector2.ZERO
+	for sibling in parent.get_children():
+		if sibling == self or not sibling is CharacterBody2D:
+			continue
+		var diff : Vector2 = position - sibling.position
+		var dist := diff.length()
+		if dist > 0.0 and dist < SEPARATION_RADIUS:
+			sep += diff.normalized() * (SEPARATION_RADIUS - dist)
+	if sep != Vector2.ZERO:
+		move_and_collide(sep.normalized() * SEPARATION_FORCE * delta)
 
 # -- Combat / health ----------------------------------------------------------
 

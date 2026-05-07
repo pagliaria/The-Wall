@@ -253,7 +253,6 @@ atlas = ExtResource("8_usrg6")
 
 [node name="EnemyWarrior" type="CharacterBody2D"]
 collision_layer = 2
-collision_mask = 3
 script = ExtResource("1_script")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
@@ -270,6 +269,7 @@ target_desired_distance = 16.0
 radius = 64.0
 
 [node name="HpBar" type="Control" parent="."]
+visible = false
 layout_mode = 3
 anchors_preset = 0
 offset_left = -17.0
@@ -279,6 +279,7 @@ offset_bottom = -23.0
 scale = Vector2(0.75, 0.75)
 
 [node name="left" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = -62.0
 offset_top = -25.0
 offset_right = -22.0
@@ -286,6 +287,7 @@ offset_bottom = 15.0
 texture = SubResource("AtlasTexture_8yg18")
 
 [node name="middle" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = -23.0
 offset_top = -25.0
 offset_right = 40.0
@@ -293,6 +295,7 @@ offset_bottom = 15.0
 texture = SubResource("AtlasTexture_nfx6k")
 
 [node name="right" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = 40.0
 offset_top = -25.0
 offset_right = 80.0
@@ -300,6 +303,7 @@ offset_bottom = 15.0
 texture = SubResource("AtlasTexture_dt3ge")
 
 [node name="health" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = -29.3333
 offset_top = -50.6667
 offset_right = 34.6667

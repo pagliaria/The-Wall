@@ -253,6 +253,7 @@ region = Rect2(256.301, 15.5149, 19.2602, 29.3799)
 atlas = ExtResource("9_m0bhd")
 
 [node name="Warrior" type="CharacterBody2D"]
+collision_layer = 4
 script = ExtResource("1_warrior")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
@@ -276,6 +277,7 @@ target_desired_distance = 16.0
 radius = 64.0
 
 [node name="HpBar" type="Control" parent="."]
+visible = false
 layout_mode = 3
 anchors_preset = 0
 offset_left = -17.0
@@ -285,6 +287,7 @@ offset_bottom = -23.0
 scale = Vector2(0.75, 0.75)
 
 [node name="left" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = -62.0
 offset_top = -25.0
 offset_right = -22.0
@@ -292,6 +295,7 @@ offset_bottom = 15.0
 texture = SubResource("AtlasTexture_wc5ks")
 
 [node name="middle" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = -23.0
 offset_top = -25.0
 offset_right = 40.0
@@ -299,6 +303,7 @@ offset_bottom = 15.0
 texture = SubResource("AtlasTexture_x8tj7")
 
 [node name="right" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = 40.0
 offset_top = -25.0
 offset_right = 80.0
@@ -306,6 +311,7 @@ offset_bottom = 15.0
 texture = SubResource("AtlasTexture_d5f3y")
 
 [node name="health" type="TextureRect" parent="HpBar"]
+layout_mode = 0
 offset_left = -29.3333
 offset_top = -50.6667
 offset_right = 34.6667

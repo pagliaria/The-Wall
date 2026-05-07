@@ -175,6 +175,7 @@ animations = [{
 radius = 18.0
 
 [node name="Monk" type="CharacterBody2D"]
+collision_layer = 4
 script = ExtResource("1_monk")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]

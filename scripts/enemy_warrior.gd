@@ -1,5 +1,4 @@
 extends "res://scripts/enemy_base.gd"
-
 # enemy_warrior.gd — Melee warrior enemy.
 # Charges into melee range and alternates between attack1 / attack2.
 # All movement, targeting, push, and health logic lives in enemy_base.gd.
