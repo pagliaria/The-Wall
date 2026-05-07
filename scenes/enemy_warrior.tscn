@@ -1,9 +1,10 @@
-[gd_scene load_steps=43 format=3 uid="uid://b6lv8c4x8fsuc"]
+[gd_scene load_steps=54 format=3 uid="uid://b6lv8c4x8fsuc"]
 
 [ext_resource type="Script" uid="uid://b5b0ipbp0nmqw" path="res://scripts/enemy_warrior.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://b3v1b4pf0sc5o" path="res://assets/Units/Red Units/Warrior/Warrior_Attack1.png" id="2_atk1"]
 [ext_resource type="Texture2D" uid="uid://bm0awtjlwhild" path="res://assets/Units/Red Units/Warrior/Warrior_Attack2.png" id="3_atk2"]
 [ext_resource type="Texture2D" uid="uid://lqj7pofotjpi" path="res://assets/Units/Red Units/Warrior/Warrior_Guard.png" id="4_guard"]
+[ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="4_usrg6"]
 [ext_resource type="Texture2D" uid="uid://h71s1m2qelq3" path="res://assets/Units/Red Units/Warrior/Warrior_Idle.png" id="5_idle"]
 [ext_resource type="Texture2D" uid="uid://dm5c0blirrf73" path="res://assets/Units/Red Units/Warrior/Warrior_Run.png" id="6_run"]
 [ext_resource type="Texture2D" uid="uid://vvnniucpqaqc" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Base.png" id="7_7c6lk"]
@@ -40,6 +41,46 @@ region = Rect2(384, 0, 192, 192)
 [sub_resource type="AtlasTexture" id="atk2_3"]
 atlas = ExtResource("3_atk2")
 region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p8vv5"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_njkki"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4usey"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2e35n"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s0210"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(256, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rp5v3"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(320, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o6we7"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(384, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_prjdh"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(448, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hx636"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(512, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eotex"]
+atlas = ExtResource("4_usrg6")
+region = Rect2(576, 0, 64, 64)
 
 [sub_resource type="AtlasTexture" id="guard_0"]
 atlas = ExtResource("4_guard")
@@ -159,6 +200,41 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_p8vv5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_njkki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4usey")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2e35n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s0210")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rp5v3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o6we7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_prjdh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hx636")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eotex")
+}],
+"loop": false,
+"name": &"death",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("guard_0")
 }, {
 "duration": 1.0,
@@ -257,7 +333,7 @@ script = ExtResource("1_script")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("enemy_warrior_frames")
-animation = &"attack1"
+animation = &"death"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)

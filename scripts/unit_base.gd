@@ -56,8 +56,8 @@ const STUCK_TIMEOUT = 5.0
 #  Separation
 # =========================================================================== #
 
-const SEPARATION_RADIUS := 20.0
-const SEPARATION_FORCE  := 30.0
+const SEPARATION_RADIUS := 50.0
+const SEPARATION_FORCE  := 5.0
 
 # =========================================================================== #
 #  Health
@@ -191,4 +191,7 @@ func die() -> void:
 
 # Override for cleanup before queue_free (e.g. pawn unregisters from resource).
 func _on_die() -> void:
+	if _sprite.sprite_frames.has_animation("death"):
+		_sprite.play("death")
+		await _sprite.animation_finished
 	pass

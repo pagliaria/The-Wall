@@ -1,7 +1,8 @@
-[gd_scene load_steps=44 format=3 uid="uid://bwarrior00001"]
+[gd_scene load_steps=55 format=3 uid="uid://bwarrior00001"]
 
 [ext_resource type="Script" uid="uid://bq4jpm1ulyyhm" path="res://scripts/warrior.gd" id="1_warrior"]
 [ext_resource type="Script" uid="uid://j5v5w444d8s7" path="res://scripts/selection_circle.gd" id="2_selcircle"]
+[ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="4_m0bhd"]
 [ext_resource type="Texture2D" uid="uid://vvnniucpqaqc" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Base.png" id="8_3stqy"]
 [ext_resource type="Texture2D" uid="uid://bmvu32pp07fxe" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Fill.png" id="9_m0bhd"]
 [ext_resource type="Texture2D" uid="uid://dgyad75c1tqaw" path="res://assets/Units/Black Units/Warrior/Warrior_Attack1.png" id="tex_attack1"]
@@ -41,6 +42,46 @@ region = Rect2(384, 0, 192, 192)
 [sub_resource type="AtlasTexture" id="atk2_3"]
 atlas = ExtResource("tex_attack2")
 region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0v712"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0181g"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pow82"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kwvqs"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w3whh"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(256, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lve0g"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(320, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wdwiw"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(384, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_irh1o"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(448, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_i3guq"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(512, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ycyxv"]
+atlas = ExtResource("4_m0bhd")
+region = Rect2(576, 0, 64, 64)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bwxyh"]
 atlas = ExtResource("tex_guard")
@@ -160,6 +201,41 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_0v712")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0181g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pow82")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kwvqs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w3whh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lve0g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wdwiw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_irh1o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_i3guq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ycyxv")
+}],
+"loop": true,
+"name": &"death",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_bwxyh")
 }, {
 "duration": 1.0,
@@ -179,7 +255,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"guard",
-"speed": 8.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -208,7 +284,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle",
-"speed": 8.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -231,7 +307,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"run",
-"speed": 8.0
+"speed": 10.0
 }]
 
 [sub_resource type="CircleShape2D" id="warrior_circle"]
@@ -258,9 +334,7 @@ script = ExtResource("1_warrior")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("warrior_frames")
-animation = &"run"
-frame = 2
-frame_progress = 0.415168
+animation = &"attack1"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)

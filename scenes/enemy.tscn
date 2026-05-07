@@ -38,7 +38,7 @@ const WANDER_MAX_Y = 1536.0
 # Combat
 const MELEE_RANGE   = 48.0
 const ATTACK_DAMAGE = 4
-const ATTACK_RATE   = 1.2   # seconds between attacks
+const ATTACK_RATE   = 3   # seconds between attacks
 
 var max_hp : int = 18
 var hp     : int = 18

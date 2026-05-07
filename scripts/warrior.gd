@@ -11,7 +11,7 @@ const ARRIVAL_RADIUS = 12.0
 
 const MELEE_RANGE    = 48.0
 const ATTACK_DAMAGE  = 5
-const ATTACK_RATE    = 1.0
+const ATTACK_RATE    = 3
 
 # =========================================================================== #
 #  Health override
@@ -45,8 +45,11 @@ func _process_state(delta: float) -> void:
 	match _state:
 		State.IDLE:
 			_apply_separation(delta)
-			if not has_moved and _state_timer >= _state_dur:
-				_enter_state(_pick_next_wander_state())
+			if _state_timer >= _state_dur:
+				if has_moved:
+					_enter_state(State.IDLE)
+				else:
+					_enter_state(_pick_next_wander_state())
 		State.MOVE:
 			_do_nav_move(delta, MOVE_SPEED)
 			if _nav_agent.is_navigation_finished() or _state_timer >= _state_dur:
@@ -67,6 +70,8 @@ func _process_state(delta: float) -> void:
 				_target.take_damage(ATTACK_DAMAGE)
 				_attack_timer = ATTACK_RATE
 				_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
+				await _sprite.animation_finished
+				_sprite.play("idle")
 			if is_instance_valid(_target) and position.distance_to(_target.position) > MELEE_RANGE * 1.5:
 				_enter_state(State.BATTLE)
 
@@ -111,7 +116,7 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 		State.ATTACKING:
 			_attack_timer = 0.0
-			_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
+			#_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
 
 # =========================================================================== #
 #  Battle
@@ -128,7 +133,7 @@ func update_battle_target(enemies: Array) -> void:
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
-		_sprite.play("idle")
+		_enter_state(State.BATTLE)
 		return
 	var dist := position.distance_to(_target.position)
 	if dist <= MELEE_RANGE:

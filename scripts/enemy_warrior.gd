@@ -5,8 +5,10 @@ extends "res://scripts/enemy_base.gd"
 
 # Stats — set here as defaults; can also be tweaked per-scene in the inspector.
 @export var attack_damage : int   = 4
-@export var attack_rate   : float = 1.2
+@export var attack_rate   : float = 3
 @export var engage_range  : float = 48.0
+
+
 
 func _ready() -> void:
 	# Set base exports before super._ready() initialises hp.
@@ -36,13 +38,14 @@ func _on_enter_idle_state() -> void:
 		_sprite.play("idle")
 
 func _on_enter_attacking_state() -> void:
+	return
 	var anim := "attack1" if _rng.randf() > 0.5 else "attack2"
 	if _sprite.sprite_frames.has_animation(anim):
 		_sprite.play(anim)
 
 func _do_attack_tick(_delta: float) -> void:
-	# Replay attack anim when it finishes so it loops visually.
-	if not _sprite.is_playing():
-		var anim := "attack1" if _rng.randf() > 0.5 else "attack2"
-		if _sprite.sprite_frames.has_animation(anim):
-			_sprite.play(anim)
+	var anim := "attack1" if _rng.randf() > 0.5 else "attack2"
+	if _sprite.sprite_frames.has_animation(anim):
+		_sprite.play(anim)
+		await _sprite.animation_finished
+		_sprite.play("idle")

@@ -12,13 +12,8 @@ signal died
 @export var move_time_min : float = 1.0
 @export var move_time_max : float = 2.5
 
-const SEPARATION_RADIUS := 20.0
-const SEPARATION_FORCE  := 30.0
-
-const WANDER_MIN_X = 32.0
-const WANDER_MAX_X = 580.0
-const WANDER_MIN_Y = 200.0
-const WANDER_MAX_Y = 1520.0
+const SEPARATION_RADIUS := 50.0
+const SEPARATION_FORCE  := 5.0
 
 var faction : String = "enemy"
 var hp      : int    = 0
@@ -86,7 +81,7 @@ func _physics_process(delta: float) -> void:
 			if _attack_timer <= 0.0:
 				_attack_timer = _get_attack_rate()
 				_do_attack_hit()
-			_do_attack_tick(delta)
+				_do_attack_tick(delta)
 
 # =========================================================================== #
 #  State transitions
@@ -128,7 +123,7 @@ func update_target(player_units: Array) -> void:
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
-		_on_enter_idle_state()
+		_enter_state(State.BATTLE)
 		return
 
 	var dist := position.distance_to(_target.position)
@@ -204,7 +199,7 @@ func take_damage(amount: int) -> void:
 	hp -= amount
 	_update_hp_bar()
 	if hp <= 0:
-		die()
+		_enter_state(State.DEAD)
 
 func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
@@ -252,5 +247,7 @@ func _on_enter_attacking_state() -> void:
 		_sprite.play("attack1")
 
 func _on_enter_dead_state() -> void:
-	if _sprite.sprite_frames.has_animation("idle"):
-		_sprite.play("idle")
+	if _sprite.sprite_frames.has_animation("death"):
+		_sprite.play("death")
+		await _sprite.animation_finished
+		die()
