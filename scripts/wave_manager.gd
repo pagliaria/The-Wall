@@ -39,6 +39,7 @@ var _spawn_step     : float = 0.0
 var _enemies      : Array = []
 var _player_units : Array = []
 var _spawn_queue  : Array = []
+var _battle_start_positions : Dictionary = {}
 
 var units_layer : Node2D = null
 var drawbridge  : Node   = null
@@ -88,6 +89,12 @@ func _start_wave() -> void:
 func _begin_battle() -> void:
 	_player_units = _get_battlefield_player_units()
 	_enemies = _get_battlefield_enemies()
+
+	# Snapshot each battle unit's position so we can teleport survivors home.
+	_battle_start_positions.clear()
+	for u in _player_units:
+		if is_instance_valid(u):
+			_battle_start_positions[u] = u.global_position
 
 	for e in _enemies:
 		if is_instance_valid(e):
@@ -201,6 +208,12 @@ func _end_wave(player_won: bool) -> void:
 
 	if is_instance_valid(drawbridge):
 		drawbridge.force_lower()
+
+	# Teleport survivors back to where they stood when the battle started.
+	for u in _player_units:
+		if is_instance_valid(u) and _battle_start_positions.has(u):
+			u.global_position = _battle_start_positions[u]
+	_battle_start_positions.clear()
 
 	for u in _player_units:
 		if is_instance_valid(u) and u.has_method("end_battle"):

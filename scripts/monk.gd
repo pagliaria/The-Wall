@@ -154,6 +154,10 @@ func move_to(target: Vector2) -> void:
 	_move_target = target
 	_enter_state(State.MOVE_TO)
 
+func end_battle() -> void:
+	has_moved = false
+	_enter_state(State.IDLE)
+
 func request_push(direction: Vector2, distance: float, requester_pos: Vector2 = Vector2.ZERO) -> void:
 	var forward := direction.normalized()
 	if forward == Vector2.ZERO:
