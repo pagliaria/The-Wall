@@ -251,3 +251,5 @@ func _on_enter_dead_state() -> void:
 		_sprite.play("death")
 		await _sprite.animation_finished
 		die()
+	else:
+		die()

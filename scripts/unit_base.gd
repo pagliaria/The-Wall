@@ -175,7 +175,7 @@ func take_damage(amount: int) -> void:
 	hp -= amount
 	_update_hp_bar()
 	if hp <= 0:
-		die()
+		_on_die()
 
 func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
@@ -185,13 +185,17 @@ func _update_hp_bar() -> void:
 	_hp_fill.scale.x = HP_FILL_FULL_SCALE_X * ratio
 
 func die() -> void:
-	_on_die()
 	emit_signal("died")
+	print("freeing")
 	queue_free()
 
 # Override for cleanup before queue_free (e.g. pawn unregisters from resource).
 func _on_die() -> void:
 	if _sprite.sprite_frames.has_animation("death"):
+		print("death")
 		_sprite.play("death")
 		await _sprite.animation_finished
-	pass
+		print("death finish")
+		die()
+	else:
+		die()

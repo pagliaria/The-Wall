@@ -230,7 +230,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_ycyxv")
 }],
-"loop": true,
+"loop": false,
 "name": &"death",
 "speed": 20.0
 }, {
@@ -334,7 +334,9 @@ script = ExtResource("1_warrior")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("warrior_frames")
-animation = &"attack1"
+animation = &"death"
+frame = 9
+frame_progress = 1.0
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
