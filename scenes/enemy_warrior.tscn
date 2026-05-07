@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://b6lv8c4x8fsuc"]
+[gd_scene load_steps=43 format=3 uid="uid://b6lv8c4x8fsuc"]
 
 [ext_resource type="Script" uid="uid://b5b0ipbp0nmqw" path="res://scripts/enemy_warrior.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://b3v1b4pf0sc5o" path="res://assets/Units/Red Units/Warrior/Warrior_Attack1.png" id="2_atk1"]
@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" uid="uid://lqj7pofotjpi" path="res://assets/Units/Red Units/Warrior/Warrior_Guard.png" id="4_guard"]
 [ext_resource type="Texture2D" uid="uid://h71s1m2qelq3" path="res://assets/Units/Red Units/Warrior/Warrior_Idle.png" id="5_idle"]
 [ext_resource type="Texture2D" uid="uid://dm5c0blirrf73" path="res://assets/Units/Red Units/Warrior/Warrior_Run.png" id="6_run"]
+[ext_resource type="Texture2D" uid="uid://vvnniucpqaqc" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Base.png" id="7_7c6lk"]
+[ext_resource type="Texture2D" uid="uid://bmvu32pp07fxe" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Fill.png" id="8_usrg6"]
 
 [sub_resource type="AtlasTexture" id="atk1_0"]
 atlas = ExtResource("2_atk1")
@@ -234,6 +236,21 @@ animations = [{
 [sub_resource type="CircleShape2D" id="enemy_circle"]
 radius = 18.0
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_8yg18"]
+atlas = ExtResource("7_7c6lk")
+region = Rect2(36.9312, 15.5149, 26.7684, 29.3799)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nfx6k"]
+atlas = ExtResource("7_7c6lk")
+region = Rect2(128.335, 15.5149, 63.0036, 29.3799)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dt3ge"]
+atlas = ExtResource("7_7c6lk")
+region = Rect2(256.301, 15.5149, 19.2602, 29.3799)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jj3hi"]
+atlas = ExtResource("8_usrg6")
+
 [node name="EnemyWarrior" type="CharacterBody2D"]
 collision_layer = 2
 collision_mask = 3
@@ -251,3 +268,41 @@ shape = SubResource("enemy_circle")
 path_desired_distance = 8.0
 target_desired_distance = 16.0
 radius = 64.0
+
+[node name="HpBar" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = -17.0
+offset_top = -63.0
+offset_right = 23.0
+offset_bottom = -23.0
+scale = Vector2(0.75, 0.75)
+
+[node name="left" type="TextureRect" parent="HpBar"]
+offset_left = -62.0
+offset_top = -25.0
+offset_right = -22.0
+offset_bottom = 15.0
+texture = SubResource("AtlasTexture_8yg18")
+
+[node name="middle" type="TextureRect" parent="HpBar"]
+offset_left = -23.0
+offset_top = -25.0
+offset_right = 40.0
+offset_bottom = 15.0
+texture = SubResource("AtlasTexture_nfx6k")
+
+[node name="right" type="TextureRect" parent="HpBar"]
+offset_left = 40.0
+offset_top = -25.0
+offset_right = 80.0
+offset_bottom = 15.0
+texture = SubResource("AtlasTexture_dt3ge")
+
+[node name="health" type="TextureRect" parent="HpBar"]
+offset_left = -29.3333
+offset_top = -50.6667
+offset_right = 34.6667
+offset_bottom = 13.3333
+scale = Vector2(1.3, 1.5)
+texture = SubResource("AtlasTexture_jj3hi")

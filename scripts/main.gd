@@ -20,7 +20,7 @@ var _pan_start_cam   := Vector2.ZERO
 
 var _gold : int = 100
 var _wood : int = 50
-var _meat : int = 25
+var _meat : int = 10
 
 var _gold_multiplier = 10
 var _wood_multiplier = 10
@@ -38,6 +38,7 @@ var _castle_placed := false
 @onready var unit_selection  : Node2D             = $UnitSelection
 @onready var nav_region      : NavigationRegion2D = $NavRegion
 @onready var drawbridge      : Node2D             = $wall
+@onready var battle_seperator: CollisionShape2D   = $wall/Wall_Collision/BattleSeperator
 
 var _castle_prompt : CanvasLayer = null
 var _wave_manager  : Node        = null
@@ -88,11 +89,15 @@ func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
 	unit_selection.clear_selection()
 	unit_selection.disabled = true
+	battle_seperator.disabled = true
+	call_deferred("_rebake_nav")
 
 func _on_wave_ended(player_won: bool) -> void:
 	hud.set_wave_ended(player_won)
 	if not building_placer.is_placing():
 		unit_selection.disabled = false
+	battle_seperator.disabled = false
+	call_deferred("_rebake_nav")
 
 # =========================================================================== #
 #  Castle prompt

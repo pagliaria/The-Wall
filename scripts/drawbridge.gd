@@ -9,7 +9,6 @@ extends Node2D
 @onready var bridge_up         : Sprite2D          = $bridge_up
 @onready var anim_player       : AnimationPlayer   = $AnimationPlayer
 @onready var bridge_collision  : CollisionShape2D  = $Wall_Collision/bridge_collision
-@onready var battle_seperator  : CollisionShape2D  = $Wall_Collision/BattleSeperator
 
 var _is_raised := false
 
@@ -33,11 +32,9 @@ func force_lower() -> void:
 func _do_raise() -> void:
 	anim_player.play("raise")
 	bridge_collision.disabled = false
-	battle_seperator.disabled = true
 	_is_raised = true
 
 func _do_lower() -> void:
 	anim_player.play("lower")
 	bridge_collision.disabled = true
-	battle_seperator.disabled = false
 	_is_raised = false
