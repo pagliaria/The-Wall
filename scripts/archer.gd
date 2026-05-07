@@ -1,6 +1,8 @@
 # archer.gd
 extends "res://scripts/unit_base.gd"
 
+const ARROW_SCENE := preload("res://scenes/arrow.tscn")
+
 # =========================================================================== #
 #  Constants
 # =========================================================================== #
@@ -8,7 +10,7 @@ extends "res://scripts/unit_base.gd"
 const MOVE_SPEED    = 62.0
 const PATROL_RADIUS = 180.0
 
-const SHOOT_RANGE      = 180.0   # starts shooting within this distance
+const SHOOT_RANGE      = 500.0   # starts shooting within this distance
 const SHOOT_RANGE_MIN  = 80.0    # backs away if enemy gets closer than this
 const ATTACK_DAMAGE    = 3
 const ATTACK_RATE      = 2     # seconds between shots
@@ -155,15 +157,22 @@ func _do_battle(delta: float) -> void:
 
 func _do_shoot() -> void:
 	_shooting = true
-	_sprite.flip_h = is_instance_valid(_target) and _target.position.x < position.x
+	if not is_instance_valid(_target):
+		_shooting = false
+		return
+	_sprite.flip_h = _target.position.x < position.x
 	_sprite.play("shoot")
 
 func _on_shoot_animation_finished() -> void:
 	if _state != State.SHOOTING or not _shooting:
 		return
-	# Deal damage at the end of the shoot animation
+	# Spawn the arrow at the archer's position aimed at the target
 	if is_instance_valid(_target) and _target.hp > 0:
-		_target.take_damage(ATTACK_DAMAGE)
+		var arrow      := ARROW_SCENE.instantiate()
+		var dir        : Vector2 = ((_target.position) - position).normalized()
+		get_parent().add_child(arrow)
+		arrow.global_position = global_position
+		arrow.init(_target, dir, ATTACK_DAMAGE)
 	_shooting     = false
 	_attack_timer = ATTACK_RATE
 	_sprite.play("idle")
