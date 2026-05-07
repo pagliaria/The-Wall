@@ -7,6 +7,7 @@ signal building_selected(building_id: String)
 @onready var build_menu       : Control       = $BuildMenu
 @onready var resource_display : Control       = $ResourceDisplay
 @onready var wave_label       : Label         = $WaveTimer/WaveLabel
+@onready var wave_display     : Control       = $WaveTimer
 
 func _ready() -> void:
 	build_button.pressed.connect(_on_build_button_pressed)
@@ -36,16 +37,19 @@ func set_build_button_enabled(enabled: bool) -> void:
 
 # Called by main.gd from wave_manager signals
 func set_wave_countdown(seconds: float) -> void:
+	wave_display.visible = true
 	if seconds > 0.0:
-		wave_label.text = "Wave in: %d s" % int(ceil(seconds))
+		wave_label.text = "%d s" % int(ceil(seconds))
 	else:
 		wave_label.text = "WAVE!"
 		wave_label.modulate = Color(1.0, 0.3, 0.3)
 
 func set_wave_active(wave_number: int) -> void:
-	wave_label.text = "Wave %d — FIGHT!" % wave_number
+	wave_label.text = "Fight!"
 	wave_label.modulate = Color(1.0, 0.3, 0.3)
 
 func set_wave_ended(player_won: bool) -> void:
 	wave_label.text = "Victory!" if player_won else "Defeated..."
 	wave_label.modulate = Color(0.3, 1.0, 0.3) if player_won else Color(1.0, 0.3, 0.3)
+	await get_tree().create_timer(5).timeout
+	wave_display.visible = false

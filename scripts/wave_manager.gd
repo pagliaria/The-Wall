@@ -26,9 +26,9 @@ const WAVE_COMPOSITIONS : Array = [
 ]
 const LATE_WAVE_SCALE : float = 1.5
 
-enum Phase { PREP, BATTLE }
+enum Phase { PREP, BATTLE , NONE}
 
-var _phase          : Phase = Phase.PREP
+var _phase          : Phase = Phase.NONE
 var _wave_number    : int   = 0
 var _countdown      : float = WAVE_INTERVAL
 var _battle_check   : float = 0.0
@@ -49,7 +49,7 @@ var _scene_cache := {}
 
 func _ready() -> void:
 	_rng.randomize()
-	_prepare_next_wave()
+	#_prepare_next_wave()
 
 func _process(delta: float) -> void:
 	match _phase:
@@ -105,6 +105,7 @@ func _begin_battle() -> void:
 			u.start_battle(_enemies)
 
 func _prepare_next_wave() -> void:
+	_phase = Phase.PREP
 	_spawn_queue.clear()
 	var comp_index := mini(_wave_number, WAVE_COMPOSITIONS.size() - 1)
 	var composition : Array = WAVE_COMPOSITIONS[comp_index]
@@ -203,7 +204,7 @@ func _check_battle_over() -> void:
 		_end_wave(false)
 
 func _end_wave(player_won: bool) -> void:
-	_phase = Phase.PREP
+	_phase = Phase.NONE
 	_countdown = WAVE_INTERVAL
 
 	if is_instance_valid(drawbridge):
@@ -224,7 +225,7 @@ func _end_wave(player_won: bool) -> void:
 			e.queue_free()
 	_enemies.clear()
 	_player_units.clear()
-	_prepare_next_wave()
+	#_prepare_next_wave()
 
 	emit_signal("wave_ended", player_won)
 	emit_signal("wave_countdown_changed", _countdown)

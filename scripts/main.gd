@@ -39,6 +39,7 @@ var _castle_placed := false
 @onready var nav_region      : NavigationRegion2D = $NavRegion
 @onready var drawbridge      : Node2D             = $wall
 @onready var battle_seperator: CollisionShape2D   = $wall/Wall_Collision/BattleSeperator
+@onready var wave_timer      : Timer              = $wave_timer
 
 var _castle_prompt : CanvasLayer = null
 var _wave_manager  : Node        = null
@@ -97,6 +98,7 @@ func _on_wave_ended(player_won: bool) -> void:
 	if not building_placer.is_placing():
 		unit_selection.disabled = false
 	battle_seperator.disabled = false
+	wave_timer.start()
 	call_deferred("_rebake_nav")
 
 # =========================================================================== #
@@ -291,3 +293,7 @@ func _toggle_fullscreen() -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	await get_tree().process_frame
 	_fit_camera_to_screen()
+
+
+func _on_wave_timer_timeout() -> void:
+	_wave_manager._prepare_next_wave()

@@ -12,7 +12,7 @@ extends Area2D
 #  Tuning
 # =========================================================================== #
 
-const ARC_HEIGHT  = 200.0   # pixels above ground at peak
+const ARC_HEIGHT  = 50.0   # pixels above ground at peak
 const FLIGHT_TIME = 0.55   # seconds to reach the target
 
 # =========================================================================== #
