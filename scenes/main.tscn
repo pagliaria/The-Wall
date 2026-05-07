@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=32 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -92,6 +92,9 @@ size = Vector2(56, 188.5)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_muem4"]
 size = Vector2(3064, 176)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gqmmt"]
+size = Vector2(14, 1560)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_0ld40"]
 atlas = ExtResource("15_0ld40")
 region = Rect2(22.4539, 520.74, 104.808, 123.967)
@@ -180,7 +183,7 @@ libraries = {
 }
 
 [node name="Wall_Collision" type="StaticBody2D" parent="wall"]
-position = Vector2(1213, 143)
+position = Vector2(1215, 143)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="wall/Wall_Collision"]
 z_index = 5
@@ -201,6 +204,11 @@ shape = SubResource("RectangleShape2D_tipki")
 z_index = 5
 position = Vector2(323, -51)
 shape = SubResource("RectangleShape2D_muem4")
+
+[node name="BattleSeperator" type="CollisionShape2D" parent="wall/Wall_Collision"]
+z_index = 5
+position = Vector2(-566, 817)
+shape = SubResource("RectangleShape2D_gqmmt")
 
 [node name="Terrain" parent="." instance=ExtResource("2_terrain")]
 
