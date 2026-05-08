@@ -74,6 +74,7 @@ func set_resources(gold: int, wood: int, meat: int) -> void:
 		_refresh_affordability()
 
 func _on_close_pressed() -> void:
+	UiAudio.play()
 	hide()
 	emit_signal("closed")
 
@@ -213,5 +214,6 @@ func _build_banner_panel() -> void:
 	panel.patch_margin_bottom = row_heights[2]
 
 func _on_build_pressed(id: String) -> void:
+	UiAudio.play()
 	emit_signal("building_selected", id)
 	hide()

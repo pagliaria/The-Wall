@@ -38,6 +38,7 @@ func _setup_speed_buttons() -> void:
 
 func _on_speed_button_pressed(btn: Button) -> void:
 	var speed : float = SPEED_MAP.get(btn.name, 1.0)
+	UiAudio.play()
 	_set_speed(speed)
 
 func _set_speed(speed: float) -> void:
@@ -56,6 +57,7 @@ func _highlight_speed(speed: float) -> void:
 			btn.remove_theme_color_override("font_hover_color")
 
 func _on_build_button_pressed() -> void:
+	UiAudio.play()
 	if build_menu.visible:
 		build_menu.hide()
 	else:

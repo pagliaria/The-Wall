@@ -26,3 +26,4 @@ mouse_cursor/custom_image_hotspot=Vector2(20, 18)
 [autoload]
 
 ResourceManager="*res://scripts/resource_manager.gd"
+UiAudio="*res://scripts/ui_audio.gd"

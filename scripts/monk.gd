@@ -19,7 +19,8 @@ const ATTACK_RANGE  = 200.0   # range for holy bolt attack on enemies
 const ATTACK_RANGE_MIN = 80.0 # backs off if enemy closer than this
 const HEAL_AMOUNT   = 6       # HP restored per heal projectile
 const ATTACK_DAMAGE = 4       # damage dealt to enemies
-const CAST_RATE     = 2.2     # seconds between any cast (heal or attack)
+const CAST_RATE          = 2.2     # seconds between any cast (heal or attack)
+const IDLE_HEAL_SCAN_RATE = 1.0    # how often to scan for injured allies outside battle
 
 # =========================================================================== #
 #  State machine
@@ -33,9 +34,11 @@ var _enemies      : Array = []
 var _allies       : Array = []   # all player units — injected by wave_manager or scanned
 var _attack_target : Node  = null
 var _heal_target   : Node  = null
-var _cast_timer    : float = 0.0
-var _casting       : bool  = false
-var _cast_is_heal  : bool  = true
+var _cast_timer       : float = 0.0
+var _casting          : bool  = false
+var _cast_is_heal     : bool  = true
+var _pre_cast_state   : State = State.IDLE   # where to return after a non-battle cast
+var _idle_heal_timer  : float = 0.0
 
 # =========================================================================== #
 #  Lifecycle
@@ -51,10 +54,18 @@ func _process_state(delta: float) -> void:
 	match _state:
 		State.IDLE:
 			_apply_separation(delta)
+			_idle_heal_timer -= delta
+			if _idle_heal_timer <= 0.0:
+				_idle_heal_timer = IDLE_HEAL_SCAN_RATE
+				_try_idle_heal()
 			if not has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE:
 			_do_nav_move(delta, MOVE_SPEED)
+			_idle_heal_timer -= delta
+			if _idle_heal_timer <= 0.0:
+				_idle_heal_timer = IDLE_HEAL_SCAN_RATE
+				_try_idle_heal()
 			if _nav_agent.is_navigation_finished() or _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE_TO:
@@ -65,12 +76,17 @@ func _process_state(delta: float) -> void:
 			_do_battle(delta)
 		State.CASTING:
 			_cast_timer -= delta
-			# If cast target gone mid-wait, go back to battle
+			# If in battle, validate both targets; outside battle only need heal target
 			var heal_tgt_valid : bool = is_instance_valid(_heal_target) and _heal_target.hp < _heal_target.max_hp
 			var atk_tgt_valid  : bool = is_instance_valid(_attack_target) and _attack_target.hp > 0
-			if not heal_tgt_valid and not atk_tgt_valid:
+			var in_battle      : bool = _state == State.CASTING and _pre_cast_state == State.BATTLE
+			if _pre_cast_state == State.BATTLE and not heal_tgt_valid and not atk_tgt_valid:
 				_casting = false
 				_enter_state(State.BATTLE)
+				return
+			if _pre_cast_state != State.BATTLE and not heal_tgt_valid:
+				_casting = false
+				_enter_state(_pre_cast_state)
 				return
 			if _cast_timer <= 0.0 and not _casting:
 				_do_cast()
@@ -133,6 +149,32 @@ func update_battle_target(enemies: Array) -> void:
 	_enemies = enemies
 	_scan_allies()
 
+func _try_idle_heal() -> void:
+	# Scan nearby allies for anyone injured — heal them without entering battle
+	var parent : Node = get_parent()
+	if parent == null:
+		return
+	var best_target : Node  = null
+	var best_dist   : float = INF
+	for child in parent.get_children():
+		if child == self or not child is CharacterBody2D:
+			continue
+		if child.get("faction") != "player":
+			continue
+		if child.get("hp") == null or child.hp >= child.max_hp:
+			continue
+		var d : float = position.distance_to(child.position)
+		if d < HEAL_RANGE and d < best_dist:
+			best_dist   = d
+			best_target = child
+	if best_target == null:
+		return
+	_heal_target      = best_target
+	_attack_target    = null
+	_cast_is_heal     = true
+	_pre_cast_state   = _state   # remember IDLE or MOVE to return to
+	_enter_state(State.CASTING)
+
 func _scan_allies() -> void:
 	# Collect all other player CharacterBody2D in the same parent
 	_allies.clear()
@@ -172,25 +214,25 @@ func _do_battle(delta: float) -> void:
 
 	# --- Decide what to do ---
 	if _heal_target != null:
-		# Stay still and heal — no need to reposition for heals
-		_sprite.flip_h = _heal_target.position.x < position.x
+		_sprite.flip_h  = _heal_target.position.x < position.x
+		_pre_cast_state = State.BATTLE
 		_enter_state(State.CASTING)
 		return
 
 	if _attack_target != null:
-		var dist := position.distance_to(_attack_target.position)
-		_sprite.flip_h = _attack_target.position.x < position.x
+		var dist : float = position.distance_to(_attack_target.position)
+		_sprite.flip_h   = _attack_target.position.x < position.x
 
 		if dist < ATTACK_RANGE_MIN:
-			# Back away
 			var flee_dir : Vector2 = (position - _attack_target.position).normalized()
-			var flee_pos := Vector2(
+			var flee_pos : Vector2 = Vector2(
 				clampf(position.x + flee_dir.x * ATTACK_RANGE, WANDER_MIN_X, WANDER_MAX_X),
 				clampf(position.y + flee_dir.y * ATTACK_RANGE, WANDER_MIN_Y, WANDER_MAX_Y)
 			)
 			_nav_agent.target_position = flee_pos
 			_do_nav_move(delta, MOVE_SPEED)
 		elif dist <= ATTACK_RANGE:
+			_pre_cast_state = State.BATTLE
 			_enter_state(State.CASTING)
 		else:
 			# Move into attack range
@@ -242,10 +284,7 @@ func _on_cast_animation_finished() -> void:
 	_casting    = false
 	_cast_timer = CAST_RATE
 	_sprite.play("idle")
-
-	# Go back to BATTLE to re-evaluate targets, which will re-enter CASTING
-	# immediately if there's still something to heal or attack.
-	_enter_state(State.BATTLE)
+	_enter_state(_pre_cast_state)
 
 # =========================================================================== #
 #  Base overrides

@@ -1,0 +1,25 @@
+# ui_audio.gd
+# Autoload singleton for UI sound effects.
+# Usage: UiAudio.play()  or  UiAudio.play("click1")
+extends Node
+
+const SOUNDS : Dictionary = {
+	"click1":    preload("res://assets/audio/UI/click1.ogg"),
+	"select":    preload("res://assets/audio/UI/select_008.ogg"),
+	"switch":    preload("res://assets/audio/UI/switch_002.ogg"),
+	"toggle":    preload("res://assets/audio/UI/toggle_001.ogg"),
+}
+
+const DEFAULT_SOUND : String = "click1"
+
+var _player : AudioStreamPlayer = null
+
+func _ready() -> void:
+	_player = AudioStreamPlayer.new()
+	_player.bus = "Master"
+	add_child(_player)
+
+func play(sound: String = DEFAULT_SOUND) -> void:
+	var stream : AudioStream = SOUNDS.get(sound, SOUNDS[DEFAULT_SOUND])
+	_player.stream = stream
+	_player.play()
