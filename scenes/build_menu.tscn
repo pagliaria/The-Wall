@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://cwgtv3300cseo"]
+[gd_scene load_steps=21 format=3 uid="uid://cwgtv3300cseo"]
 
 [ext_resource type="Script" uid="uid://b3x0ps32eev6x" path="res://scripts/build_menu.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://03hji3qdk0hb" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Regular.png" id="3_red_reg"]
@@ -10,6 +10,22 @@
 [ext_resource type="Texture2D" uid="uid://bftuw36baylsj" path="res://assets/Buildings/Black Buildings/House1.png" id="9_house"]
 [ext_resource type="Texture2D" uid="uid://dwn4h1harq5uc" path="res://assets/Buildings/Black Buildings/Monastery.png" id="10_monastery"]
 [ext_resource type="Texture2D" uid="uid://c2w6klqgyq3jb" path="res://assets/Buildings/Black Buildings/Tower.png" id="11_tower"]
+[ext_resource type="Texture2D" uid="uid://bb373u3ennggs" path="res://assets/Units/Black Units/Archer/Archer_Idle.png" id="12_archer_idle"]
+[ext_resource type="Texture2D" uid="uid://ceacwdv3ug52r" path="res://assets/Units/Black Units/Warrior/Warrior_Idle.png" id="13_warrior_idle"]
+[ext_resource type="Texture2D" uid="uid://ghqqd2n0sr8e" path="res://assets/Units/Black Units/Monk/Idle.png" id="15_monk_idle"]
+[ext_resource type="Texture2D" uid="uid://b14k0s0yqu2jo" path="res://assets/UI Elements/UI Elements/Icons/Icon_04.png" id="16_meat"]
+
+[sub_resource type="AtlasTexture" id="unit_archer"]
+atlas = ExtResource("12_archer_idle")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="unit_warrior"]
+atlas = ExtResource("13_warrior_idle")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="unit_monk"]
+atlas = ExtResource("15_monk_idle")
+region = Rect2(0, 0, 192, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4h3qg"]
 atlas = ExtResource("4_jp2d4")
@@ -70,7 +86,7 @@ size_flags_vertical = 4
 
 [node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Preview" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox"]
@@ -94,6 +110,34 @@ theme_override_font_sizes/font_size = 10
 text = "Gold: ??  Wood: ??"
 horizontal_alignment = 1
 
+[node name="Divider" type="HSeparator" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox"]
+layout_mode = 2
+
+[node name="UnitRow" type="HBoxContainer" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = SubResource("unit_archer")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatIcon" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("16_meat")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/UnitRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "x3"
+
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox"]
 custom_minimum_size = Vector2(70, 24)
 layout_mode = 2
@@ -108,7 +152,7 @@ size_flags_vertical = 4
 
 [node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer/VBox/Grid/BarracksCard"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Preview" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox"]
@@ -132,6 +176,34 @@ theme_override_font_sizes/font_size = 10
 text = "Gold: ??  Wood: ??"
 horizontal_alignment = 1
 
+[node name="Divider" type="HSeparator" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox"]
+layout_mode = 2
+
+[node name="UnitRow" type="HBoxContainer" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = SubResource("unit_warrior")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatIcon" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("16_meat")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/UnitRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "x3"
+
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox"]
 custom_minimum_size = Vector2(70, 24)
 layout_mode = 2
@@ -146,7 +218,7 @@ size_flags_vertical = 4
 
 [node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer/VBox/Grid/HouseCard"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Preview" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox"]
@@ -170,6 +242,31 @@ theme_override_font_sizes/font_size = 10
 text = "Gold: ??  Wood: ??"
 horizontal_alignment = 1
 
+[node name="Divider" type="HSeparator" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox"]
+layout_mode = 2
+
+[node name="UnitRow" type="HBoxContainer" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatIcon" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox/UnitRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox"]
 custom_minimum_size = Vector2(70, 24)
 layout_mode = 2
@@ -184,7 +281,7 @@ size_flags_vertical = 4
 
 [node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Preview" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox"]
@@ -207,6 +304,34 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 10
 text = "Gold: ??  Wood: ??"
 horizontal_alignment = 1
+
+[node name="Divider" type="HSeparator" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox"]
+layout_mode = 2
+
+[node name="UnitRow" type="HBoxContainer" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = SubResource("unit_monk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatIcon" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("16_meat")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/UnitRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "x2"
 
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox"]
 custom_minimum_size = Vector2(70, 24)

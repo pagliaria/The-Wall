@@ -4,9 +4,14 @@ signal building_selected(building_id: String)
 signal closed
 
 # ---------------------------------------------------------------------------
-# Building costs  { building_id: { gold, wood, meat } }
-# Single source of truth — building_placer.gd and main.gd both reference this.
+# Unit meat costs per building — mirrors the MEAT_COST const in each controller
 # ---------------------------------------------------------------------------
+const UNIT_MEAT_COSTS: Dictionary = {
+	"barracks":  3,
+	"archery":   3,
+	"monastery": 2,
+	"castle":    1,
+}
 const BUILDING_COSTS: Dictionary = {
 	"castle":    { "gold": 0,   "wood": 0,  "meat": 0  },
 	"barracks":  { "gold": 80,  "wood": 40, "meat": 0  },
@@ -45,6 +50,7 @@ func _ready() -> void:
 	close_button.pressed.connect(_on_close_pressed)
 	_wire_buttons()
 	_populate_cost_labels()
+	_populate_unit_meat_labels()
 	await get_tree().process_frame
 	var margin: MarginContainer = $Panel/MarginContainer
 	var content_size := margin.get_combined_minimum_size()
@@ -85,6 +91,21 @@ func _populate_cost_labels() -> void:
 			continue
 		var cost: Dictionary = BUILDING_COSTS[id]
 		cost_labels[i].text = _format_cost(cost)
+
+func _populate_unit_meat_labels() -> void:
+	var cards := [
+		["archery",   "Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/UnitRow/MeatCost"],
+		["barracks",  "Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/UnitRow/MeatCost"],
+		["monastery", "Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/UnitRow/MeatCost"],
+	]
+	for entry in cards:
+		var id     : String = entry[0]
+		var path   : String = entry[1]
+		var label  := get_node_or_null(path) as Label
+		if label == null:
+			continue
+		var cost : int = UNIT_MEAT_COSTS.get(id, 0)
+		label.text = "x%d" % cost
 
 func _format_cost(cost: Dictionary) -> String:
 	var parts: Array[String] = []
