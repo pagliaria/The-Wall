@@ -32,6 +32,8 @@ var _state_timer_local : float = 0.0  # alias — we use _state_timer from base
 var _target       : Node  = null
 var _attack_timer : float = 0.0
 
+var _is_striking  : bool = false
+
 # =========================================================================== #
 #  Lifecycle
 # =========================================================================== #
@@ -61,17 +63,21 @@ func _process_state(delta: float) -> void:
 		State.BATTLE:
 			_do_battle(delta)
 		State.ATTACKING:
+			if _is_striking:
+				return
 			_attack_timer -= delta
 			if not is_instance_valid(_target) or _target.hp <= 0:
 				_target = null
 				_enter_state(State.BATTLE)
 				return
 			if _attack_timer <= 0.0:
-				_target.take_damage(ATTACK_DAMAGE)
+				_is_striking = true
 				_attack_timer = ATTACK_RATE
 				_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
+				_target.take_damage(ATTACK_DAMAGE)
 				await _sprite.animation_finished
 				_sprite.play("idle")
+				_is_striking = false
 			if is_instance_valid(_target) and position.distance_to(_target.position) > MELEE_RANGE * 1.5:
 				_enter_state(State.BATTLE)
 
@@ -116,7 +122,6 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 		State.ATTACKING:
 			_attack_timer = 0.0
-			#_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
 
 # =========================================================================== #
 #  Battle

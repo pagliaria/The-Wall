@@ -8,7 +8,7 @@ signal enemy_count_changed(count: int)
 const WAVE_INTERVAL     = 90.0
 const SPAWN_END_TIME    = 30.0
 const BATTLE_CHECK_RATE = 0.5
-const RETARGET_RATE     = 1.0
+const RETARGET_RATE     = .5
 
 const SPAWN_MIN_X = 48.0
 const SPAWN_MAX_X = 580.0
@@ -20,8 +20,12 @@ const BATTLEFIELD_MID   = 640.0
 const BATTLEFIELD_RIGHT = 1280.0
 
 const WAVE_COMPOSITIONS : Array = [
-	[{ "path": "res://scenes/enemy_warrior.tscn", "count": 4 }],
+	# Wave 1
+	[{ "path": "res://scenes/enemy_slime.tscn", "count": 4 },
+	{ "path": "res://scenes/enemy_warrior.tscn", "count": 1 }],
+	# Wave 2
 	[{ "path": "res://scenes/enemy_warrior.tscn", "count": 6 }],
+	# Wave 3
 	[{ "path": "res://scenes/enemy_warrior.tscn", "count": 8 }],
 ]
 const LATE_WAVE_SCALE : float = 1.5
@@ -105,6 +109,7 @@ func _begin_battle() -> void:
 			u.start_battle(_enemies)
 
 func _prepare_next_wave() -> void:
+	_countdown = WAVE_INTERVAL
 	_phase = Phase.PREP
 	_spawn_queue.clear()
 	var comp_index := mini(_wave_number, WAVE_COMPOSITIONS.size() - 1)

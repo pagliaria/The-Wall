@@ -9,6 +9,8 @@ signal building_selected(building_id: String)
 @onready var wave_label       : Label          = $WaveTimer/WaveLabel
 @onready var wave_display     : Control        = $WaveTimer
 @onready var speed_controls   : HBoxContainer  = $ActionBar/SpeedControls
+@onready var victory          : Label          = $WaveTimer/Victory
+@onready var title            : Label          = $WaveTimer/Title
 
 var _speed_buttons : Array[Button] = []
 var _current_speed : float = 1.0
@@ -87,7 +89,15 @@ func set_wave_active(wave_number: int) -> void:
 	wave_label.modulate = Color(1.0, 0.3, 0.3)
 
 func set_wave_ended(player_won: bool) -> void:
-	wave_label.text = "Victory!" if player_won else "Defeated..."
+	victory.visible = true
+	wave_label.visible = false
+	title.visible = false
+	var original_color = wave_display.modulate
+	victory.text = "Victory!" if player_won else "Defeated..."
 	wave_display.modulate = Color(0.3, 1.0, 0.3) if player_won else Color(1.0, 0.3, 0.3)
 	await get_tree().create_timer(5, true, false, true).timeout
 	wave_display.visible = false
+	victory.visible = false
+	title.visible = true
+	wave_label.visible = true
+	wave_display.modulate = original_color

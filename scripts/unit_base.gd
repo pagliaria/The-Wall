@@ -195,10 +195,19 @@ func die() -> void:
 
 # Override for cleanup before queue_free (e.g. pawn unregisters from resource).
 func _on_die() -> void:
-	if _sprite.sprite_frames.has_animation("death"):
-		print("death")
-		_sprite.play("death")
-		await _sprite.animation_finished
+	var anim_name = "death"
+	if _sprite.sprite_frames.has_animation(anim_name):
+		print(anim_name)
+		_sprite.play(anim_name)
+		
+		# Get frames and fps to calculate duration
+		var frames = _sprite.sprite_frames.get_frame_count(anim_name)
+		var fps = _sprite.sprite_frames.get_animation_speed(anim_name)
+		var total_duration = frames / fps
+	
+		# Wait for animation. Not using animation finished because there is a chance the unit goes 
+		# into another animation and never gets freed
+		await get_tree().create_timer(total_duration).timeout
 		print("death finish")
 		die()
 	else:

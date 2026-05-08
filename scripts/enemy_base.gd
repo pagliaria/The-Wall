@@ -30,6 +30,8 @@ var _battle_ready : bool    = false   # set true once start_battle() is called
 var _target       : Node  = null
 var _attack_timer : float = 0.0
 
+var _is_striking  : bool = false
+
 @onready var _sprite  : AnimatedSprite2D  = $Sprite
 @onready var _nav     : NavigationAgent2D = $NavAgent
 @onready var _hp_bar  : Control           = $HpBar
@@ -67,9 +69,14 @@ func _physics_process(delta: float) -> void:
 			return
 
 		State.BATTLE:
+			print("battle")
 			_do_battle(delta)
 
 		State.ATTACKING:
+			if _is_striking and _sprite.is_playing() and _sprite.animation.contains("attack"):
+				return
+			else:
+				_is_striking = false
 			if not is_instance_valid(_target) or _target.hp <= 0:
 				_target = null
 				_enter_state(State.BATTLE)
@@ -79,6 +86,8 @@ func _physics_process(delta: float) -> void:
 				return
 			_attack_timer -= delta
 			if _attack_timer <= 0.0:
+				print("striking")
+				_is_striking = true
 				_attack_timer = _get_attack_rate()
 				_do_attack_hit()
 				_do_attack_tick(delta)
@@ -134,6 +143,7 @@ func _do_battle(delta: float) -> void:
 	# Drive nav toward target every frame so it tracks movement
 	_nav.target_position = _target.position
 	_do_nav_move(delta)
+	_move()
 
 func _pick_target(units: Array) -> void:
 	var best      : Node  = null
@@ -213,39 +223,6 @@ func die() -> void:
 	emit_signal("died")
 	queue_free()
 
-# =========================================================================== #
-#  Virtual methods
-# =========================================================================== #
-
-func _get_engage_range() -> float:
-	return 48.0
-
-func _get_attack_rate() -> float:
-	return 1.2
-
-func _do_attack_hit() -> void:
-	if is_instance_valid(_target):
-		_target.take_damage(4)
-
-func _do_attack_tick(_delta: float) -> void:
-	pass
-
-func _on_enter_idle_state() -> void:
-	if _sprite.sprite_frames.has_animation("idle"):
-		_sprite.play("idle")
-
-func _on_enter_mill_state() -> void:
-	if _sprite.sprite_frames.has_animation("run"):
-		_sprite.play("run")
-
-func _on_enter_battle_state() -> void:
-	if _sprite.sprite_frames.has_animation("run"):
-		_sprite.play("run")
-
-func _on_enter_attacking_state() -> void:
-	if _sprite.sprite_frames.has_animation("attack1"):
-		_sprite.play("attack1")
-
 func _on_enter_dead_state() -> void:
 	if _sprite.sprite_frames.has_animation("death"):
 		_sprite.play("death")
@@ -253,3 +230,48 @@ func _on_enter_dead_state() -> void:
 		die()
 	else:
 		die()
+
+# =========================================================================== #
+#  Virtual methods
+# =========================================================================== #
+
+func _move() -> void:
+	print("DONT USE")
+	pass
+
+func _get_engage_range() -> float:
+	print("DONT USE")
+	return 48.0
+
+func _get_attack_rate() -> float:
+	print("DONT USE")
+	return 1.2
+
+func _do_attack_hit() -> void:
+	print("DONT USE")
+	if is_instance_valid(_target):
+		_target.take_damage(4)
+
+func _do_attack_tick(_delta: float) -> void:
+	print("DONT USE")
+	pass
+
+func _on_enter_idle_state() -> void:
+	print("DONT USE")
+	if _sprite.sprite_frames.has_animation("idle"):
+		_sprite.play("idle")
+
+func _on_enter_mill_state() -> void:
+	print("DONT USE")
+	if _sprite.sprite_frames.has_animation("run"):
+		_sprite.play("run")
+
+func _on_enter_battle_state() -> void:
+	print("DONT USE")
+	if _sprite.sprite_frames.has_animation("run"):
+		_sprite.play("run")
+
+func _on_enter_attacking_state() -> void:
+	print("DONT USE")
+	if _sprite.sprite_frames.has_animation("attack1"):
+		_sprite.play("attack1")
