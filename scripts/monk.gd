@@ -89,6 +89,7 @@ func _enter_state(new_state: State) -> void:
 		State.IDLE:
 			_state_dur = _rng.randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
 			_sprite.play("idle")
+			
 		State.MOVE:
 			_state_dur = _rng.randf_range(MOVE_TIME_MIN, MOVE_TIME_MAX)
 			var to_home := _spawn_pos - position

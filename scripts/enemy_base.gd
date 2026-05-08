@@ -36,6 +36,7 @@ var _is_striking  : bool = false
 @onready var _nav     : NavigationAgent2D = $NavAgent
 @onready var _hp_bar  : Control           = $HpBar
 @onready var _hp_fill : TextureRect       = $HpBar/health
+@onready var wave_manager := get_tree().current_scene.get_node_or_null("WaveManager")
 
 const HP_FILL_FULL_SCALE_X := 1.3
 
@@ -69,7 +70,6 @@ func _physics_process(delta: float) -> void:
 			return
 
 		State.BATTLE:
-			print("battle")
 			_do_battle(delta)
 
 		State.ATTACKING:
@@ -204,6 +204,7 @@ func _apply_separation(delta: float) -> void:
 # =========================================================================== #
 
 func take_damage(amount: int) -> void:
+	flash_red()
 	if _state == State.DEAD:
 		return
 	hp -= amount
@@ -230,6 +231,17 @@ func _on_enter_dead_state() -> void:
 		die()
 	else:
 		die()
+
+func flash_red():
+	var original_mod = _sprite.modulate
+	# Set the sprite's tint to red
+	_sprite.modulate = Color.RED
+	
+	# Wait for a short duration (0.1 seconds)
+	await get_tree().create_timer(0.1).timeout
+	
+	# Reset back to the original color (white)
+	_sprite.modulate = original_mod
 
 # =========================================================================== #
 #  Virtual methods

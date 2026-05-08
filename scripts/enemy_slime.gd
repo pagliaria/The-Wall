@@ -5,8 +5,11 @@ extends "res://scripts/enemy_base.gd"
 
 # Stats — set here as defaults; can also be tweaked per-scene in the inspector.
 @export var attack_damage : int   = 1
-@export var attack_rate   : float = 1.5
+@export var attack_rate   : float = 2
 @export var engage_range  : float = 48.0
+
+# based on frames assuming 60 FPS
+var SPLIT_COOLDOWN = 180
 
 var has_split = false
 
@@ -21,15 +24,19 @@ func _do_duplicate() -> void:
 	var clone : CharacterBody2D = load("res://scenes/enemy_slime.tscn").instantiate()
 	clone.position = position + Vector2(_rng.randf_range(-40, 40), _rng.randf_range(-40, 40))
 
-	# Hand it to the wave manager — it handles everything from here
-	get_tree().root.find_child("WaveManager").register_enemy(clone)
+	if wave_manager != null:
+		wave_manager.register_enemy(clone)
 
 # -- Virtual overrides -------------------------------------------------------
 func _move() -> void:
-	if _rng.randf() > 0.9 and not has_split:
+	SPLIT_COOLDOWN -= 1
+	if SPLIT_COOLDOWN <= 0 and not has_split:
+		has_split = true
+		SPLIT_COOLDOWN = 120
 		_sprite.play("special")
 		await _sprite.animation_finished
 		_do_duplicate()
+		_sprite.play("run")
 		print("Slime Special")
 	pass
 

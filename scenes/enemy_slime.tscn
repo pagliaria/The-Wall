@@ -271,11 +271,14 @@ attack_damage = 4
 attack_rate = 3.0
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
-scale = Vector2(1.5, 1.5)
+modulate = Color(24.309, 1, 1, 1)
+scale = Vector2(2, 2)
 sprite_frames = SubResource("enemy_warrior_frames")
 animation = &"run"
+frame_progress = 0.34214
 
 [node name="Collision" type="CollisionShape2D" parent="."]
+visible = false
 position = Vector2(0, 10)
 shape = SubResource("enemy_circle")
 

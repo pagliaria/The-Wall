@@ -94,6 +94,7 @@ var home_node     : Node    = null
 @onready var _nav_agent        : NavigationAgent2D = $NavAgent
 @onready var _hp_bar           : Control           = $HpBar
 @onready var _hp_fill          : TextureRect       = $HpBar/health
+@onready var wave_manager := get_tree().current_scene.get_node_or_null("WaveManager")
 
 # =========================================================================== #
 #  Lifecycle
@@ -172,10 +173,22 @@ func _on_end_battle() -> void:
 # =========================================================================== #
 
 func take_damage(amount: int) -> void:
+	flash_red()
 	hp -= amount
 	_update_hp_bar()
 	if hp <= 0:
 		_on_die()
+
+func flash_red():
+	var original_mod = _sprite.modulate
+	# Set the sprite's tint to red
+	_sprite.modulate = Color.RED
+	
+	# Wait for a short duration (0.1 seconds)
+	await get_tree().create_timer(0.1).timeout
+	
+	# Reset back to the original color (white)
+	_sprite.modulate = original_mod
 
 func receive_heal(amount: int) -> void:
 	hp = mini(hp + amount, max_hp)
