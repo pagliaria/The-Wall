@@ -205,7 +205,6 @@ func _check_battle_over() -> void:
 
 func _end_wave(player_won: bool) -> void:
 	_phase = Phase.NONE
-	_countdown = WAVE_INTERVAL
 
 	if is_instance_valid(drawbridge):
 		drawbridge.force_lower()
@@ -228,7 +227,6 @@ func _end_wave(player_won: bool) -> void:
 	#_prepare_next_wave()
 
 	emit_signal("wave_ended", player_won)
-	emit_signal("wave_countdown_changed", _countdown)
 
 func _on_enemy_died(enemy: Node) -> void:
 	_enemies.erase(enemy)

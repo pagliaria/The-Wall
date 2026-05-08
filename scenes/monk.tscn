@@ -1,10 +1,51 @@
-[gd_scene load_steps=29 format=3 uid="uid://dy5hnu75ehgdh"]
+[gd_scene load_steps=40 format=3 uid="uid://dy5hnu75ehgdh"]
 
 [ext_resource type="Script" uid="uid://j4eftjusn1mn" path="res://scripts/monk.gd" id="1_monk"]
+[ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="2_lynu3"]
 [ext_resource type="Script" uid="uid://j5v5w444d8s7" path="res://scripts/selection_circle.gd" id="2_selcircle"]
 [ext_resource type="Texture2D" uid="uid://ghqqd2n0sr8e" path="res://assets/Units/Black Units/Monk/Idle.png" id="3_idle"]
 [ext_resource type="Texture2D" uid="uid://dc3imwrl1dgwn" path="res://assets/Units/Black Units/Monk/Run.png" id="4_run"]
 [ext_resource type="Texture2D" uid="uid://dy2u6jqffv4bj" path="res://assets/Units/Black Units/Monk/Heal.png" id="5_heal"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sqkrf"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8oj1f"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uj33c"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vucyb"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h1dku"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(256, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_32f6t"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(320, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hfjxo"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(384, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m8few"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(448, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_27fqs"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(512, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6a4af"]
+atlas = ExtResource("2_lynu3")
+region = Rect2(576, 0, 64, 64)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_pa8bx"]
 atlas = ExtResource("5_heal")
@@ -94,6 +135,41 @@ region = Rect2(576, 0, 192, 192)
 animations = [{
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_sqkrf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8oj1f")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uj33c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vucyb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h1dku")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_32f6t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hfjxo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m8few")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_27fqs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6a4af")
+}],
+"loop": false,
+"name": &"death",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_pa8bx")
 }, {
 "duration": 1.0,
@@ -180,8 +256,7 @@ script = ExtResource("1_monk")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("monk_frames")
-animation = &"run"
-frame_progress = 0.024861
+animation = &"death"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)

@@ -50,6 +50,6 @@ func set_wave_active(wave_number: int) -> void:
 
 func set_wave_ended(player_won: bool) -> void:
 	wave_label.text = "Victory!" if player_won else "Defeated..."
-	wave_label.modulate = Color(0.3, 1.0, 0.3) if player_won else Color(1.0, 0.3, 0.3)
+	wave_display.modulate = Color(0.3, 1.0, 0.3) if player_won else Color(1.0, 0.3, 0.3)
 	await get_tree().create_timer(5).timeout
 	wave_display.visible = false
