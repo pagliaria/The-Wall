@@ -16,7 +16,7 @@ var _player : AudioStreamPlayer = null
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
-	_player.bus = "Master"
+	_player.bus = "SFX"
 	add_child(_player)
 
 func play(sound: String = DEFAULT_SOUND) -> void:

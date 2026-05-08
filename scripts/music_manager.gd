@@ -62,7 +62,7 @@ func _ready() -> void:
 func _make_player(node_name: String) -> AudioStreamPlayer:
 	var p : AudioStreamPlayer = AudioStreamPlayer.new()
 	p.name       = node_name
-	p.bus        = "Master"
+	p.bus        = "Music"
 	p.volume_db  = -80.0
 	add_child(p)
 	return p
