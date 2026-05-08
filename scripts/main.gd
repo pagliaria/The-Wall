@@ -57,6 +57,7 @@ func _ready() -> void:
 	hud.set_build_button_enabled(false)
 	_show_castle_prompt()
 	_setup_wave_manager()
+	MusicManager.play_chill()
 
 # =========================================================================== #
 #  Wave manager
@@ -79,9 +80,14 @@ func _setup_wave_manager() -> void:
 
 func _on_wave_countdown_changed(seconds: float) -> void:
 	hud.set_wave_countdown(seconds)
+	# Switch to warning music as soon as the countdown banner appears
+	if seconds <= 90.0 and seconds > 0.0:
+		if MusicManager.current_zone != MusicManager.Zone.WARNING:
+			MusicManager.play_warning()
 
 func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
+	MusicManager.play_battle()
 	unit_selection.clear_selection()
 	unit_selection.disabled = true
 	battle_seperator.disabled = true
@@ -89,6 +95,7 @@ func _on_wave_started(wave_number: int) -> void:
 
 func _on_wave_ended(player_won: bool) -> void:
 	hud.set_wave_ended(player_won)
+	MusicManager.play_chill()
 	if not building_placer.is_placing():
 		unit_selection.disabled = false
 	battle_seperator.disabled = false

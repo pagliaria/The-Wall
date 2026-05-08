@@ -275,7 +275,7 @@ modulate = Color(24.309, 1, 1, 1)
 scale = Vector2(2, 2)
 sprite_frames = SubResource("enemy_warrior_frames")
 animation = &"run"
-frame_progress = 0.61847
+frame_progress = 0.862664
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 visible = false
