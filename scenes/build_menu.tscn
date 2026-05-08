@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://cwgtv3300cseo"]
+[gd_scene load_steps=26 format=3 uid="uid://cwgtv3300cseo"]
 
 [ext_resource type="Script" uid="uid://b3x0ps32eev6x" path="res://scripts/build_menu.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://03hji3qdk0hb" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Regular.png" id="3_red_reg"]
@@ -17,15 +17,35 @@
 
 [sub_resource type="AtlasTexture" id="unit_archer"]
 atlas = ExtResource("12_archer_idle")
-region = Rect2(0, 0, 192, 192)
+region = Rect2(50.7287, 40.797, 87.4641, 100.847)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w0wao"]
+content_margin_right = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
 
 [sub_resource type="AtlasTexture" id="unit_warrior"]
 atlas = ExtResource("13_warrior_idle")
-region = Rect2(0, 0, 192, 192)
+region = Rect2(49.9163, 38.8853, 101.325, 103.714)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j7ea0"]
+content_margin_right = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_30rjs"]
+content_margin_right = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
 
 [sub_resource type="AtlasTexture" id="unit_monk"]
 atlas = ExtResource("15_monk_idle")
-region = Rect2(0, 0, 192, 192)
+region = Rect2(62.0679, 56.5693, 73.1258, 86.9862)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ah171"]
+content_margin_right = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5j6h1"]
+content_margin_right = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4h3qg"]
 atlas = ExtResource("4_jp2d4")
@@ -136,6 +156,7 @@ stretch_mode = 5
 [node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/UnitRow"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_w0wao")
 text = "x3"
 
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox"]
@@ -202,6 +223,7 @@ stretch_mode = 5
 [node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/UnitRow"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_j7ea0")
 text = "x3"
 
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/BarracksCard/VBox"]
@@ -251,13 +273,13 @@ theme_override_constants/separation = 4
 alignment = 1
 
 [node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox/UnitRow"]
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
 [node name="MeatIcon" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox/UnitRow"]
-custom_minimum_size = Vector2(16, 16)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 size_flags_vertical = 4
 expand_mode = 1
@@ -265,7 +287,9 @@ stretch_mode = 5
 
 [node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox/UnitRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_30rjs")
+text = "   "
 
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/HouseCard/VBox"]
 custom_minimum_size = Vector2(70, 24)
@@ -331,6 +355,7 @@ stretch_mode = 5
 [node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/UnitRow"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_ah171")
 text = "x2"
 
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox"]
@@ -371,6 +396,30 @@ theme_override_font_sizes/font_size = 10
 text = "Gold: ??  Wood: ??"
 horizontal_alignment = 1
 
+[node name="UnitRow" type="HBoxContainer" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatIcon" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox/UnitRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_5j6h1")
+text = "   "
+
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox"]
 custom_minimum_size = Vector2(70, 24)
 layout_mode = 2
@@ -380,10 +429,10 @@ metadata/building_id = "tower"
 [node name="CloseButton" type="TextureButton" parent="Panel"]
 custom_minimum_size = Vector2(25, 25)
 layout_mode = 2
-offset_left = 488.0
-offset_top = -29.0
-offset_right = 616.0
-offset_bottom = 99.0
+offset_left = 601.0
+offset_top = -25.0
+offset_right = 729.0
+offset_bottom = 103.0
 scale = Vector2(0.5, 0.5)
 size_flags_vertical = 4
 texture_normal = ExtResource("3_red_reg")
@@ -392,10 +441,10 @@ texture_hover = ExtResource("3_red_reg")
 
 [node name="Ribbon" type="Panel" parent="Panel"]
 layout_mode = 0
-offset_left = 209.0
-offset_top = 3.0
-offset_right = 249.0
-offset_bottom = 43.0
+offset_left = 283.0
+offset_top = 5.0
+offset_right = 323.0
+offset_bottom = 45.0
 scale = Vector2(0.5, 0.5)
 
 [node name="ribbon_left" type="TextureRect" parent="Panel/Ribbon"]
@@ -448,10 +497,10 @@ texture = SubResource("AtlasTexture_yiarh")
 
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 2
-offset_left = 244.0
-offset_top = -25.0
-offset_right = 294.0
-offset_bottom = 23.0
+offset_left = 318.0
+offset_top = -23.0
+offset_right = 368.0
+offset_bottom = 25.0
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)

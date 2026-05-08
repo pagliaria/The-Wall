@@ -1,10 +1,23 @@
-[gd_scene load_steps=9 format=3 uid="uid://cr3lg6qsx3bq3"]
+[gd_scene load_steps=14 format=3 uid="uid://cr3lg6qsx3bq3"]
 
 [ext_resource type="Script" uid="uid://b7cctta8bg0nc" path="res://scripts/castle_prompt.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://q31u1grfnkam" path="res://assets/UI Elements/UI Elements/Banners/Banner_Slots.png" id="2_6388n"]
 [ext_resource type="Texture2D" uid="uid://cautf2bh2ydse" path="res://assets/Buildings/Black Buildings/Castle.png" id="3_uvs4a"]
+[ext_resource type="Texture2D" uid="uid://csq834oyrvmp6" path="res://assets/Units/Black Units/Pawn/Pawn_Idle.png" id="4_q6d2s"]
+[ext_resource type="Texture2D" uid="uid://b14k0s0yqu2jo" path="res://assets/UI Elements/UI Elements/Icons/Icon_04.png" id="5_ksjbq"]
 [ext_resource type="Texture2D" uid="uid://c5fkle31ll17f" path="res://assets/UI Elements/UI Elements/Ribbons/BigRibbons.png" id="5_ribbons"]
 [ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="6_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q6d2s"]
+bg_color = Color(0.314316, 0.314316, 0.314316, 1)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qgtuj"]
+atlas = ExtResource("4_q6d2s")
+region = Rect2(48.264, 48.8292, 98.2596, 93.3629)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ksjbq"]
+content_margin_right = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_left_end"]
 atlas = ExtResource("5_ribbons")
@@ -74,6 +87,7 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(110, 150)
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_q6d2s")
 
 [node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer/VBox/CastleCard"]
 layout_mode = 2
@@ -99,6 +113,32 @@ theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
 theme_override_font_sizes/font_size = 10
 text = "Free"
 horizontal_alignment = 1
+
+[node name="UnitRow" type="HBoxContainer" parent="Panel/MarginContainer/VBox/CastleCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/CastleCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = SubResource("AtlasTexture_qgtuj")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatIcon" type="TextureRect" parent="Panel/MarginContainer/VBox/CastleCard/VBox/UnitRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("5_ksjbq")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MeatCost" type="Label" parent="Panel/MarginContainer/VBox/CastleCard/VBox/UnitRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_ksjbq")
+text = "x1"
 
 [node name="PlaceButton" type="Button" parent="Panel/MarginContainer/VBox/CastleCard/VBox"]
 custom_minimum_size = Vector2(80, 24)
@@ -146,6 +186,7 @@ offset_bottom = 47.0
 texture = SubResource("AtlasTexture_mid")
 
 [node name="ribbon_mid5" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
 offset_left = -60.0
 offset_top = -54.0
 offset_right = 3.0
@@ -169,6 +210,7 @@ offset_bottom = 47.0
 texture = SubResource("AtlasTexture_mid")
 
 [node name="ribbon_mid6" type="TextureRect" parent="Panel/Ribbon"]
+layout_mode = 0
 offset_left = -112.0
 offset_top = -54.0
 offset_right = -49.0

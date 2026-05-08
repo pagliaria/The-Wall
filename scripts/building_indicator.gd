@@ -12,9 +12,10 @@ extends Node2D
 # =========================================================================== #
 #  Appearance
 # =========================================================================== #
+const FONT_SIZE  = 16.0
 
-const RADIUS_OUTER  = 22.0
-const RADIUS_INNER  = 16.0
+const RADIUS_OUTER  = 30.0
+const RADIUS_INNER  = 25.0
 const RING_WIDTH    = 6.0
 const ARC_STEPS     = 48       # smoothness of the arc
 
@@ -29,7 +30,7 @@ const COLOR_NO_MEAT   := Color(0.85, 0.25, 0.25, 1.0)   # red tint when starved
 const MEAT_ICON_TEXTURE := preload("res://assets/UI Elements/UI Elements/Icons/Icon_04.png")
 const PULSE_SPEED  := 1     # full cycles per second
 const PULSE_OFFSET := Vector2(0, -48)  # above the indicator circle
-const ICON_SCALE   := 0.4
+const ICON_SCALE   := 0.5
 
 # =========================================================================== #
 #  State — set by placed_building each frame
@@ -98,7 +99,7 @@ func _draw() -> void:
 
 	# --- Center text ---
 	var label    := "%d/%d" % [live_units, max_units]
-	var font_size := 11
+	var font_size := FONT_SIZE
 	var size     := _font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var offset   := Vector2(-size.x * 0.5, size.y * 0.35)
 	draw_string(_font, offset, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, COLOR_TEXT)
