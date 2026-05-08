@@ -66,9 +66,12 @@ const SHEEP_EXTRACT_TIME := 5.0 # seconds per chunk
 # Group name used by unit_selection.gd to find resource hover areas
 const RESOURCE_HOVER_GROUP := "resource_hover"
 
-var tree_nodes : Array[Node] = []
-var sheep_nodes : Array[Node] = []
-var gold_nodes : Array[Node] = []
+var tree_nodes      : Array[Node] = []
+var sheep_nodes     : Array[Node] = []
+var gold_nodes      : Array[Node] = []
+var buildings_layer : Node2D      = null
+
+const BUILDING_SPACING := 3   # tile clearance around any placed building
 
 func _ready() -> void:
 	pass
@@ -263,6 +266,12 @@ func _too_close(placed: Array[Vector2i], col: int, row: int, spacing: int) -> bo
 	for p in placed:
 		if abs(p.x - col) < spacing and abs(p.y - row) < spacing:
 			return true
+	# Also check against placed buildings
+	if buildings_layer != null:
+		for building in buildings_layer.get_children():
+			var tile : Variant = building.get_meta("tile", Vector2i(-9999, -9999))
+			if abs(tile.x - col) < BUILDING_SPACING and abs(tile.y - row) < BUILDING_SPACING:
+				return true
 	return false
 
 func _add_placement_blocker(parent: Node2D, local_pos: Vector2, radius: float) -> void:

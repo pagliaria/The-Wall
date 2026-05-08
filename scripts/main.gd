@@ -38,6 +38,7 @@ var _wave_manager  : Node        = null
 
 func _ready() -> void:
 	_fit_camera_to_screen()
+	resource_layer.buildings_layer = buildings_layer
 	resource_layer.spawn()
 	resource_layer.resource_depleted.connect(_on_resource_depleted)
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3 uid="uid://dy5hnu75ehgdh"]
+[gd_scene load_steps=46 format=3 uid="uid://dy5hnu75ehgdh"]
 
 [ext_resource type="Script" uid="uid://j4eftjusn1mn" path="res://scripts/monk.gd" id="1_monk"]
 [ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="2_lynu3"]
@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" uid="uid://ghqqd2n0sr8e" path="res://assets/Units/Black Units/Monk/Idle.png" id="3_idle"]
 [ext_resource type="Texture2D" uid="uid://dc3imwrl1dgwn" path="res://assets/Units/Black Units/Monk/Run.png" id="4_run"]
 [ext_resource type="Texture2D" uid="uid://dy2u6jqffv4bj" path="res://assets/Units/Black Units/Monk/Heal.png" id="5_heal"]
+[ext_resource type="Texture2D" uid="uid://vvnniucpqaqc" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Base.png" id="7_6kcii"]
+[ext_resource type="Texture2D" uid="uid://bmvu32pp07fxe" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Fill.png" id="8_ocwry"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_sqkrf"]
 atlas = ExtResource("2_lynu3")
@@ -204,7 +206,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"heal",
-"speed": 8.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -227,7 +229,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle",
-"speed": 8.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -244,11 +246,26 @@ animations = [{
 }],
 "loop": true,
 "name": &"run",
-"speed": 8.0
+"speed": 10.0
 }]
 
 [sub_resource type="CircleShape2D" id="monk_circle"]
 radius = 18.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sbek4"]
+atlas = ExtResource("7_6kcii")
+region = Rect2(36.9312, 15.5149, 26.7684, 29.3799)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8coty"]
+atlas = ExtResource("7_6kcii")
+region = Rect2(128.335, 15.5149, 63.0036, 29.3799)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8e244"]
+atlas = ExtResource("7_6kcii")
+region = Rect2(256.301, 15.5149, 19.2602, 29.3799)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ecqyi"]
+atlas = ExtResource("8_ocwry")
 
 [node name="Monk" type="CharacterBody2D"]
 collision_layer = 4
@@ -256,7 +273,7 @@ script = ExtResource("1_monk")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("monk_frames")
-animation = &"death"
+animation = &"idle"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
@@ -271,3 +288,46 @@ script = ExtResource("2_selcircle")
 path_desired_distance = 8.0
 target_desired_distance = 16.0
 radius = 64.0
+
+[node name="HpBar" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = -9.0
+offset_top = -50.0
+offset_right = 31.0
+offset_bottom = -10.0
+scale = Vector2(0.75, 0.75)
+
+[node name="left" type="TextureRect" parent="HpBar"]
+layout_mode = 0
+offset_left = -62.0
+offset_top = -25.0
+offset_right = -22.0
+offset_bottom = 15.0
+texture = SubResource("AtlasTexture_sbek4")
+
+[node name="middle" type="TextureRect" parent="HpBar"]
+layout_mode = 0
+offset_left = -23.0
+offset_top = -25.0
+offset_right = 40.0
+offset_bottom = 15.0
+texture = SubResource("AtlasTexture_8coty")
+
+[node name="right" type="TextureRect" parent="HpBar"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = -25.0
+offset_right = 80.0
+offset_bottom = 15.0
+texture = SubResource("AtlasTexture_8e244")
+
+[node name="health" type="TextureRect" parent="HpBar"]
+layout_mode = 0
+offset_left = -29.3333
+offset_top = -50.6667
+offset_right = 34.6667
+offset_bottom = 13.3333
+scale = Vector2(1.3, 1.5)
+texture = SubResource("AtlasTexture_ecqyi")

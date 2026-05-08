@@ -3,17 +3,55 @@ extends CanvasLayer
 signal build_pressed
 signal building_selected(building_id: String)
 
-@onready var build_button     : TextureButton = $ActionBar/BuildButton
-@onready var build_menu       : Control       = $BuildMenu
-@onready var resource_display : Control       = $ResourceDisplay
-@onready var wave_label       : Label         = $WaveTimer/WaveLabel
-@onready var wave_display     : Control       = $WaveTimer
+@onready var build_button     : TextureButton  = $ActionBar/BuildButton
+@onready var build_menu       : Control        = $BuildMenu
+@onready var resource_display : Control        = $ResourceDisplay
+@onready var wave_label       : Label          = $WaveTimer/WaveLabel
+@onready var wave_display     : Control        = $WaveTimer
+@onready var speed_controls   : HBoxContainer  = $ActionBar/SpeedControls
+
+var _speed_buttons : Array[Button] = []
+var _current_speed : float = 1.0
 
 func _ready() -> void:
 	build_button.pressed.connect(_on_build_button_pressed)
 	build_menu.building_selected.connect(_on_building_selected)
 	build_menu.closed.connect(_on_build_menu_closed)
 	wave_label.text = ""
+	_setup_speed_buttons()
+
+const SPEED_MAP : Dictionary = {
+	"PauseBtn":    0.0,
+	"NormalBtn":   1.0,
+	"FastBtn":     2.0,
+	"VeryFastBtn": 5.0,
+}
+
+func _setup_speed_buttons() -> void:
+	for child in speed_controls.get_children():
+		if child is Button and SPEED_MAP.has(child.name):
+			_speed_buttons.append(child as Button)
+			(child as Button).pressed.connect(_on_speed_button_pressed.bind(child))
+	_highlight_speed(1.0)
+
+func _on_speed_button_pressed(btn: Button) -> void:
+	var speed : float = SPEED_MAP.get(btn.name, 1.0)
+	_set_speed(speed)
+
+func _set_speed(speed: float) -> void:
+	_current_speed = speed
+	Engine.time_scale = speed
+	_highlight_speed(speed)
+
+func _highlight_speed(speed: float) -> void:
+	for btn : Button in _speed_buttons:
+		var btn_speed : float = btn.get_meta("speed", 1.0)
+		if btn_speed == speed:
+			btn.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+			btn.add_theme_color_override("font_hover_color", Color(1.0, 0.85, 0.2))
+		else:
+			btn.remove_theme_color_override("font_color")
+			btn.remove_theme_color_override("font_hover_color")
 
 func _on_build_button_pressed() -> void:
 	if build_menu.visible:
@@ -51,5 +89,5 @@ func set_wave_active(wave_number: int) -> void:
 func set_wave_ended(player_won: bool) -> void:
 	wave_label.text = "Victory!" if player_won else "Defeated..."
 	wave_display.modulate = Color(0.3, 1.0, 0.3) if player_won else Color(1.0, 0.3, 0.3)
-	await get_tree().create_timer(5).timeout
+	await get_tree().create_timer(5, true, false, true).timeout
 	wave_display.visible = false

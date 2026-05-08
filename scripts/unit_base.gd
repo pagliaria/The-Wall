@@ -177,6 +177,10 @@ func take_damage(amount: int) -> void:
 	if hp <= 0:
 		_on_die()
 
+func receive_heal(amount: int) -> void:
+	hp = mini(hp + amount, max_hp)
+	_update_hp_bar()
+
 func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
 		return
