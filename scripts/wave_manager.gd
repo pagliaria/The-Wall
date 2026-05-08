@@ -236,3 +236,16 @@ func _end_wave(player_won: bool) -> void:
 func _on_enemy_died(enemy: Node) -> void:
 	_enemies.erase(enemy)
 	emit_signal("enemy_count_changed", _enemies.size())
+
+# =========================================================================== #
+#  Public hook — call from any enemy script to register a mid-battle spawn
+# =========================================================================== #
+
+func register_enemy(enemy: CharacterBody2D) -> void:
+	if _phase != Phase.BATTLE:
+		return
+	units_layer.add_child(enemy)
+	enemy.died.connect(_on_enemy_died.bind(enemy))
+	enemy.start_battle(_player_units)
+	_enemies.append(enemy)
+	emit_signal("enemy_count_changed", _enemies.size())

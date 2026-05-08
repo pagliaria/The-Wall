@@ -236,42 +236,42 @@ func _on_enter_dead_state() -> void:
 # =========================================================================== #
 
 func _move() -> void:
-	print("DONT USE")
+	print("DEFAULT move")
 	pass
 
 func _get_engage_range() -> float:
-	print("DONT USE")
+	print("DEFAULT engage range")
 	return 48.0
 
 func _get_attack_rate() -> float:
-	print("DONT USE")
+	print("DEFAULT attack rate")
 	return 1.2
 
 func _do_attack_hit() -> void:
-	print("DONT USE")
+	print("DEFAULT attack hit")
 	if is_instance_valid(_target):
 		_target.take_damage(4)
 
 func _do_attack_tick(_delta: float) -> void:
-	print("DONT USE")
+	print("DEFAULT attack tick")
 	pass
 
 func _on_enter_idle_state() -> void:
-	print("DONT USE")
+	print("DEFAULT idle state")
 	if _sprite.sprite_frames.has_animation("idle"):
 		_sprite.play("idle")
 
 func _on_enter_mill_state() -> void:
-	print("DONT USE")
+	print("DEFAULT mill state")
 	if _sprite.sprite_frames.has_animation("run"):
 		_sprite.play("run")
 
 func _on_enter_battle_state() -> void:
-	print("DONT USE")
+	print("DEFAULT battle state")
 	if _sprite.sprite_frames.has_animation("run"):
 		_sprite.play("run")
 
 func _on_enter_attacking_state() -> void:
-	print("DONT USE")
+	print("DEFAULT attack state")
 	if _sprite.sprite_frames.has_animation("attack1"):
 		_sprite.play("attack1")

@@ -8,6 +8,8 @@ extends "res://scripts/enemy_base.gd"
 @export var attack_rate   : float = 1.5
 @export var engage_range  : float = 48.0
 
+var has_split = false
+
 func _ready() -> void:
 	# Set base exports before super._ready() initialises hp.
 	max_hp        = 5
@@ -15,10 +17,19 @@ func _ready() -> void:
 	patrol_radius = 180.0
 	super._ready()
 
-# -- Virtual overrides -------------------------------------------------------
+func _do_duplicate() -> void:
+	var clone : CharacterBody2D = load("res://scenes/enemy_slime.tscn").instantiate()
+	clone.position = position + Vector2(_rng.randf_range(-40, 40), _rng.randf_range(-40, 40))
 
+	# Hand it to the wave manager — it handles everything from here
+	get_tree().root.find_child("WaveManager").register_enemy(clone)
+
+# -- Virtual overrides -------------------------------------------------------
 func _move() -> void:
-	if _rng.randf() > 0.8:
+	if _rng.randf() > 0.9 and not has_split:
+		_sprite.play("special")
+		await _sprite.animation_finished
+		_do_duplicate()
 		print("Slime Special")
 	pass
 
