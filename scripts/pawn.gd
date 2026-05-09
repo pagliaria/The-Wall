@@ -225,6 +225,8 @@ func _deliver() -> void:
 # =========================================================================== #
 
 func gather_resource(resource_node: Node, resource_body: Node) -> void:
+	if _state == State.RETURN:
+		return
 	if is_instance_valid(_resource_node):
 		_resource_node.unregister_gatherer(self)
 	_resource_node   = resource_node
