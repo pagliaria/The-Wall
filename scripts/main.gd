@@ -32,6 +32,7 @@ var _castle_placed := false
 @onready var drawbridge      : Node2D             = $wall
 @onready var battle_seperator: CollisionShape2D   = $wall/Wall_Collision/BattleSeperator
 @onready var wave_timer      : Timer              = $wave_timer
+@onready var settings_screen : CanvasLayer        = $SettingsScreen
 
 var _castle_prompt : CanvasLayer = null
 var _wave_manager  : Node        = null
@@ -49,6 +50,8 @@ func _ready() -> void:
 
 	hud.build_pressed.connect(_on_build_pressed)
 	hud.building_selected.connect(_on_building_selected)
+	hud.settings_pressed.connect(settings_screen.open)
+	settings_screen.display_changed.connect(_fit_camera_to_screen)
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
@@ -58,6 +61,14 @@ func _ready() -> void:
 	_show_castle_prompt()
 	_setup_wave_manager()
 	MusicManager.play_chill()
+
+	# Apply any saved gameplay settings
+	var start_res : Dictionary = settings_screen.get_start_resources()
+	ResourceManager.gold = start_res.get("gold", 100)
+	ResourceManager.wood = start_res.get("wood", 50)
+	ResourceManager.meat = start_res.get("meat", 10)
+	_push_resources()
+	wave_timer.wait_time = settings_screen.get_wave_interval()
 
 # =========================================================================== #
 #  Wave manager

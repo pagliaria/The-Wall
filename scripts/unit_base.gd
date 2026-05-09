@@ -189,6 +189,9 @@ func flash_red():
 	
 	# Reset back to the original color (white)
 	_sprite.modulate = original_mod
+	
+	if _sprite.modulate == Color.RED:
+		_sprite.modulate = Color.WHITE
 
 func receive_heal(amount: int) -> void:
 	hp = mini(hp + amount, max_hp)

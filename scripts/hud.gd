@@ -2,6 +2,7 @@ extends CanvasLayer
 
 signal build_pressed
 signal building_selected(building_id: String)
+signal settings_pressed
 
 @onready var build_button     : TextureButton  = $ActionBar/BuildButton
 @onready var build_menu       : Control        = $BuildMenu
@@ -11,6 +12,7 @@ signal building_selected(building_id: String)
 @onready var speed_controls   : HBoxContainer  = $ActionBar/SpeedControls
 @onready var victory          : Label          = $WaveTimer/Victory
 @onready var title            : Label          = $WaveTimer/Title
+@onready var settings_btn     : Button         = $ActionBar/SettingsBtn
 
 var _speed_buttons : Array[Button] = []
 var _current_speed : float = 1.0
@@ -19,6 +21,7 @@ func _ready() -> void:
 	build_button.pressed.connect(_on_build_button_pressed)
 	build_menu.building_selected.connect(_on_building_selected)
 	build_menu.closed.connect(_on_build_menu_closed)
+	settings_btn.pressed.connect(_on_settings_pressed)
 	wave_label.text = ""
 	_setup_speed_buttons()
 
@@ -69,6 +72,10 @@ func _on_building_selected(building_id: String) -> void:
 
 func _on_build_menu_closed() -> void:
 	pass
+
+func _on_settings_pressed() -> void:
+	UiAudio.play()
+	emit_signal("settings_pressed")
 
 func update_resources(gold: int, wood: int, meat: int) -> void:
 	resource_display.set_resources(gold, wood, meat)

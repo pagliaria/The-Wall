@@ -1,0 +1,421 @@
+[gd_scene load_steps=11 format=3 uid="uid://b1fea6knbgvwi"]
+
+[ext_resource type="Script" uid="uid://x25m1akdtnsl" path="res://scripts/settings_screen.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="3_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.92, 0.85, 0.72, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.45, 0.32, 0.18, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sep"]
+content_margin_top = 1.0
+content_margin_bottom = 1.0
+bg_color = Color(0.45, 0.32, 0.18, 0.4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_panel"]
+content_margin_left = 0.0
+content_margin_top = 16.0
+content_margin_right = 0.0
+content_margin_bottom = 8.0
+bg_color = Color(0.92, 0.85, 0.72, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_selected"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.92, 0.85, 0.72, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_color = Color(0.45, 0.32, 0.18, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_unselected"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.72, 0.63, 0.48, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_color = Color(0.45, 0.32, 0.18, 0.6)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_resume"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.28, 0.52, 0.28, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.18, 0.38, 0.18, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_neutral"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.45, 0.38, 0.28, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.22, 0.14, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_danger"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.58, 0.22, 0.18, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 0.14, 0.1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="SettingsScreen" type="CanvasLayer"]
+process_mode = 3
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1.0
+offset_right = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.6)
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -340.0
+offset_top = -310.0
+offset_right = 340.0
+offset_bottom = 310.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Panel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.1, 0.05, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 34
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="HSep" type="HSeparator" parent="Panel/MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxFlat_sep")
+
+[node name="TabContainer" type="TabContainer" parent="Panel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_unselected_color = Color(0.15, 0.08, 0.02, 0.85)
+theme_override_colors/font_selected_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/panel = SubResource("StyleBoxFlat_tab_panel")
+theme_override_styles/tab_selected = SubResource("StyleBoxFlat_tab_selected")
+theme_override_styles/tab_unselected = SubResource("StyleBoxFlat_tab_unselected")
+current_tab = 0
+
+[node name="Audio" type="VBoxContainer" parent="Panel/MarginContainer/VBox/TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="MarginAudio" type="MarginContainer" parent="Panel/MarginContainer/VBox/TabContainer/Audio"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Grid" type="GridContainer" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 18
+columns = 3
+
+[node name="LabelMaster" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Master"
+
+[node name="SliderMaster" type="HSlider" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(340, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="LabelMasterVal" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "100%"
+horizontal_alignment = 2
+
+[node name="LabelMusic" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Music"
+
+[node name="SliderMusic" type="HSlider" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(340, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="LabelMusicVal" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "100%"
+horizontal_alignment = 2
+
+[node name="LabelSfx" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "SFX"
+
+[node name="SliderSfx" type="HSlider" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(340, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="LabelSfxVal" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid"]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "100%"
+horizontal_alignment = 2
+
+[node name="Display" type="VBoxContainer" parent="Panel/MarginContainer/VBox/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="MarginDisplay" type="MarginContainer" parent="Panel/MarginContainer/VBox/TabContainer/Display"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Grid" type="GridContainer" parent="Panel/MarginContainer/VBox/TabContainer/Display/MarginDisplay"]
+layout_mode = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 18
+columns = 2
+
+[node name="LabelFullscreen" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Display/MarginDisplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Fullscreen"
+
+[node name="CheckFullscreen" type="CheckButton" parent="Panel/MarginContainer/VBox/TabContainer/Display/MarginDisplay/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="LabelVsync" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Display/MarginDisplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "VSync"
+
+[node name="CheckVsync" type="CheckButton" parent="Panel/MarginContainer/VBox/TabContainer/Display/MarginDisplay/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+button_pressed = true
+
+[node name="Gameplay" type="VBoxContainer" parent="Panel/MarginContainer/VBox/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="MarginGameplay" type="MarginContainer" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Grid" type="GridContainer" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay"]
+layout_mode = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 18
+columns = 2
+
+[node name="LabelWaveInterval" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Wave Interval (seconds)"
+
+[node name="SpinWaveInterval" type="SpinBox" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+min_value = 30.0
+max_value = 600.0
+step = 10.0
+value = 180.0
+
+[node name="LabelStartGold" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Starting Gold"
+
+[node name="SpinStartGold" type="SpinBox" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+max_value = 10000.0
+step = 50.0
+value = 100.0
+
+[node name="LabelStartWood" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Starting Wood"
+
+[node name="SpinStartWood" type="SpinBox" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+max_value = 10000.0
+step = 50.0
+value = 50.0
+
+[node name="LabelStartMeat" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Starting Meat"
+
+[node name="SpinStartMeat" type="SpinBox" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+max_value = 1000.0
+step = 5.0
+value = 10.0
+
+[node name="HSep2" type="HSeparator" parent="Panel/MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxFlat_sep")
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="BtnResume" type="Button" parent="Panel/MarginContainer/VBox/Buttons"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_resume")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_resume")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_resume")
+text = "Resume"
+
+[node name="BtnApply" type="Button" parent="Panel/MarginContainer/VBox/Buttons"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_neutral")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_neutral")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_neutral")
+text = "Apply"
+
+[node name="BtnDefaults" type="Button" parent="Panel/MarginContainer/VBox/Buttons"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_danger")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_danger")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_danger")
+text = "Reset Defaults"

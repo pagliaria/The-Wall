@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=33 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -20,6 +20,7 @@
 [ext_resource type="Script" uid="uid://spnm5nytjrqx" path="res://scripts/selection_overlay.gd" id="15_overlay"]
 [ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="16_gqmmt"]
 [ext_resource type="Script" uid="uid://bari6wkicm3ly" path="res://scripts/battlefield_overlay.gd" id="17_battlefield"]
+[ext_resource type="PackedScene" uid="uid://b1fea6knbgvwi" path="res://scenes/settings_screen.tscn" id="32_settings"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -334,6 +335,22 @@ layout_mode = 2
 tooltip_text = "5x speed"
 text = "5x"
 
+[node name="SettingsBtn" type="Button" parent="HUD/ActionBar"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 152.0
+offset_top = -18.0
+offset_right = 188.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Settings (ESC)"
+text = "⚙"
+
 [node name="BuildMenu" parent="HUD" instance=ExtResource("11_build_menu")]
 
 [node name="ResourceDisplay" parent="HUD" instance=ExtResource("12_resources")]
@@ -523,6 +540,8 @@ autostart = true
 wait_time = 180.0
 one_shot = true
 autostart = true
+
+[node name="SettingsScreen" parent="." instance=ExtResource("32_settings")]
 
 [connection signal="timeout" from="resource_timer" to="ResourceLayer" method="_on_timer_timeout"]
 [connection signal="timeout" from="wave_timer" to="." method="_on_wave_timer_timeout"]

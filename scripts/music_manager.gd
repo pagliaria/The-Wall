@@ -17,20 +17,17 @@ const FADE_TIME   : float = 2.0    # seconds to crossfade between tracks
 const MUSIC_VOLUME_DB : float = 0.0
 
 const CHILL_TRACKS : Array[String] = [
-	"res://assets/audio/music/chill/Ludum Dare 30 01.ogg",
-	"res://assets/audio/music/chill/Ludum Dare 30 05.ogg",
-	"res://assets/audio/music/chill/Ludum Dare 30 06.ogg",
+	"res://assets/audio/music/chill/Ludum Dare 38 01.ogg",
+	"res://assets/audio/music/chill/Ludum Dare 38 06.ogg",
+	"res://assets/audio/music/chill/Patreon Challenge 06.ogg",
 ]
 const WARNING_TRACKS : Array[String] = [
-	"res://assets/audio/music/warning/Ludum Dare 28 04.ogg",
-	"res://assets/audio/music/warning/Ludum Dare 28 07.ogg",
 	"res://assets/audio/music/warning/Ludum Dare 30 03.ogg",
 	"res://assets/audio/music/warning/Ludum Dare 30 08.ogg",
+	"res://assets/audio/music/warning/Ludum Dare 38 02.ogg",
 ]
 const BATTLE_TRACKS : Array[String] = [
-	"res://assets/audio/music/battle/Ludum Dare 28 01.ogg",
-	"res://assets/audio/music/battle/Ludum Dare 30 04.ogg",
-	"res://assets/audio/music/battle/Ludum Dare 30 07.ogg",
+	"res://assets/audio/music/battle/Ludum Dare 38 04.ogg",
 ]
 
 # =========================================================================== #

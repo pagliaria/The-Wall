@@ -6,6 +6,7 @@ extends CanvasLayer
 
 signal closed
 signal resume_requested
+signal display_changed
 
 const CONFIG_PATH : String = "user://settings.cfg"
 
@@ -34,26 +35,26 @@ var _start_meat       : int   = 10
 #  Node refs
 # =========================================================================== #
 
-@onready var _panel               : Control      = $Panel
+@onready var _panel               : Panel        = $Panel
 @onready var _tab_bar             : TabContainer = $Panel/MarginContainer/VBox/TabContainer
 
 # Audio tab
-@onready var _slider_master       : HSlider = $Panel/MarginContainer/VBox/TabContainer/Audio/Grid/SliderMaster
-@onready var _slider_music        : HSlider = $Panel/MarginContainer/VBox/TabContainer/Audio/Grid/SliderMusic
-@onready var _slider_sfx          : HSlider = $Panel/MarginContainer/VBox/TabContainer/Audio/Grid/SliderSfx
-@onready var _label_master        : Label   = $Panel/MarginContainer/VBox/TabContainer/Audio/Grid/LabelMasterVal
-@onready var _label_music         : Label   = $Panel/MarginContainer/VBox/TabContainer/Audio/Grid/LabelMusicVal
-@onready var _label_sfx           : Label   = $Panel/MarginContainer/VBox/TabContainer/Audio/Grid/LabelSfxVal
+@onready var _slider_master       : HSlider = $Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid/SliderMaster
+@onready var _slider_music        : HSlider = $Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid/SliderMusic
+@onready var _slider_sfx          : HSlider = $Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid/SliderSfx
+@onready var _label_master        : Label   = $Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid/LabelMasterVal
+@onready var _label_music         : Label   = $Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid/LabelMusicVal
+@onready var _label_sfx           : Label   = $Panel/MarginContainer/VBox/TabContainer/Audio/MarginAudio/Grid/LabelSfxVal
 
 # Display tab
-@onready var _check_fullscreen    : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Display/Grid/CheckFullscreen
-@onready var _check_vsync         : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Display/Grid/CheckVsync
+@onready var _check_fullscreen    : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Display/MarginDisplay/Grid/CheckFullscreen
+@onready var _check_vsync         : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Display/MarginDisplay/Grid/CheckVsync
 
 # Gameplay tab
-@onready var _spin_wave_interval  : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/Grid/SpinWaveInterval
-@onready var _spin_start_gold     : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/Grid/SpinStartGold
-@onready var _spin_start_wood     : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/Grid/SpinStartWood
-@onready var _spin_start_meat     : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/Grid/SpinStartMeat
+@onready var _spin_wave_interval  : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinWaveInterval
+@onready var _spin_start_gold     : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinStartGold
+@onready var _spin_start_wood     : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinStartWood
+@onready var _spin_start_meat     : SpinBox = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinStartMeat
 
 # Buttons
 @onready var _btn_resume          : Button = $Panel/MarginContainer/VBox/Buttons/BtnResume
@@ -128,6 +129,8 @@ func _on_fullscreen_toggled(pressed: bool) -> void:
 	_fullscreen = pressed
 	var mode : DisplayServer.WindowMode = DisplayServer.WINDOW_MODE_FULLSCREEN if pressed else DisplayServer.WINDOW_MODE_WINDOWED
 	DisplayServer.window_set_mode(mode)
+	await get_tree().process_frame
+	emit_signal("display_changed")
 
 func _on_vsync_toggled(pressed: bool) -> void:
 	_vsync = pressed
@@ -233,6 +236,8 @@ func _apply_display() -> void:
 	var mode : DisplayServer.WindowMode = DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
 	DisplayServer.window_set_mode(mode)
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if _vsync else DisplayServer.VSYNC_DISABLED)
+	await get_tree().process_frame
+	emit_signal("display_changed")
 
 # =========================================================================== #
 #  Public getters for main.gd to read gameplay settings
