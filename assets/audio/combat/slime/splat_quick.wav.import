@@ -3,12 +3,12 @@
 importer="wav"
 type="AudioStreamWAV"
 uid="uid://phw68kierhms"
-path="res://.godot/imported/splat_quick.wav-71be1772f4fcf011ae8cb3231a03780c.sample"
+path="res://.godot/imported/splat_quick.wav-0fbc9e22d0ef96b375b9cede5ac93f76.sample"
 
 [deps]
 
-source_file="res://assets/audio/combat/splat_quick.wav"
-dest_files=["res://.godot/imported/splat_quick.wav-71be1772f4fcf011ae8cb3231a03780c.sample"]
+source_file="res://assets/audio/combat/slime/splat_quick.wav"
+dest_files=["res://.godot/imported/splat_quick.wav-0fbc9e22d0ef96b375b9cede5ac93f76.sample"]
 
 [params]
 
