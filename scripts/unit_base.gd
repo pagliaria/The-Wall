@@ -173,6 +173,7 @@ func _on_end_battle() -> void:
 # =========================================================================== #
 
 func take_damage(amount: int) -> void:
+	CombatAudio.play("hurt")
 	flash_red()
 	hp -= amount
 	_update_hp_bar()
@@ -211,9 +212,9 @@ func die() -> void:
 
 # Override for cleanup before queue_free (e.g. pawn unregisters from resource).
 func _on_die() -> void:
-	var anim_name = "death"
+	var anim_name : String = "death"
 	if _sprite.sprite_frames.has_animation(anim_name):
-		print(anim_name)
+		CombatAudio.play("death")
 		_sprite.play(anim_name)
 		
 		# Get frames and fps to calculate duration

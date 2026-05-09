@@ -248,42 +248,33 @@ func flash_red():
 # =========================================================================== #
 
 func _move() -> void:
-	print("DEFAULT move")
 	pass
 
 func _get_engage_range() -> float:
-	print("DEFAULT engage range")
 	return 48.0
 
 func _get_attack_rate() -> float:
-	print("DEFAULT attack rate")
 	return 1.2
 
 func _do_attack_hit() -> void:
-	print("DEFAULT attack hit")
 	if is_instance_valid(_target):
 		_target.take_damage(4)
 
 func _do_attack_tick(_delta: float) -> void:
-	print("DEFAULT attack tick")
 	pass
 
 func _on_enter_idle_state() -> void:
-	print("DEFAULT idle state")
 	if _sprite.sprite_frames.has_animation("idle"):
 		_sprite.play("idle")
 
 func _on_enter_mill_state() -> void:
-	print("DEFAULT mill state")
 	if _sprite.sprite_frames.has_animation("run"):
 		_sprite.play("run")
 
 func _on_enter_battle_state() -> void:
-	print("DEFAULT battle state")
 	if _sprite.sprite_frames.has_animation("run"):
 		_sprite.play("run")
 
 func _on_enter_attacking_state() -> void:
-	print("DEFAULT attack state")
 	if _sprite.sprite_frames.has_animation("attack1"):
 		_sprite.play("attack1")

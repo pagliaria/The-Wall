@@ -43,6 +43,7 @@ func init(target: Node, dmg: int) -> void:
 	_start_pos = global_position
 	# Aim at where the target is now; straight-line collision tracks them
 	_end_pos   = target.global_position if is_instance_valid(target) else global_position + Vector2(100, 0)
+	CombatAudio.play("arrow")
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -99,5 +100,6 @@ func _physics_process(delta: float) -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.has_method("take_damage"):
+		CombatAudio.play("arrow_hit")
 		body.take_damage(damage)
 		queue_free()

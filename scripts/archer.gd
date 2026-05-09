@@ -161,14 +161,11 @@ func _do_shoot() -> void:
 		_shooting = false
 		return
 	_sprite.flip_h = _target.position.x < position.x
-	var anim_name = "shoot"
+	var anim_name : String = "shoot"
 	_sprite.play(anim_name)
-	# Get frames and fps to calculate duration
-	var frames = _sprite.sprite_frames.get_frame_count(anim_name)
-	var fps = _sprite.sprite_frames.get_animation_speed(anim_name)
-	var total_duration = frames / fps
-	
-	# Wait for half the animation
+	var frames : int = _sprite.sprite_frames.get_frame_count(anim_name)
+	var fps : float = _sprite.sprite_frames.get_animation_speed(anim_name)
+	var total_duration : float = frames / fps
 	await get_tree().create_timer(total_duration / 2.0).timeout
 	_spawn_arrow()
 

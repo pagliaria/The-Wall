@@ -24,6 +24,7 @@ default_bus_layout="res://default_bus_layout.tres"
 ResourceManager="*res://scripts/resource_manager.gd"
 UiAudio="*res://scripts/ui_audio.gd"
 MusicManager="*res://scripts/music_manager.gd"
+CombatAudio="*res://scripts/combat_audio.gd"
 
 [display]
 

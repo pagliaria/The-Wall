@@ -7,7 +7,7 @@ extends Node2D
 @onready var _sprite : AnimatedSprite2D = $Sprite
 
 func init(target: Node, amount: int, is_heal: bool) -> void:
-	# Apply effect immediately
+	CombatAudio.play("buff")
 	if is_instance_valid(target):
 		if is_heal and target.has_method("receive_heal"):
 			target.receive_heal(amount)
