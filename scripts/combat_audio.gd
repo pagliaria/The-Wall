@@ -22,6 +22,8 @@ const SOUNDS : Dictionary = {
 	"male_go":     [preload("res://assets/audio/voice/male_go.ogg")],
 	"female_ready":[preload("res://assets/audio/voice/female_human_ready.ogg")],
 	"female_go":   [preload("res://assets/audio/voice/female_go.ogg")],
+	"monk_ready":  [preload("res://assets/audio/voice/monk_select.mp3")],
+	"monk_go":     [preload("res://assets/audio/voice/monk_go.mp3")],
 	"gather":      [preload("res://assets/audio/resources/pop_2.wav")],
 	"gold":        [preload("res://assets/audio/resources/coins_gather_quick.wav")],
 	"wood":        [preload("res://assets/audio/resources/wood_small_gather.wav")],
@@ -32,7 +34,7 @@ const SOUNDS : Dictionary = {
 }
 
 # Sounds that should never overlap — only one plays within the cooldown window.
-const EXCLUSIVE_SOUNDS   : Array[String] = ["male_ready", "male_go", "female_ready", "female_go", "gather"]
+const EXCLUSIVE_SOUNDS   : Array[String] = ["male_ready", "male_go", "female_ready", "female_go", "monk_ready", "monk_go", "gather"]
 const EXCLUSIVE_COOLDOWN : float         = 1   # seconds
 
 var _pool        : Array[AudioStreamPlayer] = []

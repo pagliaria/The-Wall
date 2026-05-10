@@ -292,7 +292,11 @@ func _on_cast_animation_finished() -> void:
 #  Base overrides
 # =========================================================================== #
 
+func _on_selected() -> void:
+	CombatAudio.play("monk_ready")
+
 func _on_move_to() -> void:
+	CombatAudio.play("monk_go")
 	_enter_state(State.MOVE_TO)
 
 func _on_end_battle() -> void:
