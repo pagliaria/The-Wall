@@ -196,15 +196,16 @@ func _spawn_dust(tex_size: Vector2) -> void:
 	var base_y : float = tex_size.y * 0.5 - 8.0
 	var top_y  : float = -tex_size.y * 0.5 + 8.0
 	var half_w : float = tex_size.x * 0.22
-	# Front bottom — spray outward from base
-	_make_dust_emitter(Vector2(-half_w, base_y), -160.0, -80.0,  10, 0.75, false)
-	_make_dust_emitter(Vector2( half_w, base_y), -100.0, -20.0,  10, 0.75, false)
-	# Back top — spray upward behind the building
-	_make_dust_emitter(Vector2(-half_w * 0.3, top_y+50), -150.0, -90.0, 8, 0.9, true)
-	_make_dust_emitter(Vector2( half_w * 0.3, top_y+50), -90.0,  -30.0, 8, 0.9, true)
+	# Center impact — straight up
+	_make_dust_emitter(Vector2(0.0,      base_y),          Vector2(0.0, -1.0),  35.0, 16, 0.6,  false)
+	# Sides — up and slightly outward
+	_make_dust_emitter(Vector2(-half_w,  base_y),          Vector2(-0.4, -1.0), 25.0, 10, 0.75, false)
+	_make_dust_emitter(Vector2( half_w,  base_y),          Vector2( 0.4, -1.0), 25.0, 10, 0.75, false)
+	# Back top — rises behind building
+	_make_dust_emitter(Vector2(-half_w * 0.3, top_y + 50.0), Vector2(-0.2, -1.0), 20.0, 8, 0.9, true)
+	_make_dust_emitter(Vector2( half_w * 0.3, top_y + 50.0), Vector2( 0.2, -1.0), 20.0, 8, 0.9, true)
 
-func _make_dust_emitter(offset: Vector2, angle_min_deg: float, angle_max_deg: float, amount: int, lifetime: float, behind: bool) -> void:
-	# Crop just the first frame of the Dust_01 spritesheet (8 frames, ~64px each)
+func _make_dust_emitter(offset: Vector2, dir: Vector2, spread_deg: float, amount: int, lifetime: float, behind: bool) -> void:
 	var atlas : AtlasTexture  = AtlasTexture.new()
 	atlas.atlas               = load("res://assets/Particle FX/Dust_01.png")
 	atlas.region              = Rect2(0, 0, 64, 64)
@@ -220,15 +221,13 @@ func _make_dust_emitter(offset: Vector2, angle_min_deg: float, angle_max_deg: fl
 	dust.explosiveness         = 0.95
 	dust.emission_shape        = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	dust.emission_rect_extents = Vector2(6.0, 3.0)
-	dust.direction             = Vector2.ZERO
-	dust.spread                = 0.0
-	dust.angle_min             = angle_min_deg
-	dust.angle_max             = angle_max_deg
+	dust.direction             = dir.normalized()
+	dust.spread                = spread_deg
 	dust.gravity               = Vector2(0.0, 60.0)
 	dust.initial_velocity_min  = 50.0
-	dust.initial_velocity_max  = 100.0
-	dust.scale_amount_min      = 0.15
-	dust.scale_amount_max      = 0.45
+	dust.initial_velocity_max  = 510.0
+	dust.scale_amount_min      = 0.4
+	dust.scale_amount_max      = 3
 	dust.color                 = Color(0.76, 0.65, 0.50, 0.75)
 	dust.color_ramp            = _make_dust_gradient()
 	add_child(dust)
