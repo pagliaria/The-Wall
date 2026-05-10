@@ -36,6 +36,12 @@ const ANIM_INTERACT := {
 	"meat": "interact_knife",
 }
 
+const IMPACT_SOUND := {
+	"gold": "impact_gold",
+	"wood": "impact_wood",
+	"meat": "impact_meat",
+}
+
 # =========================================================================== #
 #  State machine
 # =========================================================================== #
@@ -54,6 +60,7 @@ var _resource_body   : Node   = null
 var _extract_timer   : float  = 0.0
 var _carrying        : String = ""
 var _carrying_amount : int    = 0
+var _carrying_sound  : String = ""
 
 var home_radius : float = 28.0
 
@@ -64,6 +71,7 @@ var home_radius : float = 28.0
 func _on_unit_ready() -> void:
 	max_hp = 10
 	hp     = 10
+	_sprite.frame_changed.connect(_on_frame_changed)
 	_enter_state(State.MOVE)
 
 func _process_state(delta: float) -> void:
@@ -136,6 +144,7 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play(GATHER_TOOL.get(_resource_node.resource_type, "run"))
 		State.EXTRACTING:
 			_extract_timer = 0.0
+			_carrying_sound = IMPACT_SOUND.get(_resource_node.resource_type, "")
 			_sprite.play(ANIM_INTERACT.get(_resource_node.resource_type, "interact_axe"))
 		State.RETURN:
 			_nav_agent.target_position = home_position
@@ -185,6 +194,14 @@ func _is_target(collider: Node, target: Node) -> bool:
 #  Extracting
 # =========================================================================== #
 
+func _on_frame_changed() -> void:
+	if _state != State.EXTRACTING or _carrying_sound == "":
+		return
+	var anim      : String = _sprite.animation
+	var last_frame : int   = _sprite.sprite_frames.get_frame_count(anim) - 1
+	if _sprite.frame == last_frame:
+		CombatAudio.play(_carrying_sound)
+
 func _do_extracting(delta: float) -> void:
 	if not is_instance_valid(_resource_node) or _resource_node.is_depleted():
 		_abort_gather()
@@ -209,6 +226,7 @@ func _do_extracting(delta: float) -> void:
 func _deliver() -> void:
 	if _carrying == "":
 		return
+	CombatAudio.play(_carrying)
 	emit_signal("resource_delivered", _carrying, _carrying_amount)
 	_carrying        = ""
 	_carrying_amount = 0
@@ -234,6 +252,7 @@ func gather_resource(resource_node: Node, resource_body: Node) -> void:
 	_carrying        = ""
 	_carrying_amount = 0
 	if _resource_node.register_gatherer(self):
+		CombatAudio.play("gather")
 		_enter_state(State.GATHER)
 
 func on_resource_depleted() -> void:
@@ -246,6 +265,7 @@ func _abort_gather() -> void:
 	_resource_body   = null
 	_carrying        = ""
 	_carrying_amount = 0
+	_carrying_sound  = ""
 	_enter_state(State.IDLE)
 
 # =========================================================================== #

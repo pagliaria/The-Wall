@@ -25,7 +25,13 @@ func set_selected(value: bool) -> void:
 	is_selected = value
 	if is_instance_valid(_selection_circle):
 		_selection_circle.visible = value
+	if value:
+		_on_selected()
 	emit_signal("selected_changed", value)
+
+# Override in subclass to play a voice line on selection.
+func _on_selected() -> void:
+	pass
 
 # =========================================================================== #
 #  Map constants (shared by all units)
