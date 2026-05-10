@@ -78,6 +78,9 @@ func setup(id: String, tile: Vector2i, p_units_layer: Node2D) -> void:
 		_indicator.position = Vector2(0, tex_size.y * 0.5 - 150)
 		add_child(_indicator)
 
+	# ── Drop animation ────────────────────────────────────────────────────────
+	_play_drop_animation(sprite, tex_size)
+
 func _attach_controller(id: String) -> void:
 	match id:
 		"castle":
@@ -156,6 +159,73 @@ func get_controller() -> Node:
 		if child.has_method("get_live_pawns"):   # duck-typed for castle
 			return child
 	return null
+
+# =========================================================================== #
+#  Drop animation
+# =========================================================================== #
+
+func _play_drop_animation(sprite: Sprite2D, tex_size: Vector2) -> void:
+	const DROP_HEIGHT  : float = 120.0
+	const DROP_TIME    : float = 0.30
+	const SQUASH_TIME  : float = 0.07
+	const SETTLE_TIME  : float = 0.22
+
+	# Start above with slight tall squish to sell downward speed
+	sprite.position = Vector2(0.0, -DROP_HEIGHT)
+	sprite.scale    = Vector2(0.88, 1.12)
+
+	var tw : Tween = create_tween()
+
+	# Phase 1 — drop: sprite falls to rest, scale normalises simultaneously
+	tw.tween_property(sprite, "position", Vector2.ZERO, DROP_TIME) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(sprite, "scale", Vector2.ONE, DROP_TIME) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	# Phase 2 — landing: squash + dust fire together the instant sprite hits ground
+	tw.tween_property(sprite, "scale", Vector2(1.22, 0.78), SQUASH_TIME) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_callback(_spawn_dust.bind(tex_size))
+
+	# Phase 3 — settle: spring back to normal, overlapping the tail of the squash
+	tw.tween_property(sprite, "scale", Vector2.ONE, SETTLE_TIME) \
+		.set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+
+func _spawn_dust(tex_size: Vector2) -> void:
+	UiAudio.play("building_land", 0.3)
+	var dust : CPUParticles2D = CPUParticles2D.new()
+	dust.texture               = load("res://assets/Particle FX/Dust_01.png")
+	# Sit at the base of the sprite — center anchor means bottom = tex_size.y * 0.5
+	dust.position              = Vector2(0.0, tex_size.y * 0.5 - 8.0)
+	dust.z_index               = 10
+	dust.amount                = 16
+	dust.lifetime              = 0.5
+	dust.one_shot              = true
+	dust.explosiveness         = 0.95
+	dust.emission_shape        = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	# Footprint width — narrower than the full texture
+	dust.emission_rect_extents = Vector2(tex_size.x * 0.22, 3.0)
+	dust.direction             = Vector2(0.0, -1.0)
+	dust.spread                = 55.0
+	dust.gravity               = Vector2(0.0, 80.0)
+	dust.initial_velocity_min  = 20.0
+	dust.initial_velocity_max  = 55.0
+	dust.scale_amount_min      = 0.2
+	dust.scale_amount_max      = 0.5
+	dust.color                 = Color(0.76, 0.65, 0.50, 0.85)
+	dust.color_ramp            = _make_dust_gradient()
+	add_child(dust)
+	dust.restart()
+	get_tree().create_timer(dust.lifetime + 0.1).timeout.connect(dust.queue_free)
+
+func _make_dust_gradient() -> Gradient:
+	var g : Gradient = Gradient.new()
+	g.colors = PackedColorArray([
+		Color(0.76, 0.65, 0.50, 0.85),
+		Color(0.76, 0.65, 0.50, 0.0),
+	])
+	g.offsets = PackedFloat32Array([0.0, 1.0])
+	return g
 
 func _tile_center(tile: Vector2i) -> Vector2:
 	return Vector2(
