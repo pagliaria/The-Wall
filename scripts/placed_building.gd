@@ -193,30 +193,47 @@ func _play_drop_animation(sprite: Sprite2D, tex_size: Vector2) -> void:
 
 func _spawn_dust(tex_size: Vector2) -> void:
 	UiAudio.play("building_land", 0.3)
+	var base_y : float = tex_size.y * 0.5 - 8.0
+	var top_y  : float = -tex_size.y * 0.5 + 8.0
+	var half_w : float = tex_size.x * 0.22
+	# Front bottom — spray outward from base
+	_make_dust_emitter(Vector2(-half_w, base_y), -160.0, -80.0,  10, 0.75, false)
+	_make_dust_emitter(Vector2( half_w, base_y), -100.0, -20.0,  10, 0.75, false)
+	# Back top — spray upward behind the building
+	_make_dust_emitter(Vector2(-half_w * 0.3, top_y+50), -150.0, -90.0, 8, 0.9, true)
+	_make_dust_emitter(Vector2( half_w * 0.3, top_y+50), -90.0,  -30.0, 8, 0.9, true)
+
+func _make_dust_emitter(offset: Vector2, angle_min_deg: float, angle_max_deg: float, amount: int, lifetime: float, behind: bool) -> void:
+	# Crop just the first frame of the Dust_01 spritesheet (8 frames, ~64px each)
+	var atlas : AtlasTexture  = AtlasTexture.new()
+	atlas.atlas               = load("res://assets/Particle FX/Dust_01.png")
+	atlas.region              = Rect2(0, 0, 64, 64)
+
 	var dust : CPUParticles2D = CPUParticles2D.new()
-	dust.texture               = load("res://assets/Particle FX/Dust_01.png")
-	# Sit at the base of the sprite — center anchor means bottom = tex_size.y * 0.5
-	dust.position              = Vector2(0.0, tex_size.y * 0.5 - 8.0)
-	dust.z_index               = 10
-	dust.amount                = 16
-	dust.lifetime              = 0.5
+	dust.texture               = atlas
+	dust.position              = offset
+	dust.set("z_relative", false)
+	dust.z_index               = 2 if behind else 10
+	dust.amount                = amount
+	dust.lifetime              = lifetime
 	dust.one_shot              = true
 	dust.explosiveness         = 0.95
 	dust.emission_shape        = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	# Footprint width — narrower than the full texture
-	dust.emission_rect_extents = Vector2(tex_size.x * 0.22, 3.0)
-	dust.direction             = Vector2(0.0, -1.0)
-	dust.spread                = 55.0
-	dust.gravity               = Vector2(0.0, 80.0)
-	dust.initial_velocity_min  = 20.0
-	dust.initial_velocity_max  = 55.0
-	dust.scale_amount_min      = 0.2
-	dust.scale_amount_max      = 0.5
-	dust.color                 = Color(0.76, 0.65, 0.50, 0.85)
+	dust.emission_rect_extents = Vector2(6.0, 3.0)
+	dust.direction             = Vector2.ZERO
+	dust.spread                = 0.0
+	dust.angle_min             = angle_min_deg
+	dust.angle_max             = angle_max_deg
+	dust.gravity               = Vector2(0.0, 60.0)
+	dust.initial_velocity_min  = 50.0
+	dust.initial_velocity_max  = 100.0
+	dust.scale_amount_min      = 0.15
+	dust.scale_amount_max      = 0.45
+	dust.color                 = Color(0.76, 0.65, 0.50, 0.75)
 	dust.color_ramp            = _make_dust_gradient()
 	add_child(dust)
 	dust.restart()
-	get_tree().create_timer(dust.lifetime + 0.1).timeout.connect(dust.queue_free)
+	get_tree().create_timer(lifetime + 0.1).timeout.connect(dust.queue_free)
 
 func _make_dust_gradient() -> Gradient:
 	var g : Gradient = Gradient.new()
