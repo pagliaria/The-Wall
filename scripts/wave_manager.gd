@@ -21,12 +21,14 @@ const BATTLEFIELD_RIGHT = 1280.0
 
 const WAVE_COMPOSITIONS : Array = [
 	# Wave 1
-	[{ "path": "res://scenes/enemy_slime.tscn", "count": 4 },
-	{ "path": "res://scenes/enemy_warrior.tscn", "count": 1 }],
+	[{ "path": "res://scenes/enemy_slime.tscn", "count": 5 },
+	{ "path": "res://scenes/enemy_warrior.tscn", "count": 2 }],
 	# Wave 2
-	[{ "path": "res://scenes/enemy_warrior.tscn", "count": 6 }],
+	[{ "path": "res://scenes/enemy_slime.tscn", "count": 5 },
+	{ "path": "res://scenes/enemy_warrior.tscn", "count": 5 }],
 	# Wave 3
-	[{ "path": "res://scenes/enemy_warrior.tscn", "count": 8 }],
+	[{ "path": "res://scenes/enemy_slime.tscn", "count": 10 },
+	{ "path": "res://scenes/enemy_warrior.tscn", "count": 5 }],
 ]
 const LATE_WAVE_SCALE : float = 1.5
 
