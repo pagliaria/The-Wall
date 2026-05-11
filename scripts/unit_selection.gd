@@ -26,8 +26,9 @@ var _drag_end     : Vector2 = Vector2.ZERO
 var _gather_cursor_active : bool = false
 
 # Injected by main.gd
-var units_layer : Node2D   = null
-var camera      : Camera2D = null
+var units_layer     : Node2D   = null
+var camera          : Camera2D = null
+var selection_panel : Node     = null   # SelectionPanel CanvasLayer
 
 # -- Lifecycle ----------------------------------------------------------------
 
@@ -93,7 +94,6 @@ func _issue_gather_order(resource_node: Node, screen_pos: Vector2) -> void:
 
 func contains_pawns() -> bool:
 	for unit in selected_units:
-		#print(unit.name)
 		if unit.name.contains("Pawn"):
 			return true
 	return false
@@ -140,8 +140,6 @@ func _reset_cursor() -> void:
 func _is_over_resource(world_pos: Vector2) -> bool:
 	return _resource_at(world_pos) != null
 
-# Returns the ResourceNode (not the Area2D) if world_pos is inside any hover
-# area, or null if not.
 func _resource_at(world_pos: Vector2) -> Node:
 	for area in get_tree().get_nodes_in_group("resource_hover"):
 		if not area is Area2D:
@@ -151,7 +149,6 @@ func _resource_at(world_pos: Vector2) -> Node:
 			continue
 		if world_pos.distance_to(area.global_position) > circle.radius:
 			continue
-		# Walk up to the root Node2D of the resource and find its ResourceNode
 		var root := area.get_parent()
 		var rn   := root.get_node_or_null("ResourceNode")
 		if rn != null and not rn.is_depleted():
@@ -196,10 +193,12 @@ func _select_unit(unit: Node) -> void:
 	unit.set_selected(true)
 	if not unit.died.is_connected(_on_unit_died.bind(unit)):
 		unit.died.connect(_on_unit_died.bind(unit))
+	_notify_panel()
 
 func _deselect_unit(unit: Node) -> void:
 	selected_units.erase(unit)
 	unit.set_selected(false)
+	_notify_panel()
 
 func _deselect_all() -> void:
 	for unit in selected_units:
@@ -207,6 +206,7 @@ func _deselect_all() -> void:
 			unit.set_selected(false)
 	selected_units.clear()
 	_reset_cursor()
+	_notify_panel()
 
 func clear_selection() -> void:
 	_deselect_all()
@@ -215,6 +215,15 @@ func _on_unit_died(unit: Node) -> void:
 	selected_units.erase(unit)
 	if selected_units.is_empty():
 		_reset_cursor()
+	_notify_panel()
+
+# -- Panel notify -------------------------------------------------------------
+
+func _notify_panel() -> void:
+	if selection_panel != null and selection_panel.has_method("refresh"):
+		# Strip dead instances before passing
+		var live : Array = selected_units.filter(func(u): return is_instance_valid(u))
+		selection_panel.refresh(live)
 
 # -- Coordinate helpers -------------------------------------------------------
 

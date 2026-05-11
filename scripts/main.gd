@@ -20,19 +20,20 @@ var _pan_start_cam   := Vector2.ZERO
 
 var _castle_placed := false
 
-@onready var camera          : Camera2D           = $Camera2D
-@onready var terrain         : Node2D             = $Terrain
-@onready var resource_layer  : Node2D             = $ResourceLayer
-@onready var hud             : CanvasLayer         = $HUD
-@onready var building_placer : Node2D             = $BuildingPlacer
-@onready var buildings_layer : Node2D             = $BuildingsLayer
-@onready var units_layer     : Node2D             = $UnitsLayer
-@onready var unit_selection  : Node2D             = $UnitSelection
-@onready var nav_region      : NavigationRegion2D = $NavRegion
-@onready var drawbridge      : Node2D             = $wall
-@onready var battle_seperator: CollisionShape2D   = $wall/Wall_Collision/BattleSeperator
-@onready var wave_timer      : Timer              = $wave_timer
-@onready var settings_screen : CanvasLayer        = $SettingsScreen
+@onready var camera           : Camera2D           = $Camera2D
+@onready var terrain          : Node2D             = $Terrain
+@onready var resource_layer   : Node2D             = $ResourceLayer
+@onready var hud              : CanvasLayer         = $HUD
+@onready var building_placer  : Node2D             = $BuildingPlacer
+@onready var buildings_layer  : Node2D             = $BuildingsLayer
+@onready var units_layer      : Node2D             = $UnitsLayer
+@onready var unit_selection   : Node2D             = $UnitSelection
+@onready var nav_region       : NavigationRegion2D = $NavRegion
+@onready var drawbridge       : Node2D             = $wall
+@onready var battle_seperator : CollisionShape2D   = $wall/Wall_Collision/BattleSeperator
+@onready var wave_timer       : Timer              = $wave_timer
+@onready var settings_screen  : CanvasLayer        = $SettingsScreen
+@onready var selection_panel  : CanvasLayer        = $HUD/SelectionPanel
 
 var _castle_prompt : CanvasLayer = null
 var _wave_manager  : Node        = null
@@ -45,8 +46,9 @@ func _ready() -> void:
 
 	building_placer.ground_layer = $Terrain/GroundLayer
 
-	unit_selection.units_layer = units_layer
-	unit_selection.camera      = camera
+	unit_selection.units_layer     = units_layer
+	unit_selection.camera          = camera
+	unit_selection.selection_panel = selection_panel
 
 	hud.build_pressed.connect(_on_build_pressed)
 	hud.building_selected.connect(_on_building_selected)
@@ -80,8 +82,6 @@ func _setup_wave_manager() -> void:
 	_wave_manager.name = "WaveManager"
 	add_child(_wave_manager)
 
-	# wave_manager loads its own scenes via WAVE_COMPOSITIONS — just inject
-	# the shared references it needs to spawn into and control.
 	_wave_manager.units_layer = units_layer
 	_wave_manager.drawbridge  = drawbridge
 
@@ -304,7 +304,6 @@ func _toggle_fullscreen() -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	await get_tree().process_frame
 	_fit_camera_to_screen()
-
 
 func _on_wave_timer_timeout() -> void:
 	_wave_manager._prepare_next_wave()
