@@ -21,25 +21,22 @@ const CHILL_TRACKS : Array[String] = [
 	"res://assets/audio/music/chill/Ludum Dare 38 06.ogg",
 	"res://assets/audio/music/chill/Patreon Challenge 06.ogg",
 ]
-const WARNING_TRACKS : Array[String] = [
-	"res://assets/audio/music/warning/Ludum Dare 30 03.ogg",
-	"res://assets/audio/music/warning/Ludum Dare 30 08.ogg",
-	"res://assets/audio/music/warning/Ludum Dare 38 02.ogg",
-]
 const BATTLE_TRACKS : Array[String] = [
 	"res://assets/audio/music/battle/Ludum Dare 38 04.ogg",
 ]
+const WAR_HORN_PATH : String = "res://assets/audio/music/battle/war_horn.mp3"
 
 # =========================================================================== #
 #  State
 # =========================================================================== #
 
-enum Zone { NONE, CHILL, WARNING, BATTLE }
+enum Zone { NONE, CHILL, BATTLE }
 
 var current_zone : Zone                  = Zone.NONE
 var _player_a    : AudioStreamPlayer     = null
 var _player_b    : AudioStreamPlayer     = null
 var _active      : AudioStreamPlayer     = null
+var _horn        : AudioStreamPlayer     = null
 var _tween       : Tween                 = null
 var _rng         : RandomNumberGenerator = RandomNumberGenerator.new()
 var _last_track  : String                = ""
@@ -55,6 +52,8 @@ func _ready() -> void:
 	_player_a = _make_player("MusicA")
 	_player_b = _make_player("MusicB")
 	_active   = _player_a
+	_horn     = _make_player("Horn")
+	_horn.volume_db = 18.0
 
 func _make_player(node_name: String) -> AudioStreamPlayer:
 	var p : AudioStreamPlayer = AudioStreamPlayer.new()
@@ -72,13 +71,17 @@ func play_chill() -> void:
 	current_zone = Zone.CHILL
 	_crossfade_to(_pick_track(CHILL_TRACKS))
 
-func play_warning() -> void:
-	current_zone = Zone.WARNING
-	_crossfade_to(_pick_track(WARNING_TRACKS))
-
 func play_battle() -> void:
 	current_zone = Zone.BATTLE
 	_crossfade_to(_pick_track(BATTLE_TRACKS))
+
+func play_horn() -> void:
+	var stream : AudioStreamMP3 = load(WAR_HORN_PATH) as AudioStreamMP3
+	if stream == null:
+		push_error("MusicManager: failed to load horn")
+		return
+	_horn.stream = stream
+	_horn.play()
 
 func stop() -> void:
 	current_zone = Zone.NONE
@@ -105,11 +108,14 @@ func _crossfade_to(path: String) -> void:
 	var outgoing : AudioStreamPlayer = _active
 
 	# Load and configure the stream — set loop at runtime since imports have loop=false
-	var stream : AudioStreamOggVorbis = load(path) as AudioStreamOggVorbis
+	var stream : AudioStream = load(path)
 	if stream == null:
 		push_error("MusicManager: failed to load " + path)
 		return
-	stream.loop = true
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = true
+	elif stream is AudioStreamMP3:
+		(stream as AudioStreamMP3).loop = true
 	incoming.stream    = stream
 	incoming.volume_db = -80.0
 	incoming.play()

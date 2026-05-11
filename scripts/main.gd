@@ -91,14 +91,13 @@ func _setup_wave_manager() -> void:
 
 func _on_wave_countdown_changed(seconds: float) -> void:
 	hud.set_wave_countdown(seconds)
-	# Switch to warning music as soon as the countdown banner appears
 	if seconds <= 90.0 and seconds > 0.0:
-		if MusicManager.current_zone != MusicManager.Zone.WARNING:
-			MusicManager.play_warning()
+		if MusicManager.current_zone != MusicManager.Zone.BATTLE:
+			MusicManager.play_battle()
+			MusicManager.play_horn()
 
 func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
-	MusicManager.play_battle()
 	unit_selection.clear_selection()
 	unit_selection.disabled = true
 	battle_seperator.disabled = true

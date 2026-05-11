@@ -285,3 +285,4 @@ func _on_end_battle() -> void:
 func _on_die() -> void:
 	if is_instance_valid(_resource_node):
 		_resource_node.unregister_gatherer(self)
+	super._on_die()
