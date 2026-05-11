@@ -31,6 +31,8 @@ const SOUNDS : Dictionary = {
 	"impact_gold": [preload("res://assets/audio/resources/qubodupImpactMetal.ogg")],
 	"impact_wood": [preload("res://assets/audio/resources/qubodupImpactWood.ogg")],
 	"impact_meat": [preload("res://assets/audio/resources/qubodupImpactMeat01.ogg")],
+	"victory":     [preload("res://assets/audio/combat/victory.mp3")],
+	"defeat":      [preload("res://assets/audio/combat/defeat.mp3")],
 }
 
 # Optional trim: { "sound_name": [from_sec, to_sec, volume_db] }  — to_sec 0 = play to end, volume_db default 0

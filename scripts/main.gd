@@ -107,6 +107,7 @@ func _on_wave_started(wave_number: int) -> void:
 func _on_wave_ended(player_won: bool) -> void:
 	hud.set_wave_ended(player_won)
 	UiAudio.play_trimmed("deep_thumps", 3.0, 4.0)
+	CombatAudio.play("victory" if player_won else "defeat")
 	MusicManager.play_chill()
 	if not building_placer.is_placing():
 		unit_selection.disabled = false
