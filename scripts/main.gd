@@ -98,6 +98,7 @@ func _on_wave_countdown_changed(seconds: float) -> void:
 
 func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
+	UiAudio.play_trimmed("deep_thumps", 0.0, 1.0)
 	unit_selection.clear_selection()
 	unit_selection.disabled = true
 	battle_seperator.disabled = true
@@ -105,6 +106,7 @@ func _on_wave_started(wave_number: int) -> void:
 
 func _on_wave_ended(player_won: bool) -> void:
 	hud.set_wave_ended(player_won)
+	UiAudio.play_trimmed("deep_thumps", 3.0, 4.0)
 	MusicManager.play_chill()
 	if not building_placer.is_placing():
 		unit_selection.disabled = false
