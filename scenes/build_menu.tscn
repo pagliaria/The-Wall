@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://cwgtv3300cseo"]
+[gd_scene load_steps=28 format=3 uid="uid://cwgtv3300cseo"]
 
 [ext_resource type="Script" uid="uid://b3x0ps32eev6x" path="res://scripts/build_menu.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://03hji3qdk0hb" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Regular.png" id="3_red_reg"]
@@ -14,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://ceacwdv3ug52r" path="res://assets/Units/Black Units/Warrior/Warrior_Idle.png" id="13_warrior_idle"]
 [ext_resource type="Texture2D" uid="uid://ghqqd2n0sr8e" path="res://assets/Units/Black Units/Monk/Idle.png" id="15_monk_idle"]
 [ext_resource type="Texture2D" uid="uid://b14k0s0yqu2jo" path="res://assets/UI Elements/UI Elements/Icons/Icon_04.png" id="16_meat"]
+[ext_resource type="Texture2D" uid="uid://clgy5fd8eudh1" path="res://assets/Units/Black Units/Lancer/Lancer_Idle.png" id="17_lancer_idle"]
 
 [sub_resource type="AtlasTexture" id="unit_archer"]
 atlas = ExtResource("12_archer_idle")
@@ -42,6 +43,10 @@ region = Rect2(62.0679, 56.5693, 73.1258, 86.9862)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ah171"]
 content_margin_right = 5.0
 bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="AtlasTexture" id="unit_lancer"]
+atlas = ExtResource("17_lancer_idle")
+region = Rect2(100.553, 28.5, 117, 191)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5j6h1"]
 content_margin_right = 5.0
@@ -372,7 +377,7 @@ size_flags_vertical = 4
 
 [node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer/VBox/Grid/TowerCard"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Preview" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox"]
@@ -396,6 +401,9 @@ theme_override_font_sizes/font_size = 10
 text = "Gold: ??  Wood: ??"
 horizontal_alignment = 1
 
+[node name="Divider" type="HSeparator" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox"]
+layout_mode = 2
+
 [node name="UnitRow" type="HBoxContainer" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 4
@@ -404,6 +412,7 @@ alignment = 1
 [node name="UnitPortrait" type="TextureRect" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox/UnitRow"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
+texture = SubResource("unit_lancer")
 expand_mode = 1
 stretch_mode = 5
 
@@ -411,6 +420,7 @@ stretch_mode = 5
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 size_flags_vertical = 4
+texture = ExtResource("16_meat")
 expand_mode = 1
 stretch_mode = 5
 
@@ -418,7 +428,7 @@ stretch_mode = 5
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_5j6h1")
-text = "   "
+text = "x4"
 
 [node name="BuildButton" type="Button" parent="Panel/MarginContainer/VBox/Grid/TowerCard/VBox"]
 custom_minimum_size = Vector2(70, 24)

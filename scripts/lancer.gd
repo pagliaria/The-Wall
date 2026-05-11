@@ -1,0 +1,188 @@
+# lancer.gd
+extends "res://scripts/unit_base.gd"
+
+# =========================================================================== #
+#  Constants
+# =========================================================================== #
+
+const MOVE_SPEED     = 55.0
+const PATROL_RADIUS  = 160.0
+const ARRIVAL_RADIUS = 12.0
+
+const MELEE_RANGE    = 72.0   # longer reach than warrior — spear
+const ATTACK_DAMAGE  = 8      # hits harder, slower rate
+const ATTACK_RATE    = 4.0
+
+# =========================================================================== #
+#  Health override
+# =========================================================================== #
+
+var _hp_init := func(): max_hp = 30; hp = 30   # tankier than warrior
+
+# =========================================================================== #
+#  State machine
+# =========================================================================== #
+
+enum State { IDLE, MOVE, MOVE_TO, BATTLE, ATTACKING }
+
+var _state       : State = State.IDLE
+var _target      : Node  = null
+var _attack_timer: float = 0.0
+var _is_striking : bool  = false
+
+# =========================================================================== #
+#  Lifecycle
+# =========================================================================== #
+
+func _on_unit_ready() -> void:
+	max_hp = 30
+	hp     = 30
+	_enter_state(State.IDLE)
+
+func _process_state(delta: float) -> void:
+	match _state:
+		State.IDLE:
+			_apply_separation(delta)
+			if _state_timer >= _state_dur:
+				_enter_state(_pick_next_wander_state())
+		State.MOVE:
+			_do_nav_move(delta, MOVE_SPEED)
+			if _nav_agent.is_navigation_finished() or _state_timer >= _state_dur:
+				_enter_state(_pick_next_wander_state())
+		State.MOVE_TO:
+			_do_nav_move(delta, MOVE_SPEED)
+			if _nav_agent.is_navigation_finished():
+				_enter_state(State.IDLE)
+		State.BATTLE:
+			_do_battle(delta)
+		State.ATTACKING:
+			if _is_striking:
+				return
+			_attack_timer -= delta
+			if not is_instance_valid(_target) or _target.hp <= 0:
+				_target = null
+				_enter_state(State.BATTLE)
+				return
+			if _attack_timer <= 0.0:
+				_is_striking = true
+				_attack_timer = ATTACK_RATE
+				# Pick directional attack animation based on target position
+				var dir : Vector2 = _target.position - position
+				var anim := _pick_attack_anim(dir)
+				_sprite.play(anim)
+				_target.take_damage(ATTACK_DAMAGE)
+				await _sprite.animation_finished
+				_sprite.play("idle")
+				_is_striking = false
+			if is_instance_valid(_target) and position.distance_to(_target.position) > MELEE_RANGE * 1.5:
+				_enter_state(State.BATTLE)
+
+func _pick_next_wander_state() -> State:
+	if has_moved:
+		return State.IDLE
+	return State.MOVE if _rng.randf() > 0.4 else State.IDLE
+
+func _pick_attack_anim(dir: Vector2) -> String:
+	# Choose among available directional stab anims
+	var angle := dir.angle()        # radians, right = 0
+	var deg   := rad_to_deg(angle)
+	if deg < -112.5 or deg >= 112.5:
+		return "attack_right"       # flip_h handles left
+	elif deg < -67.5:
+		return "attack_up"
+	elif deg < -22.5:
+		return "attack_upright"
+	elif deg < 22.5:
+		return "attack_right"
+	elif deg < 67.5:
+		return "attack_downright"
+	else:
+		return "attack_down"
+
+func _enter_state(new_state: State) -> void:
+	_state       = new_state
+	_state_timer = 0.0
+
+	match _state:
+		State.IDLE:
+			_state_dur = _rng.randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
+			_sprite.play("idle")
+		State.MOVE:
+			_state_dur = _rng.randf_range(MOVE_TIME_MIN, MOVE_TIME_MAX)
+			var to_home   := _spawn_pos - position
+			var dist      := to_home.length()
+			var angle     := _rng.randf_range(-PI * 0.5, PI * 0.5)
+			var dir       : Vector2
+			if dist > PATROL_RADIUS:
+				dir = to_home.normalized().rotated(angle * 0.3)
+			else:
+				dir = Vector2.RIGHT.rotated(_rng.randf_range(-PI, PI))
+			var patrol_dist   := _rng.randf_range(48.0, PATROL_RADIUS)
+			var raw_target    := position + dir.normalized() * patrol_dist
+			var patrol_target := Vector2(
+				clampf(raw_target.x, WANDER_MIN_X, WANDER_MAX_X),
+				clampf(raw_target.y, WANDER_MIN_Y, WANDER_MAX_Y)
+			)
+			_nav_agent.target_position = patrol_target
+			_sprite.play("run")
+		State.MOVE_TO:
+			has_moved = true
+			_state_dur = STUCK_TIMEOUT
+			_nav_agent.target_position = _move_target
+			_sprite.flip_h = (_move_target - position).x < 0
+			_sprite.play("run")
+		State.BATTLE:
+			_sprite.play("run")
+		State.ATTACKING:
+			_attack_timer = 0.0
+
+# =========================================================================== #
+#  Battle
+# =========================================================================== #
+
+func start_battle(enemies: Array) -> void:
+	_pick_target(enemies)
+	_enter_state(State.BATTLE)
+
+func update_battle_target(enemies: Array) -> void:
+	if not is_instance_valid(_target) or _target.hp <= 0:
+		_pick_target(enemies)
+
+func _do_battle(delta: float) -> void:
+	if not is_instance_valid(_target) or _target.hp <= 0:
+		_target = null
+		_enter_state(State.BATTLE)
+		return
+	var dist := position.distance_to(_target.position)
+	if dist <= MELEE_RANGE:
+		_enter_state(State.ATTACKING)
+		return
+	_nav_agent.target_position = _target.position
+	_do_nav_move(delta, MOVE_SPEED)
+
+func _pick_target(enemies: Array) -> void:
+	var best      : Node  = null
+	var best_dist : float = INF
+	for e in enemies:
+		if not is_instance_valid(e) or e.hp <= 0:
+			continue
+		var d := position.distance_to(e.position)
+		if d < best_dist:
+			best_dist = d
+			best      = e
+	_target = best
+
+# =========================================================================== #
+#  Base overrides
+# =========================================================================== #
+
+func _on_selected() -> void:
+	CombatAudio.play("male_ready")
+
+func _on_move_to() -> void:
+	CombatAudio.play("male_go")
+	_enter_state(State.MOVE_TO)
+
+func _on_end_battle() -> void:
+	_target = null
+	_enter_state(State.IDLE)

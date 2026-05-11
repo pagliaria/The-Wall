@@ -111,7 +111,14 @@ func _attach_controller(id: String) -> void:
 			add_child(ctrl)
 			ctrl.units_layer   = units_layer
 			_controller        = ctrl
-		# Future: "tower", "house1"
+		"tower":
+			var ctrl          := Node.new()
+			ctrl.set_script(load("res://scripts/tower.gd"))
+			ctrl.name          = "TowerController"
+			add_child(ctrl)
+			ctrl.units_layer   = units_layer
+			_controller        = ctrl
+		# Future: "house1"
 
 func _process(_delta: float) -> void:
 	if _indicator == null or _controller == null:
@@ -135,6 +142,10 @@ func _process(_delta: float) -> void:
 	elif _controller.has_method("get_live_monks"):
 		live  = _controller.get_live_monks()
 		max_u = _controller.get_max_monks()
+		ratio = _controller.get_spawn_timer() / _controller.SPAWN_INTERVAL
+	elif _controller.has_method("get_live_lancers"):
+		live  = _controller.get_live_lancers()
+		max_u = _controller.get_max_lancers()
 		ratio = _controller.get_spawn_timer() / _controller.SPAWN_INTERVAL
 	ratio = clampf(ratio, 0.0, 1.0)
 	var enough_meat := ResourceManager.has_meat(_controller.MEAT_COST)

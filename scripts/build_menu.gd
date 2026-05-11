@@ -10,7 +10,7 @@ const UNIT_MEAT_COSTS: Dictionary = {
 	"barracks":  3,
 	"archery":   3,
 	"monastery": 2,
-	"castle":    1,
+	"tower":     4,
 }
 const BUILDING_COSTS: Dictionary = {
 	"castle":    { "gold": 0,   "wood": 0,  "meat": 0  },
@@ -98,6 +98,7 @@ func _populate_unit_meat_labels() -> void:
 		["archery",   "Panel/MarginContainer/VBox/Grid/ArcheryCard/VBox/UnitRow/MeatCost"],
 		["barracks",  "Panel/MarginContainer/VBox/Grid/BarracksCard/VBox/UnitRow/MeatCost"],
 		["monastery", "Panel/MarginContainer/VBox/Grid/MonasteryCard/VBox/UnitRow/MeatCost"],
+		["tower",     "Panel/MarginContainer/VBox/Grid/TowerCard/VBox/UnitRow/MeatCost"],
 	]
 	for entry in cards:
 		var id     : String = entry[0]
