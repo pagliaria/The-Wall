@@ -16,12 +16,24 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 @onready var _portrait     : TextureRect   = $Panel/SingleView/Portrait
 @onready var _name_label   : Label         = $Panel/SingleView/Info/NameLabel
 @onready var _status_label : Label         = $Panel/SingleView/Info/StatusLabel
+@onready var _attack_range_label  : Label  = $Panel/SingleView/Info/StatsGrid/AttackRangeValue
+@onready var _attack_damage_label : Label  = $Panel/SingleView/Info/StatsGrid/AttackDamageValue
+@onready var _attack_speed_label  : Label  = $Panel/SingleView/Info/StatsGrid/AttackSpeedValue
+@onready var _move_speed_label    : Label  = $Panel/SingleView/Info/StatsGrid/MoveSpeedValue
 @onready var _hp_fill      : TextureRect   = $Panel/SingleView/Info/HpBarContainer/Fill
 @onready var _hp_label     : Label         = $Panel/SingleView/Info/HpBarContainer/HpLabel
 @onready var _multi_grid   : GridContainer = $Panel/MultiView/Grid
 @onready var _multi_total  : Label         = $Panel/MultiView/TotalLabel
 
 var _tracked_unit : Node = null
+
+const UNIT_STATS := {
+	"Warrior": {"attack_range": 48.0, "attack_damage": 5, "attack_speed": 3.0, "move_speed": 60.0},
+	"Archer":  {"attack_range": 500.0, "attack_damage": 3, "attack_speed": 2.0, "move_speed": 62.0},
+	"Lancer":  {"attack_range": 72.0, "attack_damage": 8, "attack_speed": 4.0, "move_speed": 55.0},
+	"Monk":    {"attack_range": 200.0, "attack_damage": 4, "attack_speed": 2.2, "move_speed": 58.0},
+	"Pawn":    {"attack_range": null, "attack_damage": null, "attack_speed": null, "move_speed": 50.0},
+}
 
 # =========================================================================== #
 #  Public API
@@ -55,6 +67,7 @@ func _show_single(unit: Node) -> void:
 	_name_label.text   = type_key
 	_apply_hp(unit)
 	_status_label.text = _get_status(unit)
+	_apply_stats(unit, type_key)
 
 func _apply_hp(unit: Node) -> void:
 	if not is_instance_valid(unit):
@@ -101,6 +114,34 @@ func _get_status(unit: Node) -> String:
 		3: return "Engaging"
 		4: return "Attacking"
 	return "Ready"
+
+func _apply_stats(unit: Node, type_key: String) -> void:
+	var stats : Dictionary = UNIT_STATS.get(type_key, {})
+	_attack_range_label.text = _format_stat_value(stats.get("attack_range"))
+	_attack_damage_label.text = _format_stat_value(stats.get("attack_damage"))
+	_attack_speed_label.text = _format_attack_speed(stats.get("attack_speed"))
+	_move_speed_label.text = _format_stat_value(stats.get("move_speed"))
+
+	if stats.is_empty():
+		# Fall back to any dynamic properties if we add stats directly on units later.
+		_attack_range_label.text = _format_stat_value(unit.get("attack_range"))
+		_attack_damage_label.text = _format_stat_value(unit.get("attack_damage"))
+		_attack_speed_label.text = _format_attack_speed(unit.get("attack_speed"))
+		_move_speed_label.text = _format_stat_value(unit.get("move_speed"))
+
+func _format_stat_value(value) -> String:
+	if value == null:
+		return "-"
+	if value is float:
+		return str(int(round(value)))
+	return str(value)
+
+func _format_attack_speed(value) -> String:
+	if value == null:
+		return "-"
+	if value is float:
+		return "%.1f s" % value
+	return "%s s" % str(value)
 
 # =========================================================================== #
 #  Multi-unit view
