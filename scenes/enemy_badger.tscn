@@ -1,6 +1,6 @@
 [gd_scene load_steps=80 format=3 uid="uid://d2wkkvcuoss6w"]
 
-[ext_resource type="Script" uid="uid://rx3pnon5dgea" path="res://scripts/enemy_slime.gd" id="1_jith5"]
+[ext_resource type="Script" uid="uid://cqfga0jdgo1sc" path="res://scripts/enemy_badger.gd" id="1_r5d4t"]
 [ext_resource type="Texture2D" uid="uid://c411i7s8com5u" path="res://assets/Enemies/badger/badger_attack_A.png" id="2_r5d4t"]
 [ext_resource type="Texture2D" uid="uid://dptaxprypwvcf" path="res://assets/Enemies/badger/badger_attack_B.png" id="3_lir2t"]
 [ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="4_m8sw4"]
@@ -511,9 +511,10 @@ atlas = ExtResource("7_8rtp6")
 
 [node name="EnemyBadger" type="CharacterBody2D"]
 collision_layer = 2
-script = ExtResource("1_jith5")
+script = ExtResource("1_r5d4t")
 attack_damage = 4
 attack_rate = 3.0
+engage_range = 48.0
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 position = Vector2(12, -35)
