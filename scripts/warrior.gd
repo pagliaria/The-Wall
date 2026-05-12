@@ -39,9 +39,12 @@ var _is_striking  : bool = false
 # =========================================================================== #
 
 func _on_unit_ready() -> void:
-	max_hp = 20
-	hp     = 20
+	max_hp = _get_base_max_hp() + get_building_hp_bonus()
+	hp     = max_hp
 	_enter_state(State.IDLE)
+
+func _get_base_max_hp() -> int:
+	return 20
 
 func _process_state(delta: float) -> void:
 	match _state:
@@ -53,11 +56,11 @@ func _process_state(delta: float) -> void:
 				else:
 					_enter_state(_pick_next_wander_state())
 		State.MOVE:
-			_do_nav_move(delta, MOVE_SPEED)
+			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished() or _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE_TO:
-			_do_nav_move(delta, MOVE_SPEED)
+			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
 		State.BATTLE:
@@ -72,9 +75,9 @@ func _process_state(delta: float) -> void:
 				return
 			if _attack_timer <= 0.0:
 				_is_striking = true
-				_attack_timer = ATTACK_RATE
+				_attack_timer = _get_attack_rate()
 				_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
-				_target.take_damage(ATTACK_DAMAGE)
+				_target.take_damage(_get_attack_damage())
 				await _sprite.animation_finished
 				_sprite.play("idle")
 				_is_striking = false
@@ -145,7 +148,7 @@ func _do_battle(delta: float) -> void:
 		_enter_state(State.ATTACKING)
 		return
 	_nav_agent.target_position = _target.position
-	_do_nav_move(delta, MOVE_SPEED)
+	_do_nav_move(delta, _get_move_speed())
 
 func _pick_target(enemies: Array) -> void:
 	var best      : Node  = null
@@ -158,6 +161,15 @@ func _pick_target(enemies: Array) -> void:
 			best_dist = d
 			best      = e
 	_target = best
+
+func _get_move_speed() -> float:
+	return MOVE_SPEED * get_building_move_speed_multiplier()
+
+func _get_attack_damage() -> int:
+	return ATTACK_DAMAGE + get_building_attack_damage_bonus()
+
+func _get_attack_rate() -> float:
+	return ATTACK_RATE * get_building_attack_speed_multiplier()
 
 # =========================================================================== #
 #  Base overrides

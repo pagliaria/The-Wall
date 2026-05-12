@@ -17,13 +17,18 @@ var _live_lancers : int   = 0
 var _spawn_timer  : float = 0.0
 
 func _process(delta: float) -> void:
-	if _live_lancers >= MAX_LANCERS:
+	var parent := get_parent()
+	var max_units := parent.get_effective_unit_cap(MAX_LANCERS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_LANCERS
+	var spawn_interval := parent.get_effective_spawn_interval(SPAWN_INTERVAL) if parent != null and parent.has_method("get_effective_spawn_interval") else SPAWN_INTERVAL
+	if parent != null and parent.has_method("is_upgrade_blocking_production") and parent.is_upgrade_blocking_production():
+		return
+	if _live_lancers >= max_units:
 		_spawn_timer = 0.0
 		return
 	if not ResourceManager.has_meat(MEAT_COST):
 		return
 	_spawn_timer += delta
-	if _spawn_timer >= SPAWN_INTERVAL:
+	if _spawn_timer >= spawn_interval:
 		_spawn_timer = 0.0
 		_spawn_lancer()
 
@@ -46,6 +51,8 @@ func _spawn_lancer() -> void:
 
 	lancer.home_position = parent.position
 	lancer.home_node     = parent
+	if parent != null and parent.has_method("apply_unit_bonuses"):
+		parent.apply_unit_bonuses(lancer)
 
 	units_layer.add_child(lancer)
 	_live_lancers += 1
@@ -56,5 +63,7 @@ func _on_lancer_died() -> void:
 	_live_lancers = max(0, _live_lancers - 1)
 
 func get_live_lancers()  -> int:   return _live_lancers
-func get_max_lancers()   -> int:   return MAX_LANCERS
+func get_max_lancers()   -> int:
+	var parent := get_parent()
+	return parent.get_effective_unit_cap(MAX_LANCERS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_LANCERS
 func get_spawn_timer()   -> float: return _spawn_timer

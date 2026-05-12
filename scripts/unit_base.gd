@@ -73,6 +73,12 @@ const HP_FILL_FULL_SCALE_X := 1.3
 
 var max_hp : int = 10
 var hp     : int = 10
+var _building_bonuses := {
+	"attack_damage": 0,
+	"attack_speed_multiplier": 1.0,
+	"move_speed_multiplier": 1.0,
+	"hp_bonus": 0,
+}
 
 # =========================================================================== #
 #  State machine (generic fields — subclass defines its own enum State)
@@ -114,6 +120,9 @@ func _ready() -> void:
 # Override in subclass to run deferred setup (e.g. call_deferred enter_state).
 func _on_unit_ready() -> void:
 	pass
+
+func _get_base_max_hp() -> int:
+	return 10
 
 func _physics_process(delta: float) -> void:
 	_state_timer += delta
@@ -173,6 +182,33 @@ func end_battle() -> void:
 # Override to return to idle after a wave ends.
 func _on_end_battle() -> void:
 	pass
+
+func apply_building_bonuses(bonuses: Dictionary) -> void:
+	_building_bonuses["attack_damage"] = int(bonuses.get("attack_damage", 0))
+	_building_bonuses["attack_speed_multiplier"] = float(bonuses.get("attack_speed_multiplier", 1.0))
+	_building_bonuses["move_speed_multiplier"] = float(bonuses.get("move_speed_multiplier", 1.0))
+	_building_bonuses["hp_bonus"] = int(bonuses.get("hp_bonus", 0))
+
+	var old_max_hp := max_hp
+	max_hp = _get_base_max_hp() + get_building_hp_bonus()
+	if hp > 0:
+		if old_max_hp <= 0:
+			hp = max_hp
+		else:
+			hp = mini(hp + (max_hp - old_max_hp), max_hp)
+	_update_hp_bar()
+
+func get_building_attack_damage_bonus() -> int:
+	return int(_building_bonuses.get("attack_damage", 0))
+
+func get_building_attack_speed_multiplier() -> float:
+	return float(_building_bonuses.get("attack_speed_multiplier", 1.0))
+
+func get_building_move_speed_multiplier() -> float:
+	return float(_building_bonuses.get("move_speed_multiplier", 1.0))
+
+func get_building_hp_bonus() -> int:
+	return int(_building_bonuses.get("hp_bonus", 0))
 
 # =========================================================================== #
 #  Health

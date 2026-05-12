@@ -32,10 +32,13 @@ var _shooting     : bool  = false  # true while shoot animation is playing
 # =========================================================================== #
 
 func _on_unit_ready() -> void:
-	max_hp = 10
-	hp     = 10
+	max_hp = _get_base_max_hp() + get_building_hp_bonus()
+	hp     = max_hp
 	#_sprite.animation_finished.connect(_on_shoot_animation_finished)
 	_enter_state(State.IDLE)
+
+func _get_base_max_hp() -> int:
+	return 10
 
 func _process_state(delta: float) -> void:
 	match _state:
@@ -44,11 +47,11 @@ func _process_state(delta: float) -> void:
 			if not has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE:
-			_do_nav_move(delta, MOVE_SPEED)
+			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished() or _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE_TO:
-			_do_nav_move(delta, MOVE_SPEED)
+			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
 		State.BATTLE:
@@ -111,7 +114,7 @@ func _enter_state(new_state: State) -> void:
 		State.BATTLE:
 			_sprite.play("run")
 		State.SHOOTING:
-			_attack_timer = ATTACK_RATE
+			_attack_timer = _get_attack_rate()
 			_sprite.play("idle")
 
 # =========================================================================== #
@@ -144,7 +147,7 @@ func _do_battle(delta: float) -> void:
 			clampf(flee_pos.y, WANDER_MIN_Y, WANDER_MAX_Y)
 		)
 		_nav_agent.target_position = flee_pos
-		_do_nav_move(delta, MOVE_SPEED)
+		_do_nav_move(delta, _get_move_speed())
 	elif dist <= SHOOT_RANGE:
 		# In range — stop and shoot
 		_enter_state(State.SHOOTING)
@@ -153,7 +156,7 @@ func _do_battle(delta: float) -> void:
 		var toward := (position.direction_to(_target.position))
 		var approach_pos : Vector2 = _target.position - toward * (SHOOT_RANGE * 0.75)
 		_nav_agent.target_position = approach_pos
-		_do_nav_move(delta, MOVE_SPEED)
+		_do_nav_move(delta, _get_move_speed())
 
 func _do_shoot() -> void:
 	_shooting = true
@@ -177,9 +180,9 @@ func _spawn_arrow() -> void:
 		var arrow := ARROW_SCENE.instantiate()
 		get_parent().add_child(arrow)
 		arrow.global_position = global_position
-		arrow.init(_target, ATTACK_DAMAGE)
+		arrow.init(_target, _get_attack_damage())
 	_shooting     = false
-	_attack_timer = ATTACK_RATE
+	_attack_timer = _get_attack_rate()
 	await _sprite.animation_finished
 	_sprite.play("idle")
 
@@ -194,6 +197,15 @@ func _pick_target(enemies: Array) -> void:
 			best_dist = d
 			best      = e
 	_target = best
+
+func _get_move_speed() -> float:
+	return MOVE_SPEED * get_building_move_speed_multiplier()
+
+func _get_attack_damage() -> int:
+	return ATTACK_DAMAGE + get_building_attack_damage_bonus()
+
+func _get_attack_rate() -> float:
+	return ATTACK_RATE * get_building_attack_speed_multiplier()
 
 # =========================================================================== #
 #  Base overrides

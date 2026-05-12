@@ -18,13 +18,18 @@ var _live_warriors : int   = 0
 var _spawn_timer   : float = 0.0
 
 func _process(delta: float) -> void:
-	if _live_warriors >= MAX_WARRIORS:
+	var parent := get_parent()
+	var max_units : int = parent.get_effective_unit_cap(MAX_WARRIORS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_WARRIORS
+	var spawn_interval : float = parent.get_effective_spawn_interval(SPAWN_INTERVAL) if parent != null and parent.has_method("get_effective_spawn_interval") else SPAWN_INTERVAL
+	if parent != null and parent.has_method("is_upgrade_blocking_production") and parent.is_upgrade_blocking_production():
+		return
+	if _live_warriors >= max_units:
 		_spawn_timer = 0.0
 		return
 	if not ResourceManager.has_meat(MEAT_COST):
 		return
 	_spawn_timer += delta
-	if _spawn_timer >= SPAWN_INTERVAL:
+	if _spawn_timer >= spawn_interval:
 		_spawn_timer = 0.0
 		_spawn_warrior()
 
@@ -47,6 +52,8 @@ func _spawn_warrior() -> void:
 
 	warrior.home_position = parent.position
 	warrior.home_node     = parent
+	if parent != null and parent.has_method("apply_unit_bonuses"):
+		parent.apply_unit_bonuses(warrior)
 
 	units_layer.add_child(warrior)
 	_live_warriors += 1
@@ -58,7 +65,9 @@ func _on_warrior_died() -> void:
 
 # -- Read-only stats ----------------------------------------------------------
 func get_live_warriors()  -> int:   return _live_warriors
-func get_max_warriors()   -> int:   return MAX_WARRIORS
+func get_max_warriors()   -> int:
+	var parent := get_parent()
+	return parent.get_effective_unit_cap(MAX_WARRIORS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_WARRIORS
 func get_spawn_timer()    -> float: return _spawn_timer
 
 # Duck-typed compatibility so unit_selection can find this controller

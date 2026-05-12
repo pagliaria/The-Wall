@@ -34,9 +34,11 @@ var _castle_placed := false
 @onready var wave_timer       : Timer              = $wave_timer
 @onready var settings_screen  : CanvasLayer        = $SettingsScreen
 @onready var selection_panel  : CanvasLayer        = $HUD/SelectionPanel
+@onready var building_upgrade_panel : CanvasLayer  = $HUD/BuildingUpgradePanel
 
 var _castle_prompt : CanvasLayer = null
 var _wave_manager  : Node        = null
+var _opening_building_panel := false
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -49,6 +51,7 @@ func _ready() -> void:
 	unit_selection.units_layer     = units_layer
 	unit_selection.camera          = camera
 	unit_selection.selection_panel = selection_panel
+	unit_selection.selection_changed.connect(_on_unit_selection_changed)
 
 	hud.build_pressed.connect(_on_build_pressed)
 	hud.building_selected.connect(_on_building_selected)
@@ -99,6 +102,7 @@ func _on_wave_countdown_changed(seconds: float) -> void:
 func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
 	UiAudio.play_trimmed("deep_thumps", 0.0, 1.0)
+	_clear_building_selection()
 	unit_selection.clear_selection()
 	unit_selection.disabled = true
 	battle_seperator.disabled = true
@@ -126,6 +130,7 @@ func _show_castle_prompt() -> void:
 	_castle_prompt.castle_placement_requested.connect(_on_castle_placement_requested)
 
 func _on_castle_placement_requested() -> void:
+	_clear_building_selection()
 	building_placer.start_placement("castle")
 	unit_selection.disabled = true
 
@@ -134,14 +139,16 @@ func _on_castle_placement_requested() -> void:
 # =========================================================================== #
 
 func _on_build_pressed() -> void:
-	pass
+	_clear_building_selection()
 
 func _on_building_selected(building_id: String) -> void:
+	_clear_building_selection()
 	building_placer.start_placement(building_id)
 	unit_selection.disabled = true
 
 func _on_placement_cancelled() -> void:
 	unit_selection.disabled = false
+	_clear_building_selection()
 	if not _castle_placed:
 		_castle_prompt.show()
 
@@ -197,7 +204,28 @@ func _on_nav_bake_complete() -> void:
 	)
 
 func _on_building_clicked(_building: Node) -> void:
-	pass
+	if _building == null or not is_instance_valid(_building):
+		return
+	if not _building.supports_upgrades():
+		_clear_building_selection()
+		return
+	_opening_building_panel = true
+	unit_selection.clear_selection()
+	call_deferred("_show_building_upgrades", _building)
+
+func _show_building_upgrades(building: Node) -> void:
+	if building == null or not is_instance_valid(building):
+		return
+	building_upgrade_panel.show_building(building)
+
+func _clear_building_selection() -> void:
+	if building_upgrade_panel != null and building_upgrade_panel.has_method("hide_panel"):
+		building_upgrade_panel.hide_panel()
+
+func _on_unit_selection_changed(_units: Array) -> void:
+	if _opening_building_panel:
+		return
+	_clear_building_selection()
 
 # =========================================================================== #
 #  Resource delivery
@@ -268,6 +296,8 @@ func _clamped(pos: Vector2) -> Vector2:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+			_opening_building_panel = false
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
 				if event.pressed: _zoom_toward_mouse(ZOOM_STEP)

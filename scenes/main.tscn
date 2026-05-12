@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=35 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -22,6 +22,7 @@
 [ext_resource type="Script" uid="uid://bari6wkicm3ly" path="res://scripts/battlefield_overlay.gd" id="17_battlefield"]
 [ext_resource type="PackedScene" uid="uid://b1fea6knbgvwi" path="res://scenes/settings_screen.tscn" id="32_settings"]
 [ext_resource type="PackedScene" uid="uid://cqs7jkoc86811" path="res://scenes/selection_panel.tscn" id="33_sel_panel"]
+[ext_resource type="PackedScene" uid="uid://dye4wevxkcnrp" path="res://scenes/building_upgrade_panel.tscn" id="34_building_upgrades"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -507,6 +508,8 @@ text = "Attack!"
 horizontal_alignment = 1
 
 [node name="SelectionPanel" parent="HUD" instance=ExtResource("33_sel_panel")]
+
+[node name="BuildingUpgradePanel" parent="HUD" instance=ExtResource("34_building_upgrades")]
 
 [node name="BuildingsLayer" type="Node2D" parent="."]
 z_index = 3

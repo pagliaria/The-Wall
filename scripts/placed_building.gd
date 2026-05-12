@@ -7,6 +7,64 @@ extends StaticBody2D
 
 signal building_clicked(building: Node)
 
+const COMBAT_BUILDINGS := ["barracks", "archery", "monastery", "tower"]
+const UPGRADE_DEFS := {
+	"attack_damage": {
+		"description": "Increase unit attack damage by +1 per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 30, "wood": 15}, "time": 10.0, "value": 1},
+			{"cost": {"gold": 50, "wood": 25}, "time": 14.0, "value": 1},
+			{"cost": {"gold": 75, "wood": 40, "meat": 5}, "time": 18.0, "value": 1},
+		],
+	},
+	"attack_speed": {
+		"description": "Train units to attack 12% faster per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 35, "wood": 20}, "time": 10.0, "value": 0.88},
+			{"cost": {"gold": 55, "wood": 30}, "time": 14.0, "value": 0.88},
+			{"cost": {"gold": 80, "wood": 45, "meat": 5}, "time": 18.0, "value": 0.88},
+		],
+	},
+	"move_speed": {
+		"description": "Increase unit move speed by 10% per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 25, "wood": 20}, "time": 8.0, "value": 1.10},
+			{"cost": {"gold": 45, "wood": 30}, "time": 12.0, "value": 1.10},
+			{"cost": {"gold": 70, "wood": 40, "meat": 4}, "time": 16.0, "value": 1.10},
+		],
+	},
+	"hp": {
+		"description": "Increase unit HP by +4 per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 35, "wood": 25}, "time": 10.0, "value": 4},
+			{"cost": {"gold": 55, "wood": 35}, "time": 14.0, "value": 4},
+			{"cost": {"gold": 80, "wood": 50, "meat": 4}, "time": 18.0, "value": 4},
+		],
+	},
+	"unit_cap": {
+		"description": "Increase the building's max unit count by +1 per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 40, "wood": 20, "meat": 3}, "time": 12.0, "value": 1},
+			{"cost": {"gold": 60, "wood": 30, "meat": 4}, "time": 16.0, "value": 1},
+			{"cost": {"gold": 90, "wood": 45, "meat": 5}, "time": 20.0, "value": 1},
+		],
+	},
+	"production_speed": {
+		"description": "Reduce unit production time by 12% per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 30, "wood": 25}, "time": 10.0, "value": 0.88},
+			{"cost": {"gold": 50, "wood": 35}, "time": 14.0, "value": 0.88},
+			{"cost": {"gold": 75, "wood": 50, "meat": 4}, "time": 18.0, "value": 0.88},
+		],
+	},
+}
+
 const TILE_SIZE = 64
 
 const BUILDING_TEXTURES := {
@@ -27,6 +85,17 @@ var units_layer : Node2D = null
 # Cached refs set during setup
 var _indicator  : Node2D = null
 var _controller : Node   = null
+var _upgrade_levels := {
+	"attack_damage": 0,
+	"attack_speed": 0,
+	"move_speed": 0,
+	"hp": 0,
+	"unit_cap": 0,
+	"production_speed": 0,
+}
+var _active_upgrade_id: String = ""
+var _upgrade_time_left: float = 0.0
+var _upgrade_total_time: float = 0.0
 
 func setup(id: String, tile: Vector2i, p_units_layer: Node2D) -> void:
 	building_id = id
@@ -121,6 +190,7 @@ func _attach_controller(id: String) -> void:
 		# Future: "house1"
 
 func _process(_delta: float) -> void:
+	_process_upgrade(_delta)
 	if _indicator == null or _controller == null:
 		return
 	var live  : int   = 0
@@ -151,6 +221,18 @@ func _process(_delta: float) -> void:
 	var enough_meat := ResourceManager.has_meat(_controller.MEAT_COST)
 	_indicator.refresh(live, max_u, ratio, enough_meat)
 
+func _process_upgrade(delta: float) -> void:
+	if _active_upgrade_id == "":
+		return
+	_upgrade_time_left = maxf(0.0, _upgrade_time_left - delta)
+	if _upgrade_time_left > 0.0:
+		return
+	var completed_id := _active_upgrade_id
+	_active_upgrade_id = ""
+	_upgrade_total_time = 0.0
+	_upgrade_levels[completed_id] = int(_upgrade_levels.get(completed_id, 0)) + 1
+	_apply_upgrades_to_live_units()
+
 func _on_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		emit_signal("building_clicked", self)
@@ -170,6 +252,104 @@ func get_controller() -> Node:
 		if child.has_method("get_live_pawns"):   # duck-typed for castle
 			return child
 	return null
+
+func supports_upgrades() -> bool:
+	return building_id in COMBAT_BUILDINGS
+
+func get_display_name() -> String:
+	return building_id.capitalize() if building_id != "" else "Building"
+
+func get_upgrade_definitions() -> Dictionary:
+	return UPGRADE_DEFS
+
+func get_upgrade_level(upgrade_id: String) -> int:
+	return int(_upgrade_levels.get(upgrade_id, 0))
+
+func get_active_upgrade_id() -> String:
+	return _active_upgrade_id
+
+func can_start_upgrade(upgrade_id: String) -> bool:
+	if not supports_upgrades():
+		return false
+	if _active_upgrade_id != "":
+		return false
+	if not UPGRADE_DEFS.has(upgrade_id):
+		return false
+	var current_level := get_upgrade_level(upgrade_id)
+	var upgrade_def: Dictionary = UPGRADE_DEFS[upgrade_id]
+	var max_level: int = int(upgrade_def.get("max_level", 0))
+	if current_level >= max_level:
+		return false
+	var levels: Array = upgrade_def.get("levels", [])
+	if current_level >= levels.size():
+		return false
+	var cost: Dictionary = levels[current_level].get("cost", {})
+	return ResourceManager.gold >= int(cost.get("gold", 0)) \
+		and ResourceManager.wood >= int(cost.get("wood", 0)) \
+		and ResourceManager.meat >= int(cost.get("meat", 0))
+
+func try_start_upgrade(upgrade_id: String) -> bool:
+	if not can_start_upgrade(upgrade_id):
+		return false
+	var current_level := get_upgrade_level(upgrade_id)
+	var level_data: Dictionary = UPGRADE_DEFS[upgrade_id]["levels"][current_level]
+	var cost: Dictionary = level_data.get("cost", {})
+	if not ResourceManager.spend(cost):
+		return false
+	_active_upgrade_id = upgrade_id
+	_upgrade_total_time = float(level_data.get("time", 0.0))
+	_upgrade_time_left = _upgrade_total_time
+	return true
+
+func is_upgrade_blocking_production() -> bool:
+	return _active_upgrade_id != ""
+
+func get_upgrade_status_text() -> String:
+	if _active_upgrade_id == "":
+		return "Ready"
+	var remaining := int(ceil(_upgrade_time_left))
+	return "Upgrading %s (%d s)" % [_active_upgrade_id.replace("_", " ").capitalize(), remaining]
+
+func get_effective_unit_cap(base_cap: int) -> int:
+	return base_cap + _sum_upgrade_values("unit_cap")
+
+func get_effective_spawn_interval(base_interval: float) -> float:
+	return base_interval * _product_upgrade_values("production_speed")
+
+func get_unit_bonus_bundle() -> Dictionary:
+	return {
+		"attack_damage": _sum_upgrade_values("attack_damage"),
+		"attack_speed_multiplier": _product_upgrade_values("attack_speed"),
+		"move_speed_multiplier": _product_upgrade_values("move_speed"),
+		"hp_bonus": _sum_upgrade_values("hp"),
+	}
+
+func apply_unit_bonuses(unit: Node) -> void:
+	if unit != null and unit.has_method("apply_building_bonuses"):
+		unit.apply_building_bonuses(get_unit_bonus_bundle())
+
+func _apply_upgrades_to_live_units() -> void:
+	if units_layer == null:
+		return
+	for unit in units_layer.get_children():
+		if unit.get("home_node") == self and unit.has_method("apply_building_bonuses"):
+			unit.apply_building_bonuses(get_unit_bonus_bundle())
+
+func _sum_upgrade_values(upgrade_id: String) -> int:
+	var total := 0
+	var level: int = get_upgrade_level(upgrade_id)
+	var levels: Array = UPGRADE_DEFS.get(upgrade_id, {}).get("levels", [])
+	for idx in range(mini(level, levels.size())):
+		total += int(levels[idx].get("value", 0))
+	return total
+
+func _product_upgrade_values(upgrade_id: String) -> float:
+	var value := 1.0
+	var level: int = get_upgrade_level(upgrade_id)
+	var levels: Array = UPGRADE_DEFS.get(upgrade_id, {}).get("levels", [])
+	for idx in range(mini(level, levels.size())):
+		value *= float(levels[idx].get("value", 1.0))
+	return value
 
 # =========================================================================== #
 #  Drop animation

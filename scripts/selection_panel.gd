@@ -117,10 +117,10 @@ func _get_status(unit: Node) -> String:
 
 func _apply_stats(unit: Node, type_key: String) -> void:
 	var stats : Dictionary = UNIT_STATS.get(type_key, {})
-	_attack_range_label.text = _format_stat_value(stats.get("attack_range"))
-	_attack_damage_label.text = _format_stat_value(stats.get("attack_damage"))
-	_attack_speed_label.text = _format_attack_speed(stats.get("attack_speed"))
-	_move_speed_label.text = _format_stat_value(stats.get("move_speed"))
+	_attack_range_label.text = _format_stat_value(_resolve_stat(unit, "attack_range", stats.get("attack_range")))
+	_attack_damage_label.text = _format_stat_value(_resolve_stat(unit, "attack_damage", stats.get("attack_damage")))
+	_attack_speed_label.text = _format_attack_speed(_resolve_stat(unit, "attack_speed", stats.get("attack_speed")))
+	_move_speed_label.text = _format_stat_value(_resolve_stat(unit, "move_speed", stats.get("move_speed")))
 
 	if stats.is_empty():
 		# Fall back to any dynamic properties if we add stats directly on units later.
@@ -128,6 +128,21 @@ func _apply_stats(unit: Node, type_key: String) -> void:
 		_attack_damage_label.text = _format_stat_value(unit.get("attack_damage"))
 		_attack_speed_label.text = _format_attack_speed(unit.get("attack_speed"))
 		_move_speed_label.text = _format_stat_value(unit.get("move_speed"))
+
+func _resolve_stat(unit: Node, stat_id: String, fallback):
+	match stat_id:
+		"attack_damage":
+			if unit.has_method("get_building_attack_damage_bonus"):
+				if fallback == null:
+					return null
+				return int(fallback) + unit.get_building_attack_damage_bonus()
+		"attack_speed":
+			if unit.has_method("get_building_attack_speed_multiplier") and fallback != null:
+				return float(fallback) * unit.get_building_attack_speed_multiplier()
+		"move_speed":
+			if unit.has_method("get_building_move_speed_multiplier") and fallback != null:
+				return float(fallback) * unit.get_building_move_speed_multiplier()
+	return fallback
 
 func _format_stat_value(value) -> String:
 	if value == null:

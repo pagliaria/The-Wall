@@ -1,5 +1,7 @@
 extends Node2D
 
+signal selection_changed(units: Array)
+
 # UnitSelection -- handles single-click and drag-box selection of units.
 #
 # Attach to a Node2D in main.tscn.
@@ -41,6 +43,8 @@ func _input(event: InputEvent) -> void:
 	if disabled:
 		_reset_cursor()
 		return
+	if _is_mouse_over_ui(event):
+		return
 
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
@@ -65,6 +69,11 @@ func _input(event: InputEvent) -> void:
 				_drag_active = true
 			_get_overlay().queue_redraw()
 		_update_cursor(event.position)
+
+func _is_mouse_over_ui(event: InputEvent) -> bool:
+	if not (event is InputEventMouseButton or event is InputEventMouseMotion):
+		return false
+	return get_viewport().gui_get_hovered_control() != null
 
 func _on_lmb_down(screen_pos: Vector2) -> void:
 	_pressing     = true
@@ -224,6 +233,7 @@ func _notify_panel() -> void:
 		# Strip dead instances before passing
 		var live : Array = selected_units.filter(func(u): return is_instance_valid(u))
 		selection_panel.refresh(live)
+		emit_signal("selection_changed", live)
 
 # -- Coordinate helpers -------------------------------------------------------
 
