@@ -1,7 +1,5 @@
 extends CharacterBody2D
 
-# enemy_base.gd — Base class for all enemy unit types.
-
 signal died
 
 @export var max_hp        : int   = 18
@@ -39,10 +37,6 @@ var _is_striking  : bool  = false
 
 const HP_FILL_FULL_SCALE_X := 1.3
 
-# =========================================================================== #
-#  Lifecycle
-# =========================================================================== #
-
 func _ready() -> void:
 	_rng.randomize()
 	hp = max_hp
@@ -57,35 +51,25 @@ func _initial_state() -> void:
 func _physics_process(delta: float) -> void:
 	if _state == State.DEAD:
 		return
-
 	_state_timer += delta
-
 	match _state:
 		State.IDLE:
 			_apply_separation(delta)
-
 		State.BATTLE:
 			_do_battle(delta)
-
 		State.ATTACKING:
-			# Let subclass reposition while attacking (e.g. badger backs up)
 			_do_attacking_move(delta)
-
 			if _is_striking and _sprite.is_playing() and _sprite.animation.contains("attack"):
 				return
 			else:
 				_is_striking = false
-
 			if not is_instance_valid(_target) or _target.hp <= 0:
 				_target = null
 				_enter_state(State.BATTLE)
 				return
-
-			# Only disengage if target is truly out of range — use virtual threshold
 			if position.distance_to(_target.position) > _get_disengage_range():
 				_enter_state(State.BATTLE)
 				return
-
 			_attack_timer -= delta
 			if _attack_timer <= 0.0:
 				_is_striking    = true
@@ -93,14 +77,9 @@ func _physics_process(delta: float) -> void:
 				_do_attack_tick(delta)
 				_do_attack_hit()
 
-# =========================================================================== #
-#  State transitions
-# =========================================================================== #
-
 func _enter_state(new_state: State) -> void:
 	_state       = new_state
 	_state_timer = 0.0
-
 	match _state:
 		State.IDLE:
 			_state_dur = _rng.randf_range(idle_time_min, idle_time_max)
@@ -113,10 +92,6 @@ func _enter_state(new_state: State) -> void:
 		State.DEAD:
 			_on_enter_dead_state()
 			set_physics_process(false)
-
-# =========================================================================== #
-#  Battle logic
-# =========================================================================== #
 
 func start_battle(player_units: Array) -> void:
 	_battle_ready = true
@@ -132,12 +107,10 @@ func _do_battle(delta: float) -> void:
 		_target = null
 		_enter_state(State.BATTLE)
 		return
-
 	var dist := position.distance_to(_target.position)
 	if dist <= _get_engage_range():
 		_enter_state(State.ATTACKING)
 		return
-
 	_nav.target_position = _target.position
 	_do_nav_move(delta)
 	_move()
@@ -151,35 +124,24 @@ func _pick_target(units: Array) -> void:
 		var d := position.distance_to(u.position)
 		if d < best_dist:
 			best_dist = d
-			best = u
+			best      = u
 	_target = best
-
-# =========================================================================== #
-#  Navigation
-# =========================================================================== #
 
 func _do_nav_move(delta: float) -> void:
 	if _state != State.BATTLE and _nav.is_navigation_finished():
 		_apply_separation(delta)
 		return
-
 	var next := _nav.get_next_path_position()
 	var dir  : Vector2
 	if next.distance_to(position) < 2.0 and _target != null and is_instance_valid(_target):
 		dir = position.direction_to(_target.position)
 	else:
 		dir = (next - position).normalized()
-
 	if dir == Vector2.ZERO:
 		return
-
 	_sprite.flip_h = dir.x < 0
 	move_and_collide(dir * move_speed * delta)
 	_apply_separation(delta)
-
-# =========================================================================== #
-#  Separation
-# =========================================================================== #
 
 func _apply_separation(delta: float) -> void:
 	var parent := get_parent()
@@ -196,16 +158,13 @@ func _apply_separation(delta: float) -> void:
 	if sep != Vector2.ZERO:
 		move_and_collide(sep.normalized() * SEPARATION_FORCE * delta)
 
-# =========================================================================== #
-#  Health
-# =========================================================================== #
-
 func take_damage(amount: int) -> void:
 	flash_red()
 	if _state == State.DEAD:
 		return
 	hp -= amount
 	_update_hp_bar()
+	CombatNumbers.show_number(global_position, amount, false)
 	if hp <= 0:
 		_enter_state(State.DEAD)
 
@@ -230,22 +189,10 @@ func _on_enter_dead_state() -> void:
 		die()
 
 func flash_red() -> void:
-	var original_mod = _sprite.modulate
-	# Set the sprite's tint to red
-	_sprite.modulate = Color.RED
-	
-	# Wait for a short duration (0.1 seconds)
+	var original_mod := _sprite.modulate
+	_sprite.modulate  = Color.RED
 	await get_tree().create_timer(0.1).timeout
-	
-	# Reset back to the original color (white)
-	_sprite.modulate = original_mod
-	
-	if _sprite.modulate == Color.RED:
-		_sprite.modulate = Color.WHITE
-
-# =========================================================================== #
-#  Virtuals
-# =========================================================================== #
+	_sprite.modulate  = original_mod
 
 func _move() -> void:
 	pass
@@ -253,9 +200,6 @@ func _move() -> void:
 func _get_engage_range() -> float:
 	return 48.0
 
-# Disengage range — how far target must be before returning to BATTLE.
-# Default: 1.6x engage. Ranged units override to be much larger so
-# separation pushes don't cause BATTLE<->ATTACKING flicker.
 func _get_disengage_range() -> float:
 	return _get_engage_range() * 1.6
 
@@ -269,17 +213,12 @@ func _do_attack_hit() -> void:
 func _do_attack_tick(_delta: float) -> void:
 	pass
 
-# Called every frame while in ATTACKING state — override for repositioning.
 func _do_attacking_move(_delta: float) -> void:
 	pass
 
 func _on_enter_idle_state() -> void:
 	if _sprite.sprite_frames.has_animation("idle"):
 		_sprite.play("idle")
-
-func _on_enter_mill_state() -> void:
-	if _sprite.sprite_frames.has_animation("run"):
-		_sprite.play("run")
 
 func _on_enter_battle_state() -> void:
 	if _sprite.sprite_frames.has_animation("run"):
