@@ -70,7 +70,7 @@ func _process_state(delta: float) -> void:
 			# If enemy closes in while we're waiting, reposition
 			if not _shooting and is_instance_valid(_target):
 				var dist := position.distance_to(_target.position)
-				if dist > SHOOT_RANGE or dist < SHOOT_RANGE_MIN:
+				if dist > _get_attack_range() or dist < SHOOT_RANGE_MIN:
 					_enter_state(State.BATTLE)
 
 func _pick_next_wander_state() -> State:
@@ -141,20 +141,20 @@ func _do_battle(delta: float) -> void:
 	if dist < SHOOT_RANGE_MIN:
 		# Too close — back away from the enemy
 		var flee_dir : Vector2 = (position - _target.position).normalized()
-		var flee_pos := position + flee_dir * SHOOT_RANGE
+		var flee_pos := position + flee_dir * _get_attack_range()
 		flee_pos = Vector2(
 			clampf(flee_pos.x, WANDER_MIN_X, WANDER_MAX_X),
 			clampf(flee_pos.y, WANDER_MIN_Y, WANDER_MAX_Y)
 		)
 		_nav_agent.target_position = flee_pos
 		_do_nav_move(delta, _get_move_speed())
-	elif dist <= SHOOT_RANGE:
+	elif dist <= _get_attack_range():
 		# In range — stop and shoot
 		_enter_state(State.SHOOTING)
 	else:
 		# Out of range — close in to shoot range
 		var toward := (position.direction_to(_target.position))
-		var approach_pos : Vector2 = _target.position - toward * (SHOOT_RANGE * 0.75)
+		var approach_pos : Vector2 = _target.position - toward * (_get_attack_range() * 0.75)
 		_nav_agent.target_position = approach_pos
 		_do_nav_move(delta, _get_move_speed())
 
@@ -206,6 +206,9 @@ func _get_attack_damage() -> int:
 
 func _get_attack_rate() -> float:
 	return ATTACK_RATE * get_building_attack_speed_multiplier()
+
+func _get_attack_range() -> float:
+	return SHOOT_RANGE + get_building_range_bonus()
 
 # =========================================================================== #
 #  Base overrides

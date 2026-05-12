@@ -7,8 +7,7 @@ extends StaticBody2D
 
 signal building_clicked(building: Node)
 
-const COMBAT_BUILDINGS := ["barracks", "archery", "monastery", "tower"]
-const UPGRADE_DEFS := {
+const COMMON_COMBAT_UPGRADES := {
 	"attack_damage": {
 		"description": "Increase unit attack damage by +1 per level.",
 		"max_level": 3,
@@ -63,6 +62,71 @@ const UPGRADE_DEFS := {
 			{"cost": {"gold": 75, "wood": 50, "meat": 4}, "time": 18.0, "value": 0.88},
 		],
 	},
+	"range": {
+		"description": "Increase range by +40 per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 35, "wood": 20}, "time": 10.0, "value": 40.0},
+			{"cost": {"gold": 55, "wood": 30}, "time": 14.0, "value": 40.0},
+			{"cost": {"gold": 80, "wood": 45, "meat": 5}, "time": 18.0, "value": 40.0},
+		],
+	},
+}
+
+const CASTLE_UPGRADES := {
+	"move_speed": {
+		"description": "Increase pawn move speed by 10% per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 20, "wood": 15}, "time": 8.0, "value": 1.10},
+			{"cost": {"gold": 35, "wood": 25}, "time": 12.0, "value": 1.10},
+			{"cost": {"gold": 50, "wood": 35, "meat": 3}, "time": 16.0, "value": 1.10},
+		],
+	},
+	"unit_cap": {
+		"description": "Increase the castle's max pawn count by +1 per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 25, "wood": 15, "meat": 2}, "time": 10.0, "value": 1},
+			{"cost": {"gold": 40, "wood": 25, "meat": 3}, "time": 14.0, "value": 1},
+			{"cost": {"gold": 60, "wood": 35, "meat": 4}, "time": 18.0, "value": 1},
+		],
+	},
+	"gather_speed": {
+		"description": "Increase pawn gathering speed by 15% per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 20, "wood": 20}, "time": 8.0, "value": 0.85},
+			{"cost": {"gold": 35, "wood": 30}, "time": 12.0, "value": 0.85},
+			{"cost": {"gold": 50, "wood": 40, "meat": 2}, "time": 16.0, "value": 0.85},
+		],
+	},
+	"production_speed": {
+		"description": "Reduce pawn production time by 12% per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 20, "wood": 20}, "time": 8.0, "value": 0.88},
+			{"cost": {"gold": 35, "wood": 30}, "time": 12.0, "value": 0.88},
+			{"cost": {"gold": 50, "wood": 40, "meat": 2}, "time": 16.0, "value": 0.88},
+		],
+	},
+	"turn_in_bonus": {
+		"description": "Pawns return +1 extra resource per trip per level.",
+		"max_level": 3,
+		"levels": [
+			{"cost": {"gold": 30, "wood": 20}, "time": 10.0, "value": 1},
+			{"cost": {"gold": 45, "wood": 30}, "time": 14.0, "value": 1},
+			{"cost": {"gold": 65, "wood": 40, "meat": 2}, "time": 18.0, "value": 1},
+		],
+	},
+}
+
+const BUILDING_UPGRADE_IDS := {
+	"castle": ["move_speed", "unit_cap", "gather_speed", "production_speed", "turn_in_bonus"],
+	"barracks": ["attack_damage", "attack_speed", "move_speed", "hp", "unit_cap", "production_speed"],
+	"tower": ["attack_damage", "attack_speed", "move_speed", "hp", "unit_cap", "production_speed"],
+	"archery": ["attack_damage", "attack_speed", "move_speed", "hp", "unit_cap", "production_speed", "range"],
+	"monastery": ["attack_damage", "attack_speed", "move_speed", "hp", "unit_cap", "production_speed", "range"],
 }
 
 const TILE_SIZE = 64
@@ -85,14 +149,7 @@ var units_layer : Node2D = null
 # Cached refs set during setup
 var _indicator  : Node2D = null
 var _controller : Node   = null
-var _upgrade_levels := {
-	"attack_damage": 0,
-	"attack_speed": 0,
-	"move_speed": 0,
-	"hp": 0,
-	"unit_cap": 0,
-	"production_speed": 0,
-}
+var _upgrade_levels: Dictionary = {}
 var _active_upgrade_id: String = ""
 var _upgrade_time_left: float = 0.0
 var _upgrade_total_time: float = 0.0
@@ -103,6 +160,7 @@ func setup(id: String, tile: Vector2i, p_units_layer: Node2D) -> void:
 	name        = "Building_%s_%d_%d" % [id, tile.x, tile.y]
 	position    = _tile_center(tile)
 	z_index     = 3
+	_upgrade_levels = _make_upgrade_levels()
 
 	# ── Sprite ────────────────────────────────────────────────────────────────
 	var sprite       := Sprite2D.new()
@@ -248,19 +306,21 @@ func get_nav_footprint() -> Rect2:
 
 func get_controller() -> Node:
 	# Returns the building-specific controller child, if any.
-	for child in get_children():
-		if child.has_method("get_live_pawns"):   # duck-typed for castle
-			return child
-	return null
+	return _controller
 
 func supports_upgrades() -> bool:
-	return building_id in COMBAT_BUILDINGS
+	return BUILDING_UPGRADE_IDS.has(building_id)
 
 func get_display_name() -> String:
 	return building_id.capitalize() if building_id != "" else "Building"
 
 func get_upgrade_definitions() -> Dictionary:
-	return UPGRADE_DEFS
+	if building_id == "castle":
+		return CASTLE_UPGRADES
+	return COMMON_COMBAT_UPGRADES
+
+func get_available_upgrade_ids() -> Array:
+	return BUILDING_UPGRADE_IDS.get(building_id, [])
 
 func get_upgrade_level(upgrade_id: String) -> int:
 	return int(_upgrade_levels.get(upgrade_id, 0))
@@ -273,10 +333,11 @@ func can_start_upgrade(upgrade_id: String) -> bool:
 		return false
 	if _active_upgrade_id != "":
 		return false
-	if not UPGRADE_DEFS.has(upgrade_id):
+	var upgrade_defs := get_upgrade_definitions()
+	if not upgrade_defs.has(upgrade_id):
 		return false
 	var current_level := get_upgrade_level(upgrade_id)
-	var upgrade_def: Dictionary = UPGRADE_DEFS[upgrade_id]
+	var upgrade_def: Dictionary = upgrade_defs[upgrade_id]
 	var max_level: int = int(upgrade_def.get("max_level", 0))
 	if current_level >= max_level:
 		return false
@@ -292,7 +353,7 @@ func try_start_upgrade(upgrade_id: String) -> bool:
 	if not can_start_upgrade(upgrade_id):
 		return false
 	var current_level := get_upgrade_level(upgrade_id)
-	var level_data: Dictionary = UPGRADE_DEFS[upgrade_id]["levels"][current_level]
+	var level_data: Dictionary = get_upgrade_definitions()[upgrade_id]["levels"][current_level]
 	var cost: Dictionary = level_data.get("cost", {})
 	if not ResourceManager.spend(cost):
 		return false
@@ -322,6 +383,9 @@ func get_unit_bonus_bundle() -> Dictionary:
 		"attack_speed_multiplier": _product_upgrade_values("attack_speed"),
 		"move_speed_multiplier": _product_upgrade_values("move_speed"),
 		"hp_bonus": _sum_upgrade_values("hp"),
+		"range_bonus": _sum_upgrade_values_float("range"),
+		"gather_speed_multiplier": _product_upgrade_values("gather_speed"),
+		"turn_in_bonus": _sum_upgrade_values("turn_in_bonus"),
 	}
 
 func apply_unit_bonuses(unit: Node) -> void:
@@ -338,18 +402,32 @@ func _apply_upgrades_to_live_units() -> void:
 func _sum_upgrade_values(upgrade_id: String) -> int:
 	var total := 0
 	var level: int = get_upgrade_level(upgrade_id)
-	var levels: Array = UPGRADE_DEFS.get(upgrade_id, {}).get("levels", [])
+	var levels: Array = get_upgrade_definitions().get(upgrade_id, {}).get("levels", [])
 	for idx in range(mini(level, levels.size())):
 		total += int(levels[idx].get("value", 0))
+	return total
+
+func _sum_upgrade_values_float(upgrade_id: String) -> float:
+	var total := 0.0
+	var level: int = get_upgrade_level(upgrade_id)
+	var levels: Array = get_upgrade_definitions().get(upgrade_id, {}).get("levels", [])
+	for idx in range(mini(level, levels.size())):
+		total += float(levels[idx].get("value", 0.0))
 	return total
 
 func _product_upgrade_values(upgrade_id: String) -> float:
 	var value := 1.0
 	var level: int = get_upgrade_level(upgrade_id)
-	var levels: Array = UPGRADE_DEFS.get(upgrade_id, {}).get("levels", [])
+	var levels: Array = get_upgrade_definitions().get(upgrade_id, {}).get("levels", [])
 	for idx in range(mini(level, levels.size())):
 		value *= float(levels[idx].get("value", 1.0))
 	return value
+
+func _make_upgrade_levels() -> Dictionary:
+	var levels := {}
+	for upgrade_id in get_available_upgrade_ids():
+		levels[upgrade_id] = 0
+	return levels
 
 # =========================================================================== #
 #  Drop animation

@@ -131,6 +131,9 @@ func _apply_stats(unit: Node, type_key: String) -> void:
 
 func _resolve_stat(unit: Node, stat_id: String, fallback):
 	match stat_id:
+		"attack_range":
+			if unit.has_method("get_building_range_bonus") and fallback != null:
+				return float(fallback) + unit.get_building_range_bonus()
 		"attack_damage":
 			if unit.has_method("get_building_attack_damage_bonus"):
 				if fallback == null:

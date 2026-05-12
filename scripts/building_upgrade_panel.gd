@@ -1,12 +1,15 @@
 extends CanvasLayer
 
-const UPGRADE_ORDER := [
+const BUTTON_ORDER := [
 	"attack_damage",
 	"attack_speed",
 	"move_speed",
 	"hp",
 	"unit_cap",
 	"production_speed",
+	"range",
+	"gather_speed",
+	"turn_in_bonus",
 ]
 
 const UPGRADE_LABELS := {
@@ -16,6 +19,9 @@ const UPGRADE_LABELS := {
 	"hp": "HP",
 	"unit_cap": "CAP",
 	"production_speed": "SPD",
+	"range": "RNG",
+	"gather_speed": "GTH",
+	"turn_in_bonus": "BONUS",
 }
 
 @onready var _panel: NinePatchRect = $Panel
@@ -28,13 +34,16 @@ const UPGRADE_LABELS := {
 	"hp": $Panel/Margin/VBox/Grid/HpButton,
 	"unit_cap": $Panel/Margin/VBox/Grid/UnitCapButton,
 	"production_speed": $Panel/Margin/VBox/Grid/ProductionSpeedButton,
+	"range": $Panel/Margin/VBox/Grid/RangeButton,
+	"gather_speed": $Panel/Margin/VBox/Grid/GatherSpeedButton,
+	"turn_in_bonus": $Panel/Margin/VBox/Grid/TurnInBonusButton,
 }
 
 var _tracked_building: Node = null
 
 func _ready() -> void:
 	hide_panel()
-	for upgrade_id in UPGRADE_ORDER:
+	for upgrade_id in BUTTON_ORDER:
 		var button: Button = _buttons[upgrade_id]
 		button.text = UPGRADE_LABELS[upgrade_id]
 		button.pressed.connect(_on_upgrade_pressed.bind(upgrade_id))
@@ -80,10 +89,15 @@ func _refresh() -> void:
 	_status_label.text = _tracked_building.get_upgrade_status_text() if _tracked_building.has_method("get_upgrade_status_text") else ""
 
 	var upgrade_defs: Dictionary = _tracked_building.get_upgrade_definitions()
+	var available_upgrade_ids: Array = _tracked_building.get_available_upgrade_ids()
 	var selected_id: String = _tracked_building.get_active_upgrade_id() if _tracked_building.has_method("get_active_upgrade_id") else ""
 
-	for upgrade_id in UPGRADE_ORDER:
+	for upgrade_id in BUTTON_ORDER:
 		var button: Button = _buttons[upgrade_id]
+		if not available_upgrade_ids.has(upgrade_id):
+			button.hide()
+			continue
+		button.show()
 		var upgrade_def: Dictionary = upgrade_defs.get(upgrade_id, {})
 		var current_level: int = _tracked_building.get_upgrade_level(upgrade_id) if _tracked_building.has_method("get_upgrade_level") else 0
 		var max_level: int = int(upgrade_def.get("max_level", 0))

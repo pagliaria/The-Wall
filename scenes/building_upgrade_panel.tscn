@@ -13,7 +13,7 @@ anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = -260.0
+offset_top = -320.0
 offset_right = 360.0
 offset_bottom = -16.0
 texture = ExtResource("2_panel")
@@ -94,3 +94,18 @@ text = "CAP"
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "SPD"
+
+[node name="RangeButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "RNG"
+
+[node name="GatherSpeedButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "GTH"
+
+[node name="TurnInBonusButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "BONUS"

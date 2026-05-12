@@ -78,6 +78,9 @@ var _building_bonuses := {
 	"attack_speed_multiplier": 1.0,
 	"move_speed_multiplier": 1.0,
 	"hp_bonus": 0,
+	"range_bonus": 0.0,
+	"gather_speed_multiplier": 1.0,
+	"turn_in_bonus": 0,
 }
 
 # =========================================================================== #
@@ -188,6 +191,9 @@ func apply_building_bonuses(bonuses: Dictionary) -> void:
 	_building_bonuses["attack_speed_multiplier"] = float(bonuses.get("attack_speed_multiplier", 1.0))
 	_building_bonuses["move_speed_multiplier"] = float(bonuses.get("move_speed_multiplier", 1.0))
 	_building_bonuses["hp_bonus"] = int(bonuses.get("hp_bonus", 0))
+	_building_bonuses["range_bonus"] = float(bonuses.get("range_bonus", 0.0))
+	_building_bonuses["gather_speed_multiplier"] = float(bonuses.get("gather_speed_multiplier", 1.0))
+	_building_bonuses["turn_in_bonus"] = int(bonuses.get("turn_in_bonus", 0))
 
 	var old_max_hp := max_hp
 	max_hp = _get_base_max_hp() + get_building_hp_bonus()
@@ -209,6 +215,15 @@ func get_building_move_speed_multiplier() -> float:
 
 func get_building_hp_bonus() -> int:
 	return int(_building_bonuses.get("hp_bonus", 0))
+
+func get_building_range_bonus() -> float:
+	return float(_building_bonuses.get("range_bonus", 0.0))
+
+func get_building_gather_speed_multiplier() -> float:
+	return float(_building_bonuses.get("gather_speed_multiplier", 1.0))
+
+func get_building_turn_in_bonus() -> int:
+	return int(_building_bonuses.get("turn_in_bonus", 0))
 
 # =========================================================================== #
 #  Health

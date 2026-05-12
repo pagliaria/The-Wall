@@ -195,7 +195,7 @@ func _scan_for_attack_target() -> Node:
 # =========================================================================== #
 
 func _try_idle_heal() -> void:
-	var target : Node = _scan_for_heal_target(HEAL_RANGE)
+	var target : Node = _scan_for_heal_target(_get_cast_range())
 	if target == null:
 		return
 	_heal_target    = target
@@ -217,7 +217,7 @@ func update_battle_target(enemies: Array) -> void:
 
 func _do_battle(delta: float) -> void:
 	# Re-scan each battle tick — keeps ally list fresh as units die or arrive
-	_heal_target   = _scan_for_heal_target(HEAL_RANGE)
+	_heal_target   = _scan_for_heal_target(_get_cast_range())
 	_attack_target = _scan_for_attack_target()
 
 	if _heal_target != null:
@@ -233,17 +233,17 @@ func _do_battle(delta: float) -> void:
 		if dist < ATTACK_RANGE_MIN:
 			var flee_dir : Vector2 = (position - _attack_target.position).normalized()
 			var flee_pos : Vector2 = Vector2(
-				clampf(position.x + flee_dir.x * ATTACK_RANGE, WANDER_MIN_X, WANDER_MAX_X),
-				clampf(position.y + flee_dir.y * ATTACK_RANGE, WANDER_MIN_Y, WANDER_MAX_Y)
+				clampf(position.x + flee_dir.x * _get_cast_range(), WANDER_MIN_X, WANDER_MAX_X),
+				clampf(position.y + flee_dir.y * _get_cast_range(), WANDER_MIN_Y, WANDER_MAX_Y)
 			)
 			_nav_agent.target_position = flee_pos
 			_do_nav_move(delta, _get_move_speed())
-		elif dist <= ATTACK_RANGE:
+		elif dist <= _get_cast_range():
 			_pre_cast_state = State.BATTLE
 			_enter_state(State.CASTING)
 		else:
 			var toward   : Vector2 = position.direction_to(_attack_target.position)
-			var approach : Vector2 = _attack_target.position - toward * (ATTACK_RANGE * 0.75)
+			var approach : Vector2 = _attack_target.position - toward * (_get_cast_range() * 0.75)
 			_nav_agent.target_position = approach
 			_do_nav_move(delta, _get_move_speed())
 		return
@@ -317,3 +317,6 @@ func _get_attack_damage() -> int:
 
 func _get_attack_rate() -> float:
 	return CAST_RATE * get_building_attack_speed_multiplier()
+
+func _get_cast_range() -> float:
+	return ATTACK_RANGE + get_building_range_bonus()

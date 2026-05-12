@@ -22,13 +22,18 @@ var _live_pawns  : int   = 0
 var _spawn_timer : float = 0.0
 
 func _process(delta: float) -> void:
-	if _live_pawns >= MAX_PAWNS:
+	var parent := get_parent()
+	var max_units : int = parent.get_effective_unit_cap(MAX_PAWNS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_PAWNS
+	var spawn_interval : float = parent.get_effective_spawn_interval(SPAWN_INTERVAL) if parent != null and parent.has_method("get_effective_spawn_interval") else SPAWN_INTERVAL
+	if parent != null and parent.has_method("is_upgrade_blocking_production") and parent.is_upgrade_blocking_production():
+		return
+	if _live_pawns >= max_units:
 		_spawn_timer = 0.0
 		return
 	if not ResourceManager.has_meat(MEAT_COST):
 		return
 	_spawn_timer += delta
-	if _spawn_timer >= SPAWN_INTERVAL:
+	if _spawn_timer >= spawn_interval:
 		_spawn_timer = 0.0
 		_spawn_pawn()
 
@@ -51,6 +56,8 @@ func _spawn_pawn() -> void:
 	pawn.home_position = parent.position + HOME_INTERACT_OFFSET
 	pawn.home_node     = parent   # PlacedBuilding StaticBody2D — arrival detected by collision
 	pawn.home_radius   = HOME_INTERACT_RADIUS
+	if parent != null and parent.has_method("apply_unit_bonuses"):
+		parent.apply_unit_bonuses(pawn)
 
 	units_layer.add_child(pawn, true)
 	_live_pawns += 1
@@ -66,5 +73,7 @@ func _on_pawn_delivered(resource_type: String, amount: int) -> void:
 
 # -- Read-only stats ----------------------------------------------------------
 func get_live_pawns()  -> int:   return _live_pawns
-func get_max_pawns()   -> int:   return MAX_PAWNS
+func get_max_pawns()   -> int:
+	var parent := get_parent()
+	return parent.get_effective_unit_cap(MAX_PAWNS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_PAWNS
 func get_spawn_timer() -> float: return _spawn_timer

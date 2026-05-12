@@ -69,19 +69,22 @@ var home_radius : float = 28.0
 # =========================================================================== #
 
 func _on_unit_ready() -> void:
-	max_hp = 10
-	hp     = 10
+	max_hp = _get_base_max_hp() + get_building_hp_bonus()
+	hp     = max_hp
 	_sprite.frame_changed.connect(_on_frame_changed)
 	_enter_state(State.MOVE)
+
+func _get_base_max_hp() -> int:
+	return 10
 
 func _process_state(delta: float) -> void:
 	match _state:
 		State.MOVE:
-			_do_nav_move(delta, MOVE_SPEED)
+			_do_nav_move(delta, _get_move_speed())
 			if _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE_TO:
-			_do_nav_move(delta, MOVE_SPEED)
+			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
 		State.IDLE:
@@ -172,7 +175,7 @@ func _do_nav_move_to_body(delta: float, target_body: Node, target_pos: Vector2, 
 	var next_point := _nav_agent.get_next_path_position()
 	_move_dir      = (next_point - position).normalized()
 	_sprite.flip_h = _move_dir.x < 0
-	var collision  := move_and_collide(_move_dir * MOVE_SPEED * delta)
+	var collision  := move_and_collide(_move_dir * _get_move_speed() * delta)
 	if collision:
 		var collider := collision.get_collider()
 		if target_body != null and _is_target(collider, target_body):
@@ -207,14 +210,14 @@ func _do_extracting(delta: float) -> void:
 		_abort_gather()
 		return
 	_extract_timer += delta
-	if _extract_timer < _resource_node.extract_time:
+	if _extract_timer < _get_extract_time():
 		return
 	var got : String = _resource_node.extract_one(self)
 	if got == "":
 		_abort_gather()
 		return
 	_carrying        = got
-	_carrying_amount = 1
+	_carrying_amount = 1 + get_building_turn_in_bonus()
 	if _resource_node:
 		_resource_node.unregister_gatherer(self)
 	_enter_state(State.RETURN)
@@ -286,3 +289,9 @@ func _on_die() -> void:
 	if is_instance_valid(_resource_node):
 		_resource_node.unregister_gatherer(self)
 	super._on_die()
+
+func _get_move_speed() -> float:
+	return MOVE_SPEED * get_building_move_speed_multiplier()
+
+func _get_extract_time() -> float:
+	return _resource_node.extract_time * get_building_gather_speed_multiplier()
