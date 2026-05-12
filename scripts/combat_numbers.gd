@@ -42,7 +42,7 @@ func show_number(world_pos: Vector2, amount: int, is_heal: bool = false) -> void
 	# Label
 	var lbl               := Label.new()
 	lbl.text               = "+%d" % amount if is_heal else "-%d" % amount
-	lbl.add_theme_font_size_override("font_size", 30 if (is_heal or amount >= LARGE_THRESH) else 20)
+	lbl.add_theme_font_size_override("font_size", 100 if (is_heal or amount >= LARGE_THRESH) else 50)
 	var col : Color        = COL_HEAL if is_heal else \
 							 (COL_DAMAGE_LARGE if amount >= LARGE_THRESH else COL_DAMAGE_SMALL)
 	lbl.add_theme_color_override("font_color", col)

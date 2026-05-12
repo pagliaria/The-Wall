@@ -374,6 +374,18 @@ max_value = 1000.0
 step = 5.0
 value = 10.0
 
+[node name="LabelCombatNumbers" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Combat Numbers"
+
+[node name="CheckCombatNumbers" type="CheckButton" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+button_pressed = true
+
 [node name="HSep2" type="HSeparator" parent="Panel/MarginContainer/VBox"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
