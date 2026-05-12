@@ -17,8 +17,8 @@ var _spawn_timer: float = 0.0
 
 func _process(delta: float) -> void:
 	var parent := get_parent()
-	var max_units := parent.get_effective_unit_cap(MAX_ARCHERS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_ARCHERS
-	var spawn_interval := parent.get_effective_spawn_interval(SPAWN_INTERVAL) if parent != null and parent.has_method("get_effective_spawn_interval") else SPAWN_INTERVAL
+	var max_units : int = parent.get_effective_unit_cap(MAX_ARCHERS) if parent != null and parent.has_method("get_effective_unit_cap") else MAX_ARCHERS
+	var spawn_interval : int = parent.get_effective_spawn_interval(SPAWN_INTERVAL) if parent != null and parent.has_method("get_effective_spawn_interval") else SPAWN_INTERVAL
 	if parent != null and parent.has_method("is_upgrade_blocking_production") and parent.is_upgrade_blocking_production():
 		return
 	if _live_archers >= max_units:
