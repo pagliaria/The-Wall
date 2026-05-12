@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=36 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -94,6 +94,9 @@ size = Vector2(56, 188.5)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_muem4"]
 size = Vector2(3064, 176)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pm3ni"]
+size = Vector2(150, 1735)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_gqmmt"]
 size = Vector2(14, 1560)
@@ -207,6 +210,21 @@ shape = SubResource("RectangleShape2D_tipki")
 z_index = 5
 position = Vector2(323, -51)
 shape = SubResource("RectangleShape2D_muem4")
+
+[node name="CollisionShape2D5" type="CollisionShape2D" parent="wall/Wall_Collision"]
+z_index = 5
+position = Vector2(315, 1668)
+shape = SubResource("RectangleShape2D_muem4")
+
+[node name="CollisionShape2D4" type="CollisionShape2D" parent="wall/Wall_Collision"]
+z_index = 5
+position = Vector2(-1280, 770)
+shape = SubResource("RectangleShape2D_pm3ni")
+
+[node name="CollisionShape2D6" type="CollisionShape2D" parent="wall/Wall_Collision"]
+z_index = 5
+position = Vector2(1926, 827)
+shape = SubResource("RectangleShape2D_pm3ni")
 
 [node name="BattleSeperator" type="CollisionShape2D" parent="wall/Wall_Collision"]
 z_index = 5

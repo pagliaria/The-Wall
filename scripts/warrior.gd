@@ -77,8 +77,8 @@ func _process_state(delta: float) -> void:
 				_is_striking = true
 				_attack_timer = _get_attack_rate()
 				_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
-				_target.take_damage(_get_attack_damage())
 				await _sprite.animation_finished
+				_target.take_damage(_get_attack_damage())
 				_sprite.play("idle")
 				_is_striking = false
 			if is_instance_valid(_target) and position.distance_to(_target.position) > MELEE_RANGE * 1.5:

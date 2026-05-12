@@ -25,12 +25,11 @@ var _state_timer  : float   = 0.0
 var _state_dur    : float   = 0.0
 var _spawn_pos    : Vector2 = Vector2.ZERO
 var _rng          := RandomNumberGenerator.new()
-var _battle_ready : bool    = false   # set true once start_battle() is called
+var _battle_ready : bool    = false
 
 var _target       : Node  = null
 var _attack_timer : float = 0.0
-
-var _is_striking  : bool = false
+var _is_striking  : bool  = false
 
 @onready var _sprite  : AnimatedSprite2D  = $Sprite
 @onready var _nav     : NavigationAgent2D = $NavAgent
@@ -48,12 +47,9 @@ func _ready() -> void:
 	_rng.randomize()
 	hp = max_hp
 	_spawn_pos = position
-	# Don't enter MILL yet — wait for start_battle() or a deferred mill start
-	# so that wave_manager can call start_battle() before the first state runs.
 	call_deferred("_initial_state")
 
 func _initial_state() -> void:
-	# If start_battle() already fired before this deferred call, stay in BATTLE.
 	if _battle_ready:
 		return
 	_enter_state(State.IDLE)
@@ -67,30 +63,35 @@ func _physics_process(delta: float) -> void:
 	match _state:
 		State.IDLE:
 			_apply_separation(delta)
-			return
 
 		State.BATTLE:
 			_do_battle(delta)
 
 		State.ATTACKING:
+			# Let subclass reposition while attacking (e.g. badger backs up)
+			_do_attacking_move(delta)
+
 			if _is_striking and _sprite.is_playing() and _sprite.animation.contains("attack"):
 				return
 			else:
 				_is_striking = false
+
 			if not is_instance_valid(_target) or _target.hp <= 0:
 				_target = null
 				_enter_state(State.BATTLE)
 				return
-			if position.distance_to(_target.position) > _get_engage_range() * 1.6:
+
+			# Only disengage if target is truly out of range — use virtual threshold
+			if position.distance_to(_target.position) > _get_disengage_range():
 				_enter_state(State.BATTLE)
 				return
+
 			_attack_timer -= delta
 			if _attack_timer <= 0.0:
-				print("striking")
-				_is_striking = true
-				_attack_timer = _get_attack_rate()
-				_do_attack_hit()
+				_is_striking    = true
+				_attack_timer   = _get_attack_rate()
 				_do_attack_tick(delta)
+				_do_attack_hit()
 
 # =========================================================================== #
 #  State transitions
@@ -104,14 +105,11 @@ func _enter_state(new_state: State) -> void:
 		State.IDLE:
 			_state_dur = _rng.randf_range(idle_time_min, idle_time_max)
 			_on_enter_idle_state()
-
 		State.BATTLE:
 			_on_enter_battle_state()
-
 		State.ATTACKING:
 			_attack_timer = 0.0
 			_on_enter_attacking_state()
-
 		State.DEAD:
 			_on_enter_dead_state()
 			set_physics_process(false)
@@ -140,7 +138,6 @@ func _do_battle(delta: float) -> void:
 		_enter_state(State.ATTACKING)
 		return
 
-	# Drive nav toward target every frame so it tracks movement
 	_nav.target_position = _target.position
 	_do_nav_move(delta)
 	_move()
@@ -166,10 +163,10 @@ func _do_nav_move(delta: float) -> void:
 		_apply_separation(delta)
 		return
 
-	var next   := _nav.get_next_path_position()
-	var dir : Vector2
+	var next := _nav.get_next_path_position()
+	var dir  : Vector2
 	if next.distance_to(position) < 2.0 and _target != null and is_instance_valid(_target):
-		dir = (position.direction_to(_target.position))
+		dir = position.direction_to(_target.position)
 	else:
 		dir = (next - position).normalized()
 
@@ -232,7 +229,7 @@ func _on_enter_dead_state() -> void:
 	else:
 		die()
 
-func flash_red():
+func flash_red() -> void:
 	var original_mod = _sprite.modulate
 	# Set the sprite's tint to red
 	_sprite.modulate = Color.RED
@@ -242,9 +239,12 @@ func flash_red():
 	
 	# Reset back to the original color (white)
 	_sprite.modulate = original_mod
+	
+	if _sprite.modulate == Color.RED:
+		_sprite.modulate = Color.WHITE
 
 # =========================================================================== #
-#  Virtual methods
+#  Virtuals
 # =========================================================================== #
 
 func _move() -> void:
@@ -252,6 +252,12 @@ func _move() -> void:
 
 func _get_engage_range() -> float:
 	return 48.0
+
+# Disengage range — how far target must be before returning to BATTLE.
+# Default: 1.6x engage. Ranged units override to be much larger so
+# separation pushes don't cause BATTLE<->ATTACKING flicker.
+func _get_disengage_range() -> float:
+	return _get_engage_range() * 1.6
 
 func _get_attack_rate() -> float:
 	return 1.2
@@ -261,6 +267,10 @@ func _do_attack_hit() -> void:
 		_target.take_damage(4)
 
 func _do_attack_tick(_delta: float) -> void:
+	pass
+
+# Called every frame while in ATTACKING state — override for repositioning.
+func _do_attacking_move(_delta: float) -> void:
 	pass
 
 func _on_enter_idle_state() -> void:

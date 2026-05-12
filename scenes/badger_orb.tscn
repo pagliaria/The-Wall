@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3 uid="uid://bn84k24r8fkbd"]
+
+[ext_resource type="Script" uid="uid://cg87m0qsaiwyu" path="res://scripts/badger_orb.gd" id="1_orb"]
+
+[sub_resource type="CircleShape2D" id="orb_shape"]
+
+[node name="BadgerOrb" type="Area2D"]
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("1_orb")
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("orb_shape")
+
+[node name="Trail" type="CPUParticles2D" parent="."]
+amount = 12
+lifetime = 0.25
+direction = Vector2(-1, 0)
+spread = 25.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 20.0
+initial_velocity_max = 60.0
+scale_amount_min = 2.0
+scale_amount_max = 6.0
+color = Color(0.2, 1, 0.4, 0.8)
