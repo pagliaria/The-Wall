@@ -514,12 +514,11 @@ collision_layer = 2
 script = ExtResource("1_r5d4t")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
-position = Vector2(12, -35)
+position = Vector2(13, -30)
 sprite_frames = SubResource("enemy_warrior_frames")
 animation = &"idle"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
-visible = false
 position = Vector2(0, 10)
 shape = SubResource("enemy_circle")
 
