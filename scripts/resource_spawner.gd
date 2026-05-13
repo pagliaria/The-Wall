@@ -133,6 +133,7 @@ func _spawn_gold_stone(col: int, row: int) -> void:
 
 	node.set_script(load("res://scripts/gold_stone.gd"))
 	add_child(node)
+	_play_emerge_animation(node, false)
 
 	var gold_collision := StaticBody2D.new()
 	gold_collision.name = "Gold_collision_%d_%d" % [col, row]
@@ -183,6 +184,7 @@ func _spawn_tree(col: int, row: int, rng: RandomNumberGenerator) -> void:
 	sprite.set_meta("col", col)
 	sprite.set_meta("row", row)
 	add_child(sprite)
+	_play_emerge_animation(sprite, true)
 
 	var stump_pos := _tile_center(col, row) + Vector2(0.0, 100.0)
 
@@ -230,6 +232,7 @@ func _spawn_one_sheep(col: int, row: int) -> void:
 	sheep.set_meta("row", row)
 
 	add_child(sheep)
+	_play_emerge_animation(sheep, false)
 
 	_add_placement_blocker(sheep, Vector2.ZERO, SHEEP_PLACE_RADIUS)
 	_add_hover_area(sheep, Vector2.ZERO, SHEEP_HOVER_RADIUS)
@@ -321,6 +324,52 @@ func _add_resource_node(parent: Node2D, type: String, amt: int, extract_sec: flo
 	# the stump is also a sibling. Sheep are CharacterBody2D and act as their
 	# own collision body. We tag the body on the ResourceNode after spawn.
 	# The spawner sets this immediately after calling _add_resource_node.
+
+func _play_emerge_animation(node: Node2D, is_tall: bool) -> void:
+	const EMERGE_TIME : float = 1
+	const SETTLE_TIME : float = 0.18
+	const OVERSHOOT   : float = 1.06
+	# Measure sprite height at runtime so bottom stays ground-pinned.
+	# Sprite2D and AnimatedSprite2D expose texture size differently.
+	var half_h : float = 0.0
+	for child in node.get_children():
+		if child is Sprite2D and (child as Sprite2D).texture != null:
+			half_h = (child as Sprite2D).texture.get_height() * 0.5
+			break
+		elif child is AnimatedSprite2D:
+			var frames : SpriteFrames = (child as AnimatedSprite2D).sprite_frames
+			if frames != null:
+				var anims : PackedStringArray = frames.get_animation_names()
+				if anims.size() > 0:
+					var tex : Texture2D = frames.get_frame_texture(anims[0], 0)
+					if tex != null:
+						half_h = tex.get_height() * 0.5
+						break
+	# Tree root node IS the AnimatedSprite2D.
+	if half_h == 0.0 and node is AnimatedSprite2D:
+		var frames : SpriteFrames = (node as AnimatedSprite2D).sprite_frames
+		if frames != null:
+			var anims : PackedStringArray = frames.get_animation_names()
+			if anims.size() > 0:
+				var tex : Texture2D = frames.get_frame_texture(anims[0], 0)
+				if tex != null:
+					half_h = tex.get_height() * 0.5
+	# Fallback if height still unknown.
+	if half_h == 0.0:
+		half_h = 64.0 if is_tall else 32.0
+	# Pin bottom: squash flat, shift down by half_h so base stays at ground.
+	# As scale.y grows from 0 to 1, position.y rises from final_y+half_h to final_y.
+	var final_y : float = node.position.y
+	node.scale      = Vector2(1.0, 0.0)
+	node.position.y = final_y + half_h
+	var tw : Tween = node.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(node, "scale", Vector2(1.0, OVERSHOOT), EMERGE_TIME) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "position:y", final_y, EMERGE_TIME) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_property(node, "scale", Vector2.ONE, SETTLE_TIME) \
+		.set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
 
 func _on_resource_depleted(_resource_node: Node) -> void:
 	call_deferred("update_nodes")
