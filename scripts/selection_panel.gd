@@ -21,6 +21,9 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 @onready var _attack_damage_label : Label  = $Panel/SingleView/Info/StatsGrid/AttackDamageValue
 @onready var _attack_speed_label  : Label  = $Panel/SingleView/Info/StatsGrid/AttackSpeedValue
 @onready var _move_speed_label    : Label  = $Panel/SingleView/Info/StatsGrid/MoveSpeedValue
+@onready var _attack_range_title  : Label  = $Panel/SingleView/Info/StatsGrid/AttackRangeTitle
+@onready var _attack_damage_title : Label  = $Panel/SingleView/Info/StatsGrid/AttackDamageTitle
+@onready var _attack_speed_title  : Label  = $Panel/SingleView/Info/StatsGrid/AttackSpeedTitle
 @onready var _hp_fill      : TextureRect   = $Panel/SingleView/Info/HpBarContainer/Fill
 @onready var _hp_label     : Label         = $Panel/SingleView/Info/HpBarContainer/HpLabel
 @onready var _multi_grid   : GridContainer = $Panel/MultiView/Grid
@@ -29,10 +32,10 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 var _tracked_unit : Node = null
 
 const UNIT_STATS := {
-	"Warrior": {"attack_range": 48.0,  "attack_damage": 5, "attack_speed": 3.0, "move_speed": 60.0},
-	"Archer":  {"attack_range": 500.0, "attack_damage": 3, "attack_speed": 2.0, "move_speed": 62.0},
-	"Lancer":  {"attack_range": 72.0,  "attack_damage": 8, "attack_speed": 4.0, "move_speed": 55.0},
-	"Monk":    {"attack_range": 200.0, "attack_damage": 4, "attack_speed": 2.2, "move_speed": 58.0},
+	"Warrior": {"attack_range": 48.0,  "attack_damage": 5,    "attack_speed": 3.0, "move_speed": 60.0},
+	"Archer":  {"attack_range": 500.0, "attack_damage": 3,    "attack_speed": 2.0, "move_speed": 62.0},
+	"Lancer":  {"attack_range": 72.0,  "attack_damage": 8,    "attack_speed": 4.0, "move_speed": 55.0},
+	"Monk":    {"cast_range":   300.0, "heal_amount":   6,    "cast_speed":   2.2, "move_speed": 58.0},
 	"Pawn":    {"attack_range": null,  "attack_damage": null, "attack_speed": null, "move_speed": 50.0},
 }
 
@@ -134,6 +137,23 @@ func _get_status(unit: Node) -> String:
 
 func _apply_stats(unit: Node, type_key: String) -> void:
 	var stats : Dictionary = UNIT_STATS.get(type_key, {})
+	if type_key == "Monk":
+		_attack_range_title.text  = "Cast Range"
+		_attack_damage_title.text = "Heal Amount"
+		_attack_speed_title.text  = "Cast Speed"
+		var cast_range : float = float(stats.get("cast_range", 300.0)) + unit.get_building_range_bonus()
+		_attack_range_label.text  = _format_stat_value(cast_range)
+		var heal_amount : int = int(stats.get("heal_amount", 6))
+		if unit.has_method("_get_heal_amount"):
+			heal_amount = unit._get_heal_amount()
+		_attack_damage_label.text = str(heal_amount)
+		var cast_speed : float = float(stats.get("cast_speed", 2.2)) * unit.get_building_attack_speed_multiplier()
+		_attack_speed_label.text  = _format_attack_speed(cast_speed)
+		_move_speed_label.text    = _format_stat_value(_resolve_stat(unit, "move_speed", stats.get("move_speed")))
+		return
+	_attack_range_title.text  = "Attack Range"
+	_attack_damage_title.text = "Attack Damage"
+	_attack_speed_title.text  = "Attack Speed"
 	_attack_range_label.text  = _format_stat_value(_resolve_stat(unit, "attack_range",  stats.get("attack_range")))
 	_attack_damage_label.text = _format_stat_value(_resolve_stat(unit, "attack_damage", stats.get("attack_damage")))
 	_attack_speed_label.text  = _format_attack_speed(_resolve_stat(unit, "attack_speed", stats.get("attack_speed")))

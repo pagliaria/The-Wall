@@ -5,9 +5,8 @@ const HEAL_EFFECT_SCENE := preload("res://scenes/heal_effect.tscn")
 
 const MOVE_SPEED          : float = 58.0
 const PATROL_RADIUS       : float = 170.0
-const HEAL_RANGE          : float = 300.0
-const ATTACK_RANGE        : float = 300.0
-const ATTACK_RANGE_MIN    : float = 80.0
+const CAST_RANGE          : float = 300.0
+const CAST_RANGE_MIN      : float = 80.0
 const BASE_HEAL_AMOUNT    : int   = 6
 const BASE_ATTACK_DAMAGE  : int   = 4
 const CAST_RATE           : float = 2.2
@@ -62,7 +61,7 @@ func _get_attack_damage() -> int:
 	return BASE_ATTACK_DAMAGE + get_building_attack_damage_bonus()
 
 func _get_cast_range() -> float:
-	return ATTACK_RANGE + _level_cast_range_bonus + get_building_range_bonus()
+	return CAST_RANGE + _level_cast_range_bonus + get_building_range_bonus()
 
 # =========================================================================== #
 #  State machine
@@ -224,7 +223,7 @@ func _do_battle(delta: float) -> void:
 	if _attack_target != null:
 		var dist := position.distance_to(_attack_target.position)
 		_sprite.flip_h = _attack_target.position.x < position.x
-		if dist < ATTACK_RANGE_MIN:
+		if dist < CAST_RANGE_MIN:
 			var flee_dir : Vector2 = (position - _attack_target.position).normalized()
 			_nav_agent.target_position = Vector2(
 				clampf(position.x + flee_dir.x * _get_cast_range(), WANDER_MIN_X, WANDER_MAX_X),
