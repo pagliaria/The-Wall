@@ -10,7 +10,6 @@
 script = ExtResource("1_script")
 
 [node name="Panel" type="NinePatchRect" parent="."]
-visible = false
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -29,7 +28,6 @@ axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
 [node name="SingleView" type="HBoxContainer" parent="Panel"]
-visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -54,12 +52,22 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="NameLabel" type="Label" parent="Panel/SingleView/Info"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/SingleView/Info"]
+layout_mode = 2
+theme_override_constants/separation = 25
+
+[node name="NameLabel" type="Label" parent="Panel/SingleView/Info/HBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 28
 text = "Warrior"
+
+[node name="LevelLabel" type="Label" parent="Panel/SingleView/Info/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.65, 1)
+theme_override_font_sizes/font_size = 20
+text = "V"
 
 [node name="StatusLabel" type="Label" parent="Panel/SingleView/Info"]
 layout_mode = 2

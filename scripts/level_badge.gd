@@ -10,7 +10,7 @@ const COL_TEXT     : Color = Color(1.0,  0.95, 0.6,  1.0)
 var _level : int = 1
 
 func _ready() -> void:
-	visible = false
+	visible = true
 
 func refresh(new_level: int) -> void:
 	_level  = new_level

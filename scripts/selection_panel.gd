@@ -14,7 +14,8 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 @onready var _single_view  : Control       = $Panel/SingleView
 @onready var _multi_view   : Control       = $Panel/MultiView
 @onready var _portrait     : TextureRect   = $Panel/SingleView/Portrait
-@onready var _name_label   : Label         = $Panel/SingleView/Info/NameLabel
+@onready var _name_label   : Label         = $Panel/SingleView/Info/HBoxContainer/NameLabel
+@onready var _level_label  : Label         = $Panel/SingleView/Info/HBoxContainer/LevelLabel
 @onready var _status_label : Label         = $Panel/SingleView/Info/StatusLabel
 @onready var _attack_range_label  : Label  = $Panel/SingleView/Info/StatsGrid/AttackRangeValue
 @onready var _attack_damage_label : Label  = $Panel/SingleView/Info/StatsGrid/AttackDamageValue
@@ -28,11 +29,11 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 var _tracked_unit : Node = null
 
 const UNIT_STATS := {
-	"Warrior": {"attack_range": 48.0, "attack_damage": 5, "attack_speed": 3.0, "move_speed": 60.0},
+	"Warrior": {"attack_range": 48.0,  "attack_damage": 5, "attack_speed": 3.0, "move_speed": 60.0},
 	"Archer":  {"attack_range": 500.0, "attack_damage": 3, "attack_speed": 2.0, "move_speed": 62.0},
-	"Lancer":  {"attack_range": 72.0, "attack_damage": 8, "attack_speed": 4.0, "move_speed": 55.0},
+	"Lancer":  {"attack_range": 72.0,  "attack_damage": 8, "attack_speed": 4.0, "move_speed": 55.0},
 	"Monk":    {"attack_range": 200.0, "attack_damage": 4, "attack_speed": 2.2, "move_speed": 58.0},
-	"Pawn":    {"attack_range": null, "attack_damage": null, "attack_speed": null, "move_speed": 50.0},
+	"Pawn":    {"attack_range": null,  "attack_damage": null, "attack_speed": null, "move_speed": 50.0},
 }
 
 # =========================================================================== #
@@ -64,10 +65,27 @@ func _show_single(unit: Node) -> void:
 
 	var type_key := _unit_type(unit)
 	_portrait.texture  = load(AVATARS.get(type_key, DEFAULT_AVATAR))
-	_name_label.text   = type_key
+	_apply_name_and_level(unit, type_key)
 	_apply_hp(unit)
 	_status_label.text = _get_status(unit)
 	_apply_stats(unit, type_key)
+
+func _apply_name_and_level(unit: Node, type_key: String) -> void:
+	_name_label.text = type_key
+	
+	var lvl : int = unit.get("level") if unit.get("level") != null else 0
+	if lvl > 0:
+		# Show level as roman numerals for flavour — clean and compact
+		_level_label.text = "%s" % [_to_roman(lvl)]
+
+func _to_roman(n: int) -> String:
+	match n:
+		1: return "I"
+		2: return "II"
+		3: return "III"
+		4: return "IV"
+		5: return "V"
+	return ""
 
 func _apply_hp(unit: Node) -> void:
 	if not is_instance_valid(unit):
@@ -89,24 +107,23 @@ func _get_status(unit: Node) -> String:
 			0: return "Idle"
 			1: return "Wandering"
 			2: return "Moving"
-			3: # GATHER — walking to resource
+			3:
 				var rnode = unit.get("_resource_node")
 				if rnode != null and is_instance_valid(rnode):
 					return "Gathering %s" % rnode.resource_type.capitalize()
 				return "Gathering"
-			4: # EXTRACTING — at resource, pulling it out
+			4:
 				var rnode = unit.get("_resource_node")
 				if rnode != null and is_instance_valid(rnode):
 					return "Extracting %s" % rnode.resource_type.capitalize()
 				return "Extracting"
-			5: # RETURN — carrying resource home
+			5:
 				var carrying = unit.get("_carrying")
 				if carrying != null and (carrying as String) != "":
 					return "Returning %s" % (carrying as String).capitalize()
 				return "Returning"
 		return "Idle"
 
-	# All combat units: IDLE=0 MOVE=1 MOVE_TO=2 BATTLE=3 ATTACKING=4
 	match s:
 		0: return "Idle"
 		1: return "Patrolling"
@@ -117,17 +134,10 @@ func _get_status(unit: Node) -> String:
 
 func _apply_stats(unit: Node, type_key: String) -> void:
 	var stats : Dictionary = UNIT_STATS.get(type_key, {})
-	_attack_range_label.text = _format_stat_value(_resolve_stat(unit, "attack_range", stats.get("attack_range")))
+	_attack_range_label.text  = _format_stat_value(_resolve_stat(unit, "attack_range",  stats.get("attack_range")))
 	_attack_damage_label.text = _format_stat_value(_resolve_stat(unit, "attack_damage", stats.get("attack_damage")))
-	_attack_speed_label.text = _format_attack_speed(_resolve_stat(unit, "attack_speed", stats.get("attack_speed")))
-	_move_speed_label.text = _format_stat_value(_resolve_stat(unit, "move_speed", stats.get("move_speed")))
-
-	if stats.is_empty():
-		# Fall back to any dynamic properties if we add stats directly on units later.
-		_attack_range_label.text = _format_stat_value(unit.get("attack_range"))
-		_attack_damage_label.text = _format_stat_value(unit.get("attack_damage"))
-		_attack_speed_label.text = _format_attack_speed(unit.get("attack_speed"))
-		_move_speed_label.text = _format_stat_value(unit.get("move_speed"))
+	_attack_speed_label.text  = _format_attack_speed(_resolve_stat(unit, "attack_speed", stats.get("attack_speed")))
+	_move_speed_label.text    = _format_stat_value(_resolve_stat(unit, "move_speed",    stats.get("move_speed")))
 
 func _resolve_stat(unit: Node, stat_id: String, fallback):
 	match stat_id:
@@ -221,6 +231,7 @@ func _process(_delta: float) -> void:
 	if not _single_view.visible or not is_instance_valid(_tracked_unit):
 		return
 	_apply_hp(_tracked_unit)
+	_apply_name_and_level(_tracked_unit, _unit_type(_tracked_unit))
 	_status_label.text = _get_status(_tracked_unit)
 
 # =========================================================================== #
