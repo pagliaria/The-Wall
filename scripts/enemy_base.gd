@@ -39,10 +39,13 @@ var _is_striking  : bool  = false
 @onready var _hp_fill : TextureRect       = $HpBar/health
 @onready var wave_manager := get_tree().current_scene.get_node_or_null("WaveManager")
 
+var original_mod := Color.WHITE
+
 func _ready() -> void:
 	_rng.randomize()
 	hp = max_hp
 	_spawn_pos = position
+	original_mod = _sprite.modulate
 	call_deferred("_initial_state")
 
 func _initial_state() -> void:
@@ -197,10 +200,14 @@ func _on_enter_dead_state() -> void:
 		die()
 
 func flash_red() -> void:
-	var original_mod := _sprite.modulate
 	_sprite.modulate  = Color.RED
 	await get_tree().create_timer(0.1).timeout
 	_sprite.modulate  = original_mod
+	
+	# should not heppen but if sprite gets stuck red this will at least put it back to a default state
+	if _sprite.modulate  == Color.RED:
+		_sprite.modulate  = Color.WHITE
+		
 
 func _move()                -> void: pass
 func _get_engage_range()    -> float: return 48.0
