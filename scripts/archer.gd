@@ -3,42 +3,60 @@ extends "res://scripts/unit_base.gd"
 
 const ARROW_SCENE := preload("res://scenes/arrow.tscn")
 
-# =========================================================================== #
-#  Constants
-# =========================================================================== #
+const MOVE_SPEED      = 62.0
+const PATROL_RADIUS   = 180.0
+const SHOOT_RANGE     = 500.0
+const SHOOT_RANGE_MIN = 80.0
+const BASE_ATTACK_DAMAGE = 3
+const BASE_ATTACK_RATE   = 2.0
 
-const MOVE_SPEED    = 62.0
-const PATROL_RADIUS = 180.0
-
-const SHOOT_RANGE      = 500.0   # starts shooting within this distance
-const SHOOT_RANGE_MIN  = 80.0    # backs away if enemy gets closer than this
-const ATTACK_DAMAGE    = 3
-const ATTACK_RATE      = 2     # seconds between shots
-
-# =========================================================================== #
-#  State machine
-# =========================================================================== #
+const LEVEL_STATS := {
+	"hp":          4,
+	"damage":      2,
+	"attack_rate": -0.15,
+}
 
 enum State { IDLE, MOVE, MOVE_TO, BATTLE, SHOOTING }
 
-var _state : State = State.IDLE
-
+var _state        : State = State.IDLE
 var _target       : Node  = null
 var _attack_timer : float = 0.0
-var _shooting     : bool  = false  # true while shoot animation is playing
+var _shooting     : bool  = false
 
-# =========================================================================== #
-#  Lifecycle
-# =========================================================================== #
+var _level_damage_bonus     : int   = 0
+var _level_attack_rate_bonus: float = 0.0
 
 func _on_unit_ready() -> void:
 	max_hp = _get_base_max_hp() + get_building_hp_bonus()
 	hp     = max_hp
-	#_sprite.animation_finished.connect(_on_shoot_animation_finished)
 	_enter_state(State.IDLE)
 
 func _get_base_max_hp() -> int:
 	return 10
+
+# =========================================================================== #
+#  XP / levelling
+# =========================================================================== #
+
+func _get_level_up_stats() -> Dictionary:
+	return LEVEL_STATS
+
+func _on_level_up_stats(stats: Dictionary) -> void:
+	_level_damage_bonus      += int(stats.get("damage", 0))
+	_level_attack_rate_bonus += float(stats.get("attack_rate", 0.0))
+
+func _get_attack_damage() -> int:
+	return BASE_ATTACK_DAMAGE + _level_damage_bonus + get_building_attack_damage_bonus()
+
+func _get_attack_rate() -> float:
+	return maxf(0.5, BASE_ATTACK_RATE + _level_attack_rate_bonus) * get_building_attack_speed_multiplier()
+
+func _get_attack_range() -> float:
+	return SHOOT_RANGE + get_building_range_bonus()
+
+# =========================================================================== #
+#  State machine
+# =========================================================================== #
 
 func _process_state(delta: float) -> void:
 	match _state:
@@ -58,41 +76,35 @@ func _process_state(delta: float) -> void:
 			_do_battle(delta)
 		State.SHOOTING:
 			_attack_timer -= delta
-			# If target dies while we're waiting to fire, go back to battle
 			if not is_instance_valid(_target) or _target.hp <= 0:
-				_target = null
+				_target   = null
 				_shooting = false
 				_enter_state(State.BATTLE)
 				return
-			# Fire when the timer expires (animation plays, damage dealt on finish)
 			if _attack_timer <= 0.0 and not _shooting:
 				_do_shoot()
-			# If enemy closes in while we're waiting, reposition
 			if not _shooting and is_instance_valid(_target):
 				var dist := position.distance_to(_target.position)
 				if dist > _get_attack_range() or dist < SHOOT_RANGE_MIN:
 					_enter_state(State.BATTLE)
 
 func _pick_next_wander_state() -> State:
-	if has_moved:
-		return State.IDLE
 	return State.MOVE if _rng.randf() > 0.4 else State.IDLE
 
 func _enter_state(new_state: State) -> void:
 	_state       = new_state
 	_state_timer = 0.0
 	_shooting    = false
-
 	match _state:
 		State.IDLE:
 			_state_dur = _rng.randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
 			_sprite.play("idle")
 		State.MOVE:
 			_state_dur = _rng.randf_range(MOVE_TIME_MIN, MOVE_TIME_MAX)
-			var to_home     := _spawn_pos - position
-			var dist        := to_home.length()
-			var angle       := _rng.randf_range(-PI * 0.5, PI * 0.5)
-			var dir         : Vector2
+			var to_home  := _spawn_pos - position
+			var dist     := to_home.length()
+			var angle    := _rng.randf_range(-PI * 0.5, PI * 0.5)
+			var dir      : Vector2
 			if dist > PATROL_RADIUS:
 				dir = to_home.normalized().rotated(angle * 0.3)
 			else:
@@ -106,7 +118,7 @@ func _enter_state(new_state: State) -> void:
 			_nav_agent.target_position = patrol_target
 			_sprite.play("run")
 		State.MOVE_TO:
-			has_moved = true
+			has_moved  = true
 			_state_dur = STUCK_TIMEOUT
 			_nav_agent.target_position = _move_target
 			_sprite.flip_h = (_move_target - position).x < 0
@@ -134,26 +146,20 @@ func _do_battle(delta: float) -> void:
 		_target = null
 		_enter_state(State.BATTLE)
 		return
-
 	var dist := position.distance_to(_target.position)
 	_sprite.flip_h = _target.position.x < position.x
-
 	if dist < SHOOT_RANGE_MIN:
-		# Too close — back away from the enemy
 		var flee_dir : Vector2 = (position - _target.position).normalized()
-		var flee_pos := position + flee_dir * _get_attack_range()
-		flee_pos = Vector2(
-			clampf(flee_pos.x, WANDER_MIN_X, WANDER_MAX_X),
-			clampf(flee_pos.y, WANDER_MIN_Y, WANDER_MAX_Y)
+		var flee_pos := Vector2(
+			clampf((position + flee_dir * _get_attack_range()).x, WANDER_MIN_X, WANDER_MAX_X),
+			clampf((position + flee_dir * _get_attack_range()).y, WANDER_MIN_Y, WANDER_MAX_Y)
 		)
 		_nav_agent.target_position = flee_pos
 		_do_nav_move(delta, _get_move_speed())
 	elif dist <= _get_attack_range():
-		# In range — stop and shoot
 		_enter_state(State.SHOOTING)
 	else:
-		# Out of range — close in to shoot range
-		var toward := (position.direction_to(_target.position))
+		var toward       := position.direction_to(_target.position)
 		var approach_pos : Vector2 = _target.position - toward * (_get_attack_range() * 0.75)
 		_nav_agent.target_position = approach_pos
 		_do_nav_move(delta, _get_move_speed())
@@ -164,23 +170,21 @@ func _do_shoot() -> void:
 		_shooting = false
 		return
 	_sprite.flip_h = _target.position.x < position.x
-	var anim_name : String = "shoot"
-	_sprite.play(anim_name)
-	var frames : int = _sprite.sprite_frames.get_frame_count(anim_name)
-	var fps : float = _sprite.sprite_frames.get_animation_speed(anim_name)
-	var total_duration : float = frames / fps
-	await get_tree().create_timer(total_duration / 2.0).timeout
+	_sprite.play("shoot")
+	var frames   := _sprite.sprite_frames.get_frame_count("shoot")
+	var fps      := _sprite.sprite_frames.get_animation_speed("shoot")
+	var half_dur := (frames / fps) * 0.5
+	await get_tree().create_timer(half_dur).timeout
 	_spawn_arrow()
 
 func _spawn_arrow() -> void:
 	if _state != State.SHOOTING or not _shooting:
 		return
-	# Spawn the arrow at the archer's position aimed at the target
 	if is_instance_valid(_target) and _target.hp > 0:
 		var arrow := ARROW_SCENE.instantiate()
 		get_parent().add_child(arrow)
 		arrow.global_position = global_position
-		arrow.init(_target, _get_attack_damage())
+		arrow.init(_target, _get_attack_damage(), self)   # pass self for XP
 	_shooting     = false
 	_attack_timer = _get_attack_rate()
 	await _sprite.animation_finished
@@ -201,27 +205,6 @@ func _pick_target(enemies: Array) -> void:
 func _get_move_speed() -> float:
 	return MOVE_SPEED * get_building_move_speed_multiplier()
 
-func _get_attack_damage() -> int:
-	return ATTACK_DAMAGE + get_building_attack_damage_bonus()
-
-func _get_attack_rate() -> float:
-	return ATTACK_RATE * get_building_attack_speed_multiplier()
-
-func _get_attack_range() -> float:
-	return SHOOT_RANGE + get_building_range_bonus()
-
-# =========================================================================== #
-#  Base overrides
-# =========================================================================== #
-
-func _on_selected() -> void:
-	CombatAudio.play("female_ready")
-
-func _on_move_to() -> void:
-	CombatAudio.play("female_go")
-	_enter_state(State.MOVE_TO)
-
-func _on_end_battle() -> void:
-	_target   = null
-	_shooting = false
-	_enter_state(State.IDLE)
+func _on_selected()   -> void: CombatAudio.play("female_ready")
+func _on_move_to()    -> void: CombatAudio.play("female_go"); _enter_state(State.MOVE_TO)
+func _on_end_battle() -> void: _target = null; _shooting = false; _enter_state(State.IDLE)

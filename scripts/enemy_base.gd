@@ -10,8 +10,12 @@ signal died
 @export var move_time_min : float = 1.0
 @export var move_time_max : float = 2.5
 
-const SEPARATION_RADIUS := 50.0
-const SEPARATION_FORCE  := 5.0
+const SEPARATION_RADIUS    := 50.0
+const SEPARATION_FORCE     := 5.0
+const HP_FILL_FULL_SCALE_X := 1.3
+
+const XP_PER_DAMAGE : int = 1
+const XP_KILL_BONUS : int = 25
 
 var faction : String = "enemy"
 var hp      : int    = 0
@@ -34,8 +38,6 @@ var _is_striking  : bool  = false
 @onready var _hp_bar  : Control           = $HpBar
 @onready var _hp_fill : TextureRect       = $HpBar/health
 @onready var wave_manager := get_tree().current_scene.get_node_or_null("WaveManager")
-
-const HP_FILL_FULL_SCALE_X := 1.3
 
 func _ready() -> void:
 	_rng.randomize()
@@ -72,8 +74,8 @@ func _physics_process(delta: float) -> void:
 				return
 			_attack_timer -= delta
 			if _attack_timer <= 0.0:
-				_is_striking    = true
-				_attack_timer   = _get_attack_rate()
+				_is_striking  = true
+				_attack_timer = _get_attack_rate()
 				_do_attack_tick(delta)
 				_do_attack_hit()
 
@@ -158,22 +160,28 @@ func _apply_separation(delta: float) -> void:
 	if sep != Vector2.ZERO:
 		move_and_collide(sep.normalized() * SEPARATION_FORCE * delta)
 
-func take_damage(amount: int) -> void:
+# attacker: the player unit that hit this enemy — receives XP
+func take_damage(amount: int, attacker: Node = null) -> void:
 	flash_red()
 	if _state == State.DEAD:
 		return
 	hp -= amount
 	_update_hp_bar()
 	CombatNumbers.show_number(global_position, amount, false)
+	if attacker != null and is_instance_valid(attacker) and attacker.has_method("grant_xp"):
+		if hp <= 0:
+			attacker.grant_xp(XP_KILL_BONUS)
+		else:
+			attacker.grant_xp(amount * XP_PER_DAMAGE)
 	if hp <= 0:
 		_enter_state(State.DEAD)
 
 func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
 		return
-	var ratio := clampf(float(hp) / float(max_hp), 0.0, 1.0)
-	_hp_bar.visible = ratio < 1.0
-	_hp_fill.scale.x = HP_FILL_FULL_SCALE_X * ratio
+	var ratio        := clampf(float(hp) / float(max_hp), 0.0, 1.0)
+	_hp_bar.visible   = ratio < 1.0
+	_hp_fill.scale.x  = HP_FILL_FULL_SCALE_X * ratio
 
 func die() -> void:
 	_state = State.DEAD
@@ -194,27 +202,16 @@ func flash_red() -> void:
 	await get_tree().create_timer(0.1).timeout
 	_sprite.modulate  = original_mod
 
-func _move() -> void:
-	pass
-
-func _get_engage_range() -> float:
-	return 48.0
-
-func _get_disengage_range() -> float:
-	return _get_engage_range() * 1.6
-
-func _get_attack_rate() -> float:
-	return 1.2
+func _move()                -> void: pass
+func _get_engage_range()    -> float: return 48.0
+func _get_disengage_range() -> float: return _get_engage_range() * 1.6
+func _get_attack_rate()     -> float: return 1.2
+func _do_attack_tick(_delta: float) -> void: pass
+func _do_attacking_move(_delta: float) -> void: pass
 
 func _do_attack_hit() -> void:
 	if is_instance_valid(_target):
-		_target.take_damage(4)
-
-func _do_attack_tick(_delta: float) -> void:
-	pass
-
-func _do_attacking_move(_delta: float) -> void:
-	pass
+		_target.take_damage(4)   # no attacker — player units don't grant XP when hit
 
 func _on_enter_idle_state() -> void:
 	if _sprite.sprite_frames.has_animation("idle"):

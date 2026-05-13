@@ -1,42 +1,30 @@
 # warrior.gd
 extends "res://scripts/unit_base.gd"
 
-# =========================================================================== #
-#  Constants
-# =========================================================================== #
-
 const MOVE_SPEED     = 60.0
 const PATROL_RADIUS  = 160.0
 const ARRIVAL_RADIUS = 12.0
 
-const MELEE_RANGE    = 48.0
-const ATTACK_DAMAGE  = 5
-const ATTACK_RATE    = 3
+const BASE_MELEE_RANGE   = 48.0
+const BASE_ATTACK_DAMAGE = 5
+const ATTACK_RATE        = 3
 
-# =========================================================================== #
-#  Health override
-# =========================================================================== #
-
-# (max_hp / hp set here so warrior values override the base defaults)
-var _hp_init := func(): max_hp = 20; hp = 20
-
-# =========================================================================== #
-#  State machine
-# =========================================================================== #
+# Level-up stat gains applied each level
+const LEVEL_STATS := {
+	"hp":     8,
+	"damage": 2,
+}
 
 enum State { IDLE, MOVE, MOVE_TO, BATTLE, ATTACKING }
 
-var _state       : State = State.IDLE
-var _state_timer_local : float = 0.0  # alias — we use _state_timer from base
-
+var _state        : State = State.IDLE
 var _target       : Node  = null
 var _attack_timer : float = 0.0
+var _is_striking  : bool  = false
 
-var _is_striking  : bool = false
-
-# =========================================================================== #
-#  Lifecycle
-# =========================================================================== #
+# Runtime stat bonuses accumulated from levelling
+var _level_damage_bonus : int   = 0
+var _level_range_bonus  : float = 0.0
 
 func _on_unit_ready() -> void:
 	max_hp = _get_base_max_hp() + get_building_hp_bonus()
@@ -46,15 +34,32 @@ func _on_unit_ready() -> void:
 func _get_base_max_hp() -> int:
 	return 20
 
+# =========================================================================== #
+#  XP / levelling
+# =========================================================================== #
+
+func _get_level_up_stats() -> Dictionary:
+	return LEVEL_STATS
+
+func _on_level_up_stats(stats: Dictionary) -> void:
+	_level_damage_bonus += int(stats.get("damage", 0))
+
+func _get_attack_damage() -> int:
+	return BASE_ATTACK_DAMAGE + _level_damage_bonus + get_building_attack_damage_bonus()
+
+func _get_melee_range() -> float:
+	return BASE_MELEE_RANGE + _level_range_bonus + get_building_range_bonus()
+
+# =========================================================================== #
+#  State machine
+# =========================================================================== #
+
 func _process_state(delta: float) -> void:
 	match _state:
 		State.IDLE:
 			_apply_separation(delta)
 			if _state_timer >= _state_dur:
-				if has_moved:
-					_enter_state(State.IDLE)
-				else:
-					_enter_state(_pick_next_wander_state())
+				_enter_state(State.IDLE if has_moved else _pick_next_wander_state())
 		State.MOVE:
 			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished() or _state_timer >= _state_dur:
@@ -74,25 +79,23 @@ func _process_state(delta: float) -> void:
 				_enter_state(State.BATTLE)
 				return
 			if _attack_timer <= 0.0:
-				_is_striking = true
+				_is_striking  = true
 				_attack_timer = _get_attack_rate()
 				_sprite.play("attack1" if _rng.randf() > 0.5 else "attack2")
 				await _sprite.animation_finished
-				_target.take_damage(_get_attack_damage())
+				if is_instance_valid(_target) and _target.hp > 0:
+					_target.take_damage(_get_attack_damage(), self)
 				_sprite.play("idle")
 				_is_striking = false
-			if is_instance_valid(_target) and position.distance_to(_target.position) > MELEE_RANGE * 1.5:
+			if is_instance_valid(_target) and position.distance_to(_target.position) > _get_melee_range() * 1.5:
 				_enter_state(State.BATTLE)
 
 func _pick_next_wander_state() -> State:
-	if has_moved:
-		return State.IDLE
 	return State.MOVE if _rng.randf() > 0.4 else State.IDLE
 
 func _enter_state(new_state: State) -> void:
 	_state       = new_state
 	_state_timer = 0.0
-
 	match _state:
 		State.IDLE:
 			_state_dur = _rng.randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
@@ -116,7 +119,7 @@ func _enter_state(new_state: State) -> void:
 			_nav_agent.target_position = patrol_target
 			_sprite.play("run")
 		State.MOVE_TO:
-			has_moved = true
+			has_moved  = true
 			_state_dur = STUCK_TIMEOUT
 			_nav_agent.target_position = _move_target
 			_sprite.flip_h = (_move_target - position).x < 0
@@ -125,10 +128,6 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 		State.ATTACKING:
 			_attack_timer = 0.0
-
-# =========================================================================== #
-#  Battle
-# =========================================================================== #
 
 func start_battle(enemies: Array) -> void:
 	_pick_target(enemies)
@@ -144,7 +143,7 @@ func _do_battle(delta: float) -> void:
 		_enter_state(State.BATTLE)
 		return
 	var dist := position.distance_to(_target.position)
-	if dist <= MELEE_RANGE:
+	if dist <= _get_melee_range():
 		_enter_state(State.ATTACKING)
 		return
 	_nav_agent.target_position = _target.position
@@ -162,26 +161,9 @@ func _pick_target(enemies: Array) -> void:
 			best      = e
 	_target = best
 
-func _get_move_speed() -> float:
-	return MOVE_SPEED * get_building_move_speed_multiplier()
+func _get_move_speed()   -> float: return MOVE_SPEED * get_building_move_speed_multiplier()
+func _get_attack_rate()  -> float: return ATTACK_RATE * get_building_attack_speed_multiplier()
 
-func _get_attack_damage() -> int:
-	return ATTACK_DAMAGE + get_building_attack_damage_bonus()
-
-func _get_attack_rate() -> float:
-	return ATTACK_RATE * get_building_attack_speed_multiplier()
-
-# =========================================================================== #
-#  Base overrides
-# =========================================================================== #
-
-func _on_selected() -> void:
-	CombatAudio.play("male_ready")
-
-func _on_move_to() -> void:
-	CombatAudio.play("male_go")
-	_enter_state(State.MOVE_TO)
-
-func _on_end_battle() -> void:
-	_target = null
-	_enter_state(State.IDLE)
+func _on_selected()    -> void: CombatAudio.play("male_ready")
+func _on_move_to()     -> void: CombatAudio.play("male_go"); _enter_state(State.MOVE_TO)
+func _on_end_battle()  -> void: _target = null; _enter_state(State.IDLE)

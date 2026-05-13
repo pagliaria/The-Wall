@@ -1,38 +1,27 @@
 # lancer.gd
 extends "res://scripts/unit_base.gd"
 
-# =========================================================================== #
-#  Constants
-# =========================================================================== #
+const MOVE_SPEED          = 55.0
+const PATROL_RADIUS       = 160.0
+const BASE_MELEE_RANGE    = 72.0
+const BASE_ATTACK_DAMAGE  = 8
+const ATTACK_RATE         = 4.0
 
-const MOVE_SPEED     = 55.0
-const PATROL_RADIUS  = 160.0
-const ARRIVAL_RADIUS = 12.0
-
-const MELEE_RANGE    = 72.0   # longer reach than warrior — spear
-const ATTACK_DAMAGE  = 8      # hits harder, slower rate
-const ATTACK_RATE    = 4.0
-
-# =========================================================================== #
-#  Health override
-# =========================================================================== #
-
-var _hp_init := func(): max_hp = 30; hp = 30   # tankier than warrior
-
-# =========================================================================== #
-#  State machine
-# =========================================================================== #
+const LEVEL_STATS := {
+	"hp":     6,
+	"damage": 3,
+	"reach":  8.0,
+}
 
 enum State { IDLE, MOVE, MOVE_TO, BATTLE, ATTACKING }
 
-var _state       : State = State.IDLE
-var _target      : Node  = null
-var _attack_timer: float = 0.0
-var _is_striking : bool  = false
+var _state        : State = State.IDLE
+var _target       : Node  = null
+var _attack_timer : float = 0.0
+var _is_striking  : bool  = false
 
-# =========================================================================== #
-#  Lifecycle
-# =========================================================================== #
+var _level_damage_bonus : int   = 0
+var _level_reach_bonus  : float = 0.0
 
 func _on_unit_ready() -> void:
 	max_hp = _get_base_max_hp() + get_building_hp_bonus()
@@ -41,6 +30,27 @@ func _on_unit_ready() -> void:
 
 func _get_base_max_hp() -> int:
 	return 30
+
+# =========================================================================== #
+#  XP / levelling
+# =========================================================================== #
+
+func _get_level_up_stats() -> Dictionary:
+	return LEVEL_STATS
+
+func _on_level_up_stats(stats: Dictionary) -> void:
+	_level_damage_bonus += int(stats.get("damage", 0))
+	_level_reach_bonus  += float(stats.get("reach", 0.0))
+
+func _get_attack_damage() -> int:
+	return BASE_ATTACK_DAMAGE + _level_damage_bonus + get_building_attack_damage_bonus()
+
+func _get_melee_range() -> float:
+	return BASE_MELEE_RANGE + _level_reach_bonus + get_building_range_bonus()
+
+# =========================================================================== #
+#  State machine
+# =========================================================================== #
 
 func _process_state(delta: float) -> void:
 	match _state:
@@ -67,45 +77,34 @@ func _process_state(delta: float) -> void:
 				_enter_state(State.BATTLE)
 				return
 			if _attack_timer <= 0.0:
-				_is_striking = true
+				_is_striking  = true
 				_attack_timer = _get_attack_rate()
-				# Pick directional attack animation based on target position
-				var dir : Vector2 = _target.position - position
+				var dir  := _target.position - position
 				var anim := _pick_attack_anim(dir)
 				_sprite.play(anim)
-				_target.take_damage(_get_attack_damage())
 				await _sprite.animation_finished
+				if is_instance_valid(_target) and _target.hp > 0:
+					_target.take_damage(_get_attack_damage(), self)
 				_sprite.play("idle")
 				_is_striking = false
-			if is_instance_valid(_target) and position.distance_to(_target.position) > MELEE_RANGE * 1.5:
+			if is_instance_valid(_target) and position.distance_to(_target.position) > _get_melee_range() * 1.5:
 				_enter_state(State.BATTLE)
 
 func _pick_next_wander_state() -> State:
-	if has_moved:
-		return State.IDLE
 	return State.MOVE if _rng.randf() > 0.4 else State.IDLE
 
 func _pick_attack_anim(dir: Vector2) -> String:
-	# Choose among available directional stab anims
-	var angle := dir.angle()        # radians, right = 0
-	var deg   := rad_to_deg(angle)
-	if deg < -112.5 or deg >= 112.5:
-		return "attack_right"       # flip_h handles left
-	elif deg < -67.5:
-		return "attack_up"
-	elif deg < -22.5:
-		return "attack_upright"
-	elif deg < 22.5:
-		return "attack_right"
-	elif deg < 67.5:
-		return "attack_downright"
-	else:
-		return "attack_down"
+	var deg := rad_to_deg(dir.angle())
+	if deg < -112.5 or deg >= 112.5: return "attack_right"
+	elif deg < -67.5:                 return "attack_up"
+	elif deg < -22.5:                 return "attack_upright"
+	elif deg < 22.5:                  return "attack_right"
+	elif deg < 67.5:                  return "attack_downright"
+	else:                             return "attack_down"
 
 func _enter_state(new_state: State) -> void:
 	_state       = new_state
 	_state_timer = 0.0
-
 	match _state:
 		State.IDLE:
 			_state_dur = _rng.randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
@@ -122,14 +121,13 @@ func _enter_state(new_state: State) -> void:
 				dir = Vector2.RIGHT.rotated(_rng.randf_range(-PI, PI))
 			var patrol_dist   := _rng.randf_range(48.0, PATROL_RADIUS)
 			var raw_target    := position + dir.normalized() * patrol_dist
-			var patrol_target := Vector2(
+			_nav_agent.target_position = Vector2(
 				clampf(raw_target.x, WANDER_MIN_X, WANDER_MAX_X),
 				clampf(raw_target.y, WANDER_MIN_Y, WANDER_MAX_Y)
 			)
-			_nav_agent.target_position = patrol_target
 			_sprite.play("run")
 		State.MOVE_TO:
-			has_moved = true
+			has_moved  = true
 			_state_dur = STUCK_TIMEOUT
 			_nav_agent.target_position = _move_target
 			_sprite.flip_h = (_move_target - position).x < 0
@@ -138,10 +136,6 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 		State.ATTACKING:
 			_attack_timer = 0.0
-
-# =========================================================================== #
-#  Battle
-# =========================================================================== #
 
 func start_battle(enemies: Array) -> void:
 	_pick_target(enemies)
@@ -157,7 +151,7 @@ func _do_battle(delta: float) -> void:
 		_enter_state(State.BATTLE)
 		return
 	var dist := position.distance_to(_target.position)
-	if dist <= MELEE_RANGE:
+	if dist <= _get_melee_range():
 		_enter_state(State.ATTACKING)
 		return
 	_nav_agent.target_position = _target.position
@@ -175,26 +169,9 @@ func _pick_target(enemies: Array) -> void:
 			best      = e
 	_target = best
 
-func _get_move_speed() -> float:
-	return MOVE_SPEED * get_building_move_speed_multiplier()
+func _get_move_speed()  -> float: return MOVE_SPEED * get_building_move_speed_multiplier()
+func _get_attack_rate() -> float: return ATTACK_RATE * get_building_attack_speed_multiplier()
 
-func _get_attack_damage() -> int:
-	return ATTACK_DAMAGE + get_building_attack_damage_bonus()
-
-func _get_attack_rate() -> float:
-	return ATTACK_RATE * get_building_attack_speed_multiplier()
-
-# =========================================================================== #
-#  Base overrides
-# =========================================================================== #
-
-func _on_selected() -> void:
-	CombatAudio.play("male_ready")
-
-func _on_move_to() -> void:
-	CombatAudio.play("male_go")
-	_enter_state(State.MOVE_TO)
-
-func _on_end_battle() -> void:
-	_target = null
-	_enter_state(State.IDLE)
+func _on_selected()   -> void: CombatAudio.play("male_ready")
+func _on_move_to()    -> void: CombatAudio.play("male_go"); _enter_state(State.MOVE_TO)
+func _on_end_battle() -> void: _target = null; _enter_state(State.IDLE)
