@@ -5,8 +5,9 @@ const ARROW_SCENE := preload("res://scenes/arrow.tscn")
 
 const MOVE_SPEED      = 62.0
 const PATROL_RADIUS   = 180.0
-const SHOOT_RANGE     = 500.0
-const SHOOT_RANGE_MIN = 80.0
+const SHOOT_RANGE        : float = 500.0
+const SHOOT_RANGE_MIN    : float = 80.0
+const SHOOT_RANGE_BUFFER : float = 1.15
 const BASE_ATTACK_DAMAGE = 3
 const BASE_ATTACK_RATE   = 2.0
 
@@ -85,7 +86,7 @@ func _process_state(delta: float) -> void:
 				_do_shoot()
 			if not _shooting and is_instance_valid(_target):
 				var dist := position.distance_to(_target.position)
-				if dist > _get_attack_range() or dist < SHOOT_RANGE_MIN:
+				if dist > _get_attack_range() * SHOOT_RANGE_BUFFER or dist < SHOOT_RANGE_MIN:
 					_enter_state(State.BATTLE)
 
 func _pick_next_wander_state() -> State:
