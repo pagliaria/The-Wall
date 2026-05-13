@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://dleftxws6cge6"]
+[gd_scene load_steps=2 format=3 uid="uid://7i4b3tktw7qi"]
 
 [ext_resource type="Script" uid="uid://k7ax5o5ys6wx" path="res://scripts/level_badge.gd" id="1_badge"]
 
 [node name="LevelBadge" type="Node2D"]
 z_index = 20
-position = Vector2(0, -52)
+position = Vector2(30, -31)
 script = ExtResource("1_badge")

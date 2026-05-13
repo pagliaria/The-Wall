@@ -44,7 +44,7 @@ const SEPARATION_FORCE     := 5.0
 const HP_FILL_FULL_SCALE_X := 1.3
 
 const MAX_LEVEL   : int   = 5
-const XP_BASE     : float = 1.0
+const XP_BASE     : float = 100.0
 const XP_EXPONENT : float = 1.4
 const XP_PER_HEAL : float = 2.0
 

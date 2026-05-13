@@ -57,7 +57,7 @@ func _process_state(delta: float) -> void:
 		State.IDLE:
 			_apply_separation(delta)
 			if _state_timer >= _state_dur:
-				_enter_state(_pick_next_wander_state())
+				_enter_state(State.IDLE if has_moved else _pick_next_wander_state())
 		State.MOVE:
 			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished() or _state_timer >= _state_dur:
@@ -79,7 +79,7 @@ func _process_state(delta: float) -> void:
 			if _attack_timer <= 0.0:
 				_is_striking  = true
 				_attack_timer = _get_attack_rate()
-				var dir  := _target.position - position
+				var dir  : Vector2 = _target.position - position
 				var anim := _pick_attack_anim(dir)
 				_sprite.play(anim)
 				await _sprite.animation_finished
