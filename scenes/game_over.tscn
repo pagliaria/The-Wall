@@ -1,0 +1,142 @@
+[gd_scene load_steps=8 format=3 uid="uid://game_over_scene"]
+
+[ext_resource type="Script" path="res://scripts/game_over.gd" id="1_gameover"]
+[ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="2_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.12, 0.06, 0.03, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.55, 0.28, 0.08, 1.0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_danger"]
+bg_color = Color(0.55, 0.12, 0.08, 1.0)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_neutral"]
+bg_color = Color(0.22, 0.18, 0.12, 1.0)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.32, 0.26, 0.18, 1.0)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="GameOver" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_gameover")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.04, 0.02, 0.01, 0.0)
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -160.0
+offset_right = 200.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="VBoxInner" type="VBoxContainer" parent="Panel/VBox/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="Panel/VBox/MarginContainer/VBoxInner"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.18, 0.08, 1.0)
+theme_override_colors/font_shadow_color = Color(0.0, 0.0, 0.0, 1.0)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 52
+text = "Defeated"
+horizontal_alignment = 1
+
+[node name="SubLabel" type="Label" parent="Panel/VBox/MarginContainer/VBoxInner"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.62, 0.45, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 18
+text = "Your walls have fallen..."
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/VBox/MarginContainer/VBoxInner"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="RestartBtn" type="Button" parent="Panel/VBox/MarginContainer/VBoxInner/Buttons"]
+custom_minimum_size = Vector2(120, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 1.0, 1.0, 1.0)
+theme_override_colors/font_hover_color = Color(1.0, 1.0, 0.8, 1.0)
+theme_override_colors/font_pressed_color = Color(0.9, 0.9, 0.9, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_neutral")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_neutral")
+text = "Restart"
+
+[node name="MenuBtn" type="Button" parent="Panel/VBox/MarginContainer/VBoxInner/Buttons"]
+custom_minimum_size = Vector2(120, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 1.0, 1.0, 1.0)
+theme_override_colors/font_hover_color = Color(1.0, 1.0, 0.8, 1.0)
+theme_override_colors/font_pressed_color = Color(0.9, 0.9, 0.9, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_neutral")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_neutral")
+text = "Main Menu"
+
+[node name="ExitBtn" type="Button" parent="Panel/VBox/MarginContainer/VBoxInner/Buttons"]
+custom_minimum_size = Vector2(120, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 1.0, 1.0, 1.0)
+theme_override_colors/font_hover_color = Color(1.0, 0.7, 0.7, 1.0)
+theme_override_colors/font_pressed_color = Color(0.9, 0.9, 0.9, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_danger")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_danger")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_danger")
+text = "Exit"

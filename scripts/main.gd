@@ -1,5 +1,14 @@
 extends Node2D
 
+const FIRE_EFFECT_SCRIPT : GDScript = preload("res://scripts/fire_effect.gd")
+const GAME_OVER_SCENE   : PackedScene = preload("res://scenes/game_over.tscn")
+
+# Town zone bounds — full map width including wall and battlefield
+const TOWN_LEFT   : float = 400.0
+const TOWN_RIGHT  : float = 3072.0
+const TOWN_TOP    : float = 200.0
+const TOWN_BOTTOM : float = 1500.0
+
 const WORLD_WIDTH  = 3072
 const WORLD_HEIGHT = 1728
 
@@ -128,12 +137,83 @@ func _on_wave_ended(player_won: bool) -> void:
 	hud.hide_rush_button()
 	UiAudio.play_trimmed("deep_thumps", 3.0, 4.0)
 	CombatAudio.play("victory" if player_won else "defeat")
-	MusicManager.play_chill()
-	if not building_placer.is_placing():
-		unit_selection.disabled = false
+	if player_won:
+		MusicManager.play_chill()
+		if not building_placer.is_placing():
+			unit_selection.disabled = false
+		battle_seperator.disabled = false
+		wave_timer.start()
+		call_deferred("_rebake_nav")
+	else:
+		MusicManager.stop()
+		_trigger_defeat()
+
+# Fire effect type constants matching fire_effect.gd EffectType enum
+const FX_FIRE      : int = 0
+const FX_EXPLOSION : int = 1
+const FX_SMOKE     : int = 2
+
+func _trigger_defeat() -> void:
+	unit_selection.disabled = true
 	battle_seperator.disabled = false
-	wave_timer.start()
-	call_deferred("_rebake_nav")
+	_spawn_defeat_effects()
+	var town_center : Vector2 = Vector2(
+		(TOWN_LEFT + TOWN_RIGHT) * 0.5,
+		(TOWN_TOP  + TOWN_BOTTOM) * 0.5
+	)
+	var tw : Tween = create_tween()
+	tw.tween_property(camera, "position", town_center, 2.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	get_tree().create_timer(3.8).timeout.connect(_show_game_over)
+
+func _spawn_defeat_effects() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	# Spawn all effects immediately with staggered start_delay via Tween
+	for i in 20:
+		_spawn_fire_at(
+			rng.randf_range(TOWN_LEFT, TOWN_RIGHT),
+			rng.randf_range(TOWN_TOP, TOWN_BOTTOM),
+			FX_EXPLOSION, 0, rng.randf_range(0.0, 2.0)
+		)
+	for i in 35:
+		_spawn_fire_at(
+			rng.randf_range(TOWN_LEFT, TOWN_RIGHT),
+			rng.randf_range(TOWN_TOP, TOWN_BOTTOM),
+			FX_FIRE, 99, rng.randf_range(0.5, 3.0)
+		)
+	for i in 15:
+		_spawn_fire_at(
+			rng.randf_range(TOWN_LEFT, TOWN_RIGHT),
+			rng.randf_range(TOWN_TOP, TOWN_BOTTOM),
+			FX_SMOKE, 99, rng.randf_range(1.0, 3.5)
+		)
+
+func _spawn_fire_at(x: float, y: float, type: int, loops: int, delay: float) -> void:
+	if delay <= 0.0:
+		_spawn_fire_effect(x, y, type, loops)
+		return
+	var tw : Tween = create_tween()
+	tw.tween_interval(delay)
+	tw.tween_callback(func() -> void: _spawn_fire_effect(x, y, type, loops))
+
+func _spawn_fire_effect(x: float, y: float, type: int, loops: int) -> void:
+	var fx : Node2D = Node2D.new()
+	fx.set_script(FIRE_EFFECT_SCRIPT)
+	fx.position = Vector2(x, y)
+	fx.z_index  = 10
+	fx.call("setup", type, loops)
+	add_child(fx)
+
+func _show_game_over() -> void:
+	var go : CanvasLayer = GAME_OVER_SCENE.instantiate()
+	add_child(go)
+	# Fade in the overlay
+	var overlay : ColorRect = go.get_node_or_null("Overlay")
+	if overlay != null:
+		var tw : Tween = create_tween()
+		tw.tween_property(overlay, "color", Color(0.04, 0.02, 0.01, 0.82), 0.8) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 # =========================================================================== #
 #  Castle prompt
