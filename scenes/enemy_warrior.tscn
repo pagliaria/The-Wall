@@ -254,7 +254,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"guard",
-"speed": 8.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -283,7 +283,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle",
-"speed": 8.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -306,7 +306,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"run",
-"speed": 8.0
+"speed": 10.0
 }]
 
 [sub_resource type="CircleShape2D" id="enemy_circle"]
@@ -333,7 +333,7 @@ script = ExtResource("1_script")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("enemy_warrior_frames")
-animation = &"idle"
+animation = &"attack1"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)
