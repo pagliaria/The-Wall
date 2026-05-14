@@ -27,6 +27,7 @@ func _get_attack_rate() -> float:
 
 func _do_attack_hit() -> void:
 	if is_instance_valid(_target):
+		CombatAudio.play("enemy_attack")
 		_target.take_damage(attack_damage)
 
 func _on_enter_idle_state() -> void:

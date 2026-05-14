@@ -135,7 +135,7 @@ func _enter_state(new_state: State) -> void:
 		State.BATTLE:
 			_sprite.play("run")
 		State.ATTACKING:
-			_attack_timer = 0.0
+			_attack_timer = _get_attack_rate()
 
 func start_battle(enemies: Array) -> void:
 	_pick_target(enemies)

@@ -17,6 +17,14 @@ const SOUNDS : Dictionary = {
 	],
 	"arrow":       [preload("res://assets/audio/combat/whoosh_1.wav")],
 	"arrow_hit":   [preload("res://assets/audio/combat/impactMetal_004.ogg")],
+	"enemy_attack":[
+		preload("res://assets/audio/combat/swipe.wav"),
+		preload("res://assets/audio/combat/sword_clash.wav"),
+	],
+	"enemy_attack_slime": [preload("res://assets/audio/combat/slime/splat_quick.wav")],
+	"enemy_cat_melee": [preload("res://assets/Enemies/cat_boss/hard-punch.mp3")],
+	"enemy_cat_nade": [preload("res://assets/Enemies/cat_boss/explosion.mp3")],
+	"enemy_cat_gun": [preload("res://assets/Enemies/cat_boss/gun-fire.mp3")],
 	"buff":        [preload("res://assets/audio/combat/spells/2 - buff.wav")],
 	"male_ready":  [preload("res://assets/audio/voice/male_ready.ogg")],
 	"male_go":     [preload("res://assets/audio/voice/male_go.ogg")],
@@ -38,6 +46,7 @@ const SOUNDS : Dictionary = {
 # Optional trim: { "sound_name": [from_sec, to_sec, volume_db] }  — to_sec 0 = play to end, volume_db default 0
 const SOUND_TRIM : Dictionary = {
 	"monk_ready": [0.4, 3.0, 6.0],
+	"enemy_cat_gun": [0.5, 2.0, 6.0],
 }
 const EXCLUSIVE_SOUNDS   : Array[String] = ["male_ready", "male_go", "female_ready", "female_go", "monk_ready", "monk_go", "gather"]
 const EXCLUSIVE_COOLDOWN : float         = 1   # seconds

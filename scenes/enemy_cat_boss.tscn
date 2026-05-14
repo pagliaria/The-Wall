@@ -896,9 +896,7 @@ script = ExtResource("1_6snvk")
 position = Vector2(1, -74)
 scale = Vector2(2, 2)
 sprite_frames = SubResource("enemy_warrior_frames")
-animation = &"attack2"
-frame = 21
-frame_progress = 0.099099
+animation = &"attack1"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(-8, 9)

@@ -4,7 +4,7 @@ extends "res://scripts/enemy_base.gd"
 @export var melee_damage : int   = 5
 @export var nade_damage : int   = 15
 @export var range_damage : int   = 5
-@export var attack_rate   : float = 1
+@export var attack_rate   : float = 2
 @export var engage_range  : float = 1000
 @export var melee_range  : float = 64
 @export var nade_range  : float = 500
@@ -61,20 +61,32 @@ func _play_attack_anim_and_fire() -> void:
 	if dist < melee_range:
 		_sprite.play("attack1")
 		await _sprite.animation_finished
+		CombatAudio.play("enemy_cat_melee")
 		_target.take_damage(melee_damage)
+		
 	elif dist < nade_range:
 		_sprite.play("special")
-		await _sprite.animation_finished
+		print("nade")
+		var total_frames = _sprite.sprite_frames.get_frame_count("special")
+		var fps = _sprite.sprite_frames.get_animation_speed("special")
+		var total_duration = total_frames / fps
+		var shoot_time = total_duration / 2.0
+	
+		await get_tree().create_timer(shoot_time).timeout
+		CombatAudio.play("enemy_cat_nade")
 		_target.take_damage(nade_damage)
+		await _sprite.animation_finished
+		
 	elif dist < engage_range:
 		_sprite.play("attack2")
 		var total_frames = _sprite.sprite_frames.get_frame_count("attack2")
 		var fps = _sprite.sprite_frames.get_animation_speed("attack2")
 		var total_duration = total_frames / fps
-		var shoot_time = total_duration / 3.0
+		var shoot_time = total_duration / 4.0
 	
 		# Start timer and stop it after half the duration
 		gun_timer.start()
+		CombatAudio.play("enemy_cat_gun")
 		await get_tree().create_timer(shoot_time).timeout
 		gun_timer.stop()
 		await _sprite.animation_finished

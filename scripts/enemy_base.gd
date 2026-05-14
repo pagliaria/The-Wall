@@ -92,7 +92,7 @@ func _enter_state(new_state: State) -> void:
 		State.BATTLE:
 			_on_enter_battle_state()
 		State.ATTACKING:
-			_attack_timer = 0.0
+			_attack_timer = _get_attack_rate()
 			_on_enter_attacking_state()
 		State.DEAD:
 			_on_enter_dead_state()
@@ -218,7 +218,11 @@ func _do_attacking_move(_delta: float) -> void: pass
 
 func _do_attack_hit() -> void:
 	if is_instance_valid(_target):
+		CombatAudio.play(_get_attack_sound())
 		_target.take_damage(4)   # no attacker — player units don't grant XP when hit
+
+func _get_attack_sound() -> String:
+	return "enemy_attack"
 
 func _on_enter_idle_state() -> void:
 	if _sprite.sprite_frames.has_animation("idle"):
