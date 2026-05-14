@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=37 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -23,6 +23,7 @@
 [ext_resource type="PackedScene" uid="uid://b1fea6knbgvwi" path="res://scenes/settings_screen.tscn" id="32_settings"]
 [ext_resource type="PackedScene" uid="uid://cqs7jkoc86811" path="res://scenes/selection_panel.tscn" id="33_sel_panel"]
 [ext_resource type="PackedScene" uid="uid://dye4wevxkcnrp" path="res://scenes/building_upgrade_panel.tscn" id="34_building_upgrades"]
+[ext_resource type="Texture2D" uid="uid://v8obx710aekl" path="res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png" id="35_rush_reg"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -524,6 +525,47 @@ theme_override_fonts/font = ExtResource("16_gqmmt")
 theme_override_font_sizes/font_size = 28
 text = "Attack!"
 horizontal_alignment = 1
+
+[node name="RushButton" type="NinePatchRect" parent="HUD/WaveTimer"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -151.2
+offset_top = -5.6
+offset_right = 88.8
+offset_bottom = 34.4
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 0
+texture = ExtResource("35_rush_reg")
+region_rect = Rect2(82.8199, 81.7952, 152.995, 147.531)
+patch_margin_left = 16
+patch_margin_top = 12
+patch_margin_right = 16
+patch_margin_bottom = 12
+
+[node name="Label" type="RichTextLabel" parent="HUD/WaveTimer/RushButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.95, 0.9, 0.6, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_offset_x = 1
+theme_override_font_sizes/normal_font_size = 12
+bbcode_enabled = true
+text = "Rush!"
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="SelectionPanel" parent="HUD" instance=ExtResource("33_sel_panel")]
 

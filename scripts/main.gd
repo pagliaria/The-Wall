@@ -56,6 +56,7 @@ func _ready() -> void:
 	hud.build_pressed.connect(_on_build_pressed)
 	hud.building_selected.connect(_on_building_selected)
 	hud.settings_pressed.connect(settings_screen.open)
+	hud.rush_pressed.connect(_on_rush_pressed)
 	settings_screen.display_changed.connect(_fit_camera_to_screen)
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
@@ -92,8 +93,21 @@ func _setup_wave_manager() -> void:
 	_wave_manager.wave_started.connect(_on_wave_started)
 	_wave_manager.wave_ended.connect(_on_wave_ended)
 
+func _on_rush_pressed() -> void:
+	if _wave_manager == null or not _wave_manager.is_in_prep():
+		return
+	var reward : Dictionary = _wave_manager.rush_wave()
+	for resource in reward:
+		ResourceManager.add(resource, reward[resource])
+	_push_resources()
+	hud.hide_rush_button()
+
 func _on_wave_countdown_changed(seconds: float) -> void:
 	hud.set_wave_countdown(seconds)
+	if _wave_manager.is_in_prep():
+		hud.update_rush_button(_wave_manager.calc_rush_reward(seconds))
+	if seconds > 0.0 and _castle_placed and not hud.is_rush_button_visible():
+		hud.show_rush_button()
 	if seconds <= 90.0 and seconds > 0.0:
 		if MusicManager.current_zone != MusicManager.Zone.BATTLE:
 			MusicManager.play_battle()
@@ -101,6 +115,7 @@ func _on_wave_countdown_changed(seconds: float) -> void:
 
 func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
+	hud.hide_rush_button()
 	UiAudio.play_trimmed("deep_thumps", 0.0, 1.0)
 	_clear_building_selection()
 	unit_selection.clear_selection()
@@ -110,6 +125,7 @@ func _on_wave_started(wave_number: int) -> void:
 
 func _on_wave_ended(player_won: bool) -> void:
 	hud.set_wave_ended(player_won)
+	hud.hide_rush_button()
 	UiAudio.play_trimmed("deep_thumps", 3.0, 4.0)
 	CombatAudio.play("victory" if player_won else "defeat")
 	MusicManager.play_chill()
@@ -158,6 +174,7 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	if building_id == "castle" and not _castle_placed:
 		_castle_placed = true
 		hud.set_build_button_enabled(true)
+		hud.show_rush_button()
 		if _castle_prompt != null:
 			_castle_prompt.queue_free()
 			_castle_prompt = null

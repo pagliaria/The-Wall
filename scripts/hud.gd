@@ -3,6 +3,7 @@ extends CanvasLayer
 signal build_pressed
 signal building_selected(building_id: String)
 signal settings_pressed
+signal rush_pressed
 
 @onready var build_button     : TextureButton  = $ActionBar/BuildButton
 @onready var build_menu       : Control        = $BuildMenu
@@ -13,6 +14,7 @@ signal settings_pressed
 @onready var victory          : Label          = $WaveTimer/Victory
 @onready var title            : Label          = $WaveTimer/Title
 @onready var settings_btn     : Button         = $ActionBar/SettingsBtn
+@onready var rush_button      : NinePatchRect = $WaveTimer/RushButton
 
 var _speed_buttons : Array[Button] = []
 var _current_speed : float = 1.0
@@ -22,6 +24,8 @@ func _ready() -> void:
 	build_menu.building_selected.connect(_on_building_selected)
 	build_menu.closed.connect(_on_build_menu_closed)
 	settings_btn.pressed.connect(_on_settings_pressed)
+	rush_button.gui_input.connect(_on_rush_gui_input)
+	rush_button.visible = false
 	wave_label.text = ""
 	_setup_speed_buttons()
 
@@ -44,6 +48,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
 		return
 	if not event.pressed or event.echo:
+		return
+	if event.keycode == KEY_B:
+		_on_build_button_pressed()
 		return
 	if KEY_SPEED_MAP.has(event.keycode):
 		_set_speed(KEY_SPEED_MAP[event.keycode])
@@ -89,6 +96,18 @@ func _on_building_selected(building_id: String) -> void:
 func _on_build_menu_closed() -> void:
 	pass
 
+const _RUSH_TEX_NORMAL  : Texture2D = preload("res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png")
+const _RUSH_TEX_PRESSED : Texture2D = preload("res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Pressed_together.png")
+
+func _on_rush_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			rush_button.texture = _RUSH_TEX_PRESSED
+		else:
+			rush_button.texture = _RUSH_TEX_NORMAL
+			UiAudio.play()
+			emit_signal("rush_pressed")
+
 func _on_settings_pressed() -> void:
 	UiAudio.play()
 	emit_signal("settings_pressed")
@@ -107,6 +126,34 @@ func set_wave_countdown(seconds: float) -> void:
 	else:
 		wave_label.text     = "WAVE!"
 		wave_label.modulate = Color(1.0, 0.3, 0.3)
+
+const _ICON_GOLD : String = "res://assets/UI Elements/UI Elements/Icons/Icon_03.png"
+const _ICON_WOOD : String = "res://assets/UI Elements/UI Elements/Icons/Icon_02.png"
+const _ICON_MEAT : String = "res://assets/UI Elements/UI Elements/Icons/Icon_04.png"
+
+func update_rush_button(reward: Dictionary) -> void:
+	if not rush_button.visible:
+		return
+	var lbl : RichTextLabel = rush_button.get_node_or_null("Label")
+	if lbl == null:
+		return
+	var gold : int = reward.get("gold", 0)
+	var text : String = "[center]⚔ Rush!  [img=14x14]%s[/img] +%d" % [_ICON_GOLD, gold * 10]
+	if reward.has("wood"):
+		text += "  [img=14x14]%s[/img] +%d" % [_ICON_WOOD, reward["wood"] * 10]
+	if reward.has("meat"):
+		text += "  [img=14x14]%s[/img] +%d" % [_ICON_MEAT, reward["meat"]]
+	text += "[/center]"
+	lbl.text = text
+
+func show_rush_button() -> void:
+	rush_button.visible = true
+
+func hide_rush_button() -> void:
+	rush_button.visible = false
+
+func is_rush_button_visible() -> bool:
+	return rush_button.visible
 
 func set_wave_active(_wave_number: int) -> void:
 	wave_label.text     = "Fight!"

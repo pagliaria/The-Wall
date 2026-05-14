@@ -115,6 +115,33 @@ func _begin_battle() -> void:
 		if is_instance_valid(u) and u.has_method("start_battle"):
 			u.start_battle(_enemies)
 
+# =========================================================================== #
+#  Rush wave — public API called by main.gd
+# =========================================================================== #
+
+func is_in_prep() -> bool:
+	return _phase == Phase.PREP
+
+func get_countdown() -> float:
+	return _countdown
+
+func rush_wave() -> Dictionary:
+	if _phase != Phase.PREP:
+		return {}
+	var reward : Dictionary = calc_rush_reward(_countdown)
+	_countdown = 0.0
+	return reward
+
+func calc_rush_reward(seconds_left: float) -> Dictionary:
+	var ratio : float = clampf(seconds_left / WAVE_INTERVAL, 0.0, 1.0)
+	var reward : Dictionary = {}
+	reward["gold"] = int(25.0 * ratio)
+	if ratio >= 0.5:
+		reward["wood"] = int(20.0 * ratio)
+	if ratio >= 0.7:
+		reward["meat"] = int(10.0 * ratio)
+	return reward
+
 func _prepare_next_wave() -> void:
 	_countdown = WAVE_INTERVAL
 	_phase = Phase.PREP
