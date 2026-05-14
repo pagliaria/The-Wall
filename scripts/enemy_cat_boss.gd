@@ -4,7 +4,7 @@ extends "res://scripts/enemy_base.gd"
 @export var melee_damage : int   = 5
 @export var nade_damage : int   = 15
 @export var range_damage : int   = 5
-@export var attack_rate   : float = 2
+@export var attack_rate   : float = 1
 @export var engage_range  : float = 1000
 @export var melee_range  : float = 64
 @export var nade_range  : float = 500
