@@ -110,12 +110,23 @@ func update_target(player_units: Array) -> void:
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
-		_enter_state(State.BATTLE)
-		return
-	var dist := position.distance_to(_target.position)
+		# Pick new target in place rather than re-entering BATTLE
+		if wave_manager != null and wave_manager.has_method("get_player_units"):
+			_pick_target(wave_manager.get_player_units())
+		if not is_instance_valid(_target):
+			_enter_state(State.IDLE)
+			return
+	var dist : float = position.distance_to(_target.position)
 	if dist <= _get_engage_range():
+		# In range — face target, stand still
+		_sprite.flip_h = _target.position.x < position.x
+		if _sprite.animation == "run":
+			_on_enter_idle_state()
 		_enter_state(State.ATTACKING)
 		return
+	# Out of range — chase
+	if _sprite.animation != "run" and _sprite.sprite_frames.has_animation("run"):
+		_sprite.play("run")
 	_nav.target_position = _target.position
 	_do_nav_move(delta)
 	_move()

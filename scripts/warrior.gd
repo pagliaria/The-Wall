@@ -125,7 +125,7 @@ func _enter_state(new_state: State) -> void:
 			_sprite.flip_h = (_move_target - position).x < 0
 			_sprite.play("run")
 		State.BATTLE:
-			_sprite.play("run")
+			pass  # animation set dynamically in _do_battle
 		State.ATTACKING:
 			_attack_timer = _get_attack_rate()
 
@@ -140,12 +140,23 @@ func update_battle_target(enemies: Array) -> void:
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
-		_enter_state(State.BATTLE)
-		return
-	var dist := position.distance_to(_target.position)
+		# Don't re-enter BATTLE — just pick new target in place
+		if wave_manager != null and wave_manager.has_method("get_enemies"):
+			_pick_target(wave_manager.get_enemies())
+		if not is_instance_valid(_target):
+			_enter_state(State.IDLE)
+			return
+	var dist : float = position.distance_to(_target.position)
 	if dist <= _get_melee_range():
+		# In range — stand and face target, don't run
+		_sprite.flip_h = _target.position.x < position.x
+		if _sprite.animation != "guard" and _sprite.animation != "idle":
+			_sprite.play("guard" if _rng.randf() > 0.5 else "idle")
 		_enter_state(State.ATTACKING)
 		return
+	# Out of range — chase
+	if _sprite.animation != "run":
+		_sprite.play("run")
 	_nav_agent.target_position = _target.position
 	_do_nav_move(delta, _get_move_speed())
 

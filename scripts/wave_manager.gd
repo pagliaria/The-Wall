@@ -120,6 +120,12 @@ func _begin_battle() -> void:
 #  Rush wave — public API called by main.gd
 # =========================================================================== #
 
+func get_enemies() -> Array:
+	return _enemies
+
+func get_player_units() -> Array:
+	return _player_units
+
 func is_in_prep() -> bool:
 	return _phase == Phase.PREP
 
