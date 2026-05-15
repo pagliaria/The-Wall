@@ -129,13 +129,57 @@ func _enter_state(new_state: State) -> void:
 		State.ATTACKING:
 			_attack_timer = _get_attack_rate()
 
+# =========================================================================== #
+#  Target selection
+# =========================================================================== #
+
+# How much closer a new target must be (as a ratio) to justify switching
+const RETARGET_THRESHOLD : float = 0.70  # new target must be <70% of current target's distance
+const CHASE_ABANDON_TIME : float = 4.0   # seconds chasing before we consider switching
+
+var _chase_timer : float = 0.0
+
+func _pick_target(enemies: Array) -> void:
+	_target = _best_target(enemies, null)
+	_chase_timer = 0.0
+
+func _best_target(candidates: Array, current: Node) -> Node:
+	var best       : Node  = null
+	var best_score : float = INF
+	for e in candidates:
+		if not is_instance_valid(e) or e.hp <= 0:
+			continue
+		var d     : float = position.distance_to(e.position)
+		# Slight bonus for low-hp targets to encourage focus fire
+		var score : float = d - (1.0 - float(e.hp) / float(e.max_hp)) * 30.0
+		if score < best_score:
+			best_score = score
+			best       = e
+	return best
+
+func _consider_retarget(candidates: Array) -> void:
+	if candidates.is_empty():
+		return
+	if not is_instance_valid(_target):
+		_pick_target(candidates)
+		return
+	var current_dist : float = position.distance_to(_target.position)
+	# Find best alternative
+	var alt : Node = _best_target(candidates, _target)
+	if alt == null or alt == _target:
+		return
+	var alt_dist : float = position.distance_to(alt.position)
+	# Switch if alt is significantly closer OR we've been chasing too long
+	if alt_dist < current_dist * RETARGET_THRESHOLD or _chase_timer >= CHASE_ABANDON_TIME:
+		_target      = alt
+		_chase_timer = 0.0
+
 func start_battle(enemies: Array) -> void:
 	_pick_target(enemies)
 	_enter_state(State.BATTLE)
 
 func update_battle_target(enemies: Array) -> void:
-	if not is_instance_valid(_target) or _target.hp <= 0:
-		_pick_target(enemies)
+	_consider_retarget(enemies)
 
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
@@ -155,22 +199,11 @@ func _do_battle(delta: float) -> void:
 		_enter_state(State.ATTACKING)
 		return
 	# Out of range — chase
+	_chase_timer += delta
 	if _sprite.animation != "run":
 		_sprite.play("run")
 	_nav_agent.target_position = _target.position
 	_do_nav_move(delta, _get_move_speed())
-
-func _pick_target(enemies: Array) -> void:
-	var best      : Node  = null
-	var best_dist : float = INF
-	for e in enemies:
-		if not is_instance_valid(e) or e.hp <= 0:
-			continue
-		var d := position.distance_to(e.position)
-		if d < best_dist:
-			best_dist = d
-			best      = e
-	_target = best
 
 func _get_move_speed()   -> float: return MOVE_SPEED * get_building_move_speed_multiplier()
 func _get_attack_rate()  -> float: return ATTACK_RATE * get_building_attack_speed_multiplier()

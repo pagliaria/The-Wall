@@ -61,8 +61,17 @@ func _play_attack_anim_and_fire() -> void:
 	if dist < melee_range:
 		_sprite.play("attack1")
 		await _sprite.animation_finished
+		if not is_instance_valid(_target):
+			return
 		CombatAudio.play("enemy_cat_melee")
 		_target.take_damage(melee_damage)
+		# Knock target back
+		if is_instance_valid(_target):
+			var kb_dir : Vector2 = (_target.position - position).normalized()
+			var kb_dest : Vector2 = _target.position + kb_dir * 320.0
+			var tw : Tween = _target.create_tween()
+			tw.tween_property(_target, "position", kb_dest, 0.25) \
+				.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		
 	elif dist < nade_range:
 		_sprite.play("special")

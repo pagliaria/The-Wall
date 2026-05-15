@@ -103,10 +103,6 @@ func start_battle(player_units: Array) -> void:
 	_pick_target(player_units)
 	_enter_state(State.BATTLE)
 
-func update_target(player_units: Array) -> void:
-	if not is_instance_valid(_target) or _target.hp <= 0:
-		_pick_target(player_units)
-
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
@@ -125,23 +121,52 @@ func _do_battle(delta: float) -> void:
 		_enter_state(State.ATTACKING)
 		return
 	# Out of range — chase
+	_chase_timer += delta
 	if _sprite.animation != "run" and _sprite.sprite_frames.has_animation("run"):
 		_sprite.play("run")
 	_nav.target_position = _target.position
 	_do_nav_move(delta)
 	_move()
 
+const RETARGET_THRESHOLD : float = 0.70
+const CHASE_ABANDON_TIME : float = 4.0
+
+var _chase_timer : float = 0.0
+
 func _pick_target(units: Array) -> void:
-	var best      : Node  = null
-	var best_dist : float = INF
-	for u in units:
+	_target = _best_target(units)
+	_chase_timer = 0.0
+
+func _best_target(candidates: Array) -> Node:
+	var best       : Node  = null
+	var best_score : float = INF
+	for u in candidates:
 		if not is_instance_valid(u) or u.hp <= 0:
 			continue
-		var d := position.distance_to(u.position)
-		if d < best_dist:
-			best_dist = d
-			best      = u
-	_target = best
+		var d     : float = position.distance_to(u.position)
+		var score : float = d - (1.0 - float(u.hp) / float(u.max_hp)) * 30.0
+		if score < best_score:
+			best_score = score
+			best       = u
+	return best
+
+func _consider_retarget(candidates: Array) -> void:
+	if candidates.is_empty():
+		return
+	if not is_instance_valid(_target) or _target.hp <= 0:
+		_pick_target(candidates)
+		return
+	var current_dist : float = position.distance_to(_target.position)
+	var alt          : Node  = _best_target(candidates)
+	if alt == null or alt == _target:
+		return
+	var alt_dist : float = position.distance_to(alt.position)
+	if alt_dist < current_dist * RETARGET_THRESHOLD or _chase_timer >= CHASE_ABANDON_TIME:
+		_target      = alt
+		_chase_timer = 0.0
+
+func update_target(player_units: Array) -> void:
+	_consider_retarget(player_units)
 
 func _do_nav_move(delta: float) -> void:
 	if _state != State.BATTLE and _nav.is_navigation_finished():

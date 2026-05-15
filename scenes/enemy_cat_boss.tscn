@@ -891,6 +891,20 @@ atlas = ExtResource("9_xo1oi")
 [node name="EnemyCatBoss" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_6snvk")
+melee_damage = null
+nade_damage = null
+range_damage = null
+attack_rate = null
+engage_range = null
+melee_range = null
+nade_range = null
+max_hp = null
+move_speed = null
+patrol_radius = null
+idle_time_min = null
+idle_time_max = null
+move_time_min = null
+move_time_max = null
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 position = Vector2(1, -74)
