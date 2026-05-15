@@ -20,7 +20,7 @@ const BATTLEFIELD_MID   = 640.0
 const BATTLEFIELD_RIGHT = 1280.0
 
 const WAVE_COMPOSITIONS : Array = [
-	[{ "path": "res://scenes/enemy_cat_boss.tscn", "count": 1 }],
+	#[{ "path": "res://scenes/enemy_cat_boss.tscn", "count": 1 }],
 	# Wave 1
 	[{ "path": "res://scenes/enemy_slime.tscn", "count": 2 },
 	{ "path": "res://scenes/enemy_warrior.tscn", "count": 2 },

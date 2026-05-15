@@ -28,8 +28,16 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 @onready var _hp_label     : Label         = $Panel/SingleView/Info/HpBarContainer/HpLabel
 @onready var _multi_grid   : GridContainer = $Panel/MultiView/Grid
 @onready var _multi_total  : Label         = $Panel/MultiView/TotalLabel
+@onready var _btn_line     : Button        = $Panel/MultiView/FormationRow/LineBtn
+@onready var _btn_wedge    : Button        = $Panel/MultiView/FormationRow/WedgeBtn
+@onready var _btn_box      : Button        = $Panel/MultiView/FormationRow/BoxBtn
+@onready var _btn_flanks   : Button        = $Panel/MultiView/FormationRow/FlanksBtn
+@onready var _btn_tight    : Button        = $Panel/MultiView/SpacingRow/TightBtn
+@onready var _btn_normal   : Button        = $Panel/MultiView/SpacingRow/NormalBtn
+@onready var _btn_loose    : Button        = $Panel/MultiView/SpacingRow/LooseBtn
 
-var _tracked_unit : Node = null
+var _unit_selection : Node = null
+var _tracked_unit   : Node = null
 
 const UNIT_STATS := {
 	"Warrior": {"attack_range": 48.0,  "attack_damage": 5,    "attack_speed": 3.0, "move_speed": 60.0},
@@ -42,6 +50,47 @@ const UNIT_STATS := {
 # =========================================================================== #
 #  Public API
 # =========================================================================== #
+
+func set_unit_selection(node: Node) -> void:
+	_unit_selection = node
+
+func _ready() -> void:
+	_btn_line.pressed.connect(func() -> void:   _set_formation(FormationManager.Formation.LINE))
+	_btn_wedge.pressed.connect(func() -> void:  _set_formation(FormationManager.Formation.WEDGE))
+	_btn_box.pressed.connect(func() -> void:    _set_formation(FormationManager.Formation.BOX))
+	_btn_flanks.pressed.connect(func() -> void: _set_formation(FormationManager.Formation.FLANKS))
+	_btn_tight.pressed.connect(func() -> void:  _set_spacing(FormationManager.Spacing.TIGHT))
+	_btn_normal.pressed.connect(func() -> void: _set_spacing(FormationManager.Spacing.NORMAL))
+	_btn_loose.pressed.connect(func() -> void:  _set_spacing(FormationManager.Spacing.LOOSE))
+	_update_formation_highlight()
+	_update_spacing_highlight()
+
+func _set_formation(f: int) -> void:
+	if _unit_selection != null:
+		_unit_selection.set_formation(f)
+	_update_formation_highlight()
+
+func _set_spacing(s: int) -> void:
+	if _unit_selection != null:
+		_unit_selection.set_spacing(s)
+	_update_spacing_highlight()
+
+func _update_formation_highlight() -> void:
+	var f : int = FormationManager.Formation.LINE
+	if _unit_selection != null:
+		f = _unit_selection.current_formation
+	_btn_line.modulate   = Color.WHITE if f == FormationManager.Formation.LINE   else Color(0.6, 0.6, 0.6)
+	_btn_wedge.modulate  = Color.WHITE if f == FormationManager.Formation.WEDGE  else Color(0.6, 0.6, 0.6)
+	_btn_box.modulate    = Color.WHITE if f == FormationManager.Formation.BOX    else Color(0.6, 0.6, 0.6)
+	_btn_flanks.modulate = Color.WHITE if f == FormationManager.Formation.FLANKS else Color(0.6, 0.6, 0.6)
+
+func _update_spacing_highlight() -> void:
+	var s : int = FormationManager.Spacing.NORMAL
+	if _unit_selection != null:
+		s = _unit_selection.current_spacing
+	_btn_tight.modulate  = Color.WHITE if s == FormationManager.Spacing.TIGHT  else Color(0.6, 0.6, 0.6)
+	_btn_normal.modulate = Color.WHITE if s == FormationManager.Spacing.NORMAL else Color(0.6, 0.6, 0.6)
+	_btn_loose.modulate  = Color.WHITE if s == FormationManager.Spacing.LOOSE  else Color(0.6, 0.6, 0.6)
 
 func refresh(units: Array) -> void:
 	_tracked_unit = null

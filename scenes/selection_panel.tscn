@@ -29,6 +29,7 @@ axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
 [node name="SingleView" type="HBoxContainer" parent="Panel"]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -174,10 +175,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = -12.0
-offset_bottom = -8.0
+offset_left = 30.0
+offset_top = 20.0
+offset_right = -34.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
@@ -196,3 +197,66 @@ size_flags_vertical = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 5
+
+[node name="FormationLabel" type="Label" parent="Panel/MultiView"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
+theme_override_font_sizes/font_size = 11
+text = "Formation"
+
+[node name="FormationRow" type="HBoxContainer" parent="Panel/MultiView"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LineBtn" type="Button" parent="Panel/MultiView/FormationRow"]
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Line"
+
+[node name="WedgeBtn" type="Button" parent="Panel/MultiView/FormationRow"]
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Wedge"
+
+[node name="BoxBtn" type="Button" parent="Panel/MultiView/FormationRow"]
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Box"
+
+[node name="FlanksBtn" type="Button" parent="Panel/MultiView/FormationRow"]
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Flanks"
+
+[node name="SpacingRow" type="HBoxContainer" parent="Panel/MultiView"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SpacingLabel" type="Label" parent="Panel/MultiView/SpacingRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
+theme_override_font_sizes/font_size = 11
+text = "Spacing:"
+vertical_alignment = 1
+
+[node name="TightBtn" type="Button" parent="Panel/MultiView/SpacingRow"]
+custom_minimum_size = Vector2(56, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Tight"
+
+[node name="NormalBtn" type="Button" parent="Panel/MultiView/SpacingRow"]
+custom_minimum_size = Vector2(56, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Normal"
+
+[node name="LooseBtn" type="Button" parent="Panel/MultiView/SpacingRow"]
+custom_minimum_size = Vector2(56, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Loose"

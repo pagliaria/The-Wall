@@ -27,6 +27,9 @@ var _drag_end     : Vector2 = Vector2.ZERO
 
 var _gather_cursor_active : bool = false
 
+var current_formation : int = FormationManager.Formation.LINE
+var current_spacing   : int = FormationManager.Spacing.NORMAL
+
 # Injected by main.gd
 var units_layer     : Node2D   = null
 var camera          : Camera2D = null
@@ -108,24 +111,31 @@ func contains_pawns() -> bool:
 	return false
 
 func _issue_move_order(screen_pos: Vector2) -> void:
-	var world_target := _screen_to_world(screen_pos)
-	var count        := selected_units.size()
-	const SPACING   := 42.0
-	const ROW_WIDTH := 4
-	for i in range(count):
-		var unit : Node = selected_units[i]
-		if not is_instance_valid(unit):
-			continue
-		var col    := i % ROW_WIDTH
-		var row    := i / ROW_WIDTH
-		var row_width : Variant = min(count - row * ROW_WIDTH, ROW_WIDTH)
-		var row_shift := SPACING * 0.5 if row % 2 == 1 else 0.0
-		var offset := Vector2(
-			(col - (row_width - 1) * 0.5) * SPACING + row_shift,
-			row * SPACING
-		)
-		unit.move_to(world_target + offset)
+	var world_target : Vector2 = _screen_to_world(screen_pos)
+	var live_units   : Array   = selected_units.filter(func(u): return is_instance_valid(u))
+	if live_units.is_empty():
+		return
+	# Compute move direction from group centroid to target
+	var centroid : Vector2 = Vector2.ZERO
+	for u in live_units:
+		centroid += u.position
+	centroid /= live_units.size()
+	var dir : Vector2 = (world_target - centroid).normalized()
+	var slots : Array = FormationManager.get_slots(
+		live_units, world_target, dir,
+		current_formation, current_spacing
+	)
+	for i in live_units.size():
+		live_units[i].move_to(slots[i])
+	if live_units.size() > 1:
+		_get_overlay().show_formation_markers(slots)
 	_get_overlay().show_ping(screen_pos)
+
+func set_formation(formation: int) -> void:
+	current_formation = formation
+
+func set_spacing(spacing: int) -> void:
+	current_spacing = spacing
 
 # -- Cursor -------------------------------------------------------------------
 

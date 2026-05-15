@@ -1,7 +1,7 @@
 extends "res://scripts/enemy_base.gd"
 # enemy_cat_boss.gd — Ranged magical enemy.
 
-@export var melee_damage : int   = 5
+@export var melee_damage : int   = 30
 @export var nade_damage : int   = 15
 @export var range_damage : int   = 5
 @export var attack_rate   : float = 1

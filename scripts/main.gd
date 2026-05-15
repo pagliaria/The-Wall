@@ -61,6 +61,7 @@ func _ready() -> void:
 	unit_selection.camera          = camera
 	unit_selection.selection_panel = selection_panel
 	unit_selection.selection_changed.connect(_on_unit_selection_changed)
+	selection_panel.set_unit_selection(unit_selection)
 
 	hud.build_pressed.connect(_on_build_pressed)
 	hud.building_selected.connect(_on_building_selected)
