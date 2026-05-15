@@ -259,7 +259,31 @@ func gather_resource(resource_node: Node, resource_body: Node) -> void:
 		_enter_state(State.GATHER)
 
 func on_resource_depleted() -> void:
+	var lost_type : String = _resource_node.resource_type if is_instance_valid(_resource_node) else ""
 	_abort_gather()
+	if lost_type != "":
+		_auto_find_next_resource(lost_type)
+
+func _auto_find_next_resource(resource_type: String) -> void:
+	var best_node   : Node  = null
+	var best_body   : Node  = null
+	var best_dist   : float = INF
+	for area in get_tree().get_nodes_in_group("resource_hover"):
+		if not area is Area2D:
+			continue
+		var root : Node = area.get_parent()
+		var rn   : Node = root.get_node_or_null("ResourceNode")
+		if rn == null or rn.is_depleted():
+			continue
+		if rn.resource_type != resource_type:
+			continue
+		var d : float = position.distance_to(rn.interact_position)
+		if d < best_dist:
+			best_dist = d
+			best_node = rn
+			best_body = rn.collision_body if rn.collision_body != null else root
+	if best_node != null:
+		gather_resource(best_node, best_body)
 
 func _abort_gather() -> void:
 	if is_instance_valid(_resource_node):
