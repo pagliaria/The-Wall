@@ -11,20 +11,18 @@ extends Node2D
 enum ItemType { SWORD, SHIELD, BOOTS, QUIVER, TOME, AMULET }
 enum Rarity   { COMMON, RARE, EPIC }
 
-# Spritesheet is Freebies_Full_Icons.png — 30x30 cells, 4px padding, top-left origin
-# Each entry: [col, row] on the sheet (0-indexed)
+# Icons per item type — [common, rare, epic] cell coordinates (col, row) on 32px grid
 const ITEM_ICONS : Dictionary = {
-	ItemType.SWORD:  Vector2i(0,  0),
-	ItemType.SHIELD: Vector2i(1,  0),
-	ItemType.BOOTS:  Vector2i(2,  0),
-	ItemType.QUIVER: Vector2i(3,  0),
-	ItemType.TOME:   Vector2i(4,  0),
-	ItemType.AMULET: Vector2i(5,  0),
+	ItemType.SWORD:  [Vector2i(0,  0), Vector2i(17, 1), Vector2i(15, 2)],
+	ItemType.SHIELD: [Vector2i(10, 0), Vector2i(14, 1), Vector2i(15, 1)],
+	ItemType.BOOTS:  [Vector2i(2,  1), Vector2i(0,  1), Vector2i(0,  2)],
+	ItemType.QUIVER: [Vector2i(3,  0), Vector2i(5,  1), Vector2i(5,  2)],
+	ItemType.TOME:   [Vector2i(19, 0), Vector2i(19, 1), Vector2i(20, 2)],
+	ItemType.AMULET: [Vector2i(2,  2), Vector2i(2,  3), Vector2i(17, 2)],
 }
 
-const ICON_SIZE    : int = 22
-const ICON_PADDING : int = 4
-const ICON_STRIDE  : int = ICON_SIZE + ICON_PADDING  # 26px per cell
+const ICON_SIZE   : int = 32
+const ICON_STRIDE : int = 32  # no padding — tight grid
 
 # Base stat values per item type
 const BASE_STATS : Dictionary = {
@@ -71,9 +69,11 @@ var _drag_offset   : Vector2 = Vector2.ZERO
 var _on_ground     : bool    = false
 var _landed_pos    : Vector2 = Vector2.ZERO
 var _base_z_index  : int     = 0
+var _hovered       : bool    = false
 
-@onready var _sprite  : Sprite2D = $Sprite2D
-@onready var _label   : Label    = $Label
+@onready var _sprite   : Sprite2D = $Sprite2D
+@onready var _label    : Label    = $Label
+var _tooltip           : Control  = null
 
 # =========================================================================== #
 #  Setup
@@ -101,18 +101,81 @@ func _ready() -> void:
 	_apply_rarity_visuals()
 	_label.text    = _get_display_name()
 	_label.visible = false
+	_build_tooltip()
 	set_process(false)
+
+func _build_tooltip() -> void:
+	# Build as a CanvasLayer child so it renders above everything in screen space
+	var cl := CanvasLayer.new()
+	cl.layer = 20
+	add_child(cl)
+
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color            = Color(0.08, 0.06, 0.04, 0.92)
+	style.border_width_left   = 2
+	style.border_width_right  = 2
+	style.border_width_top    = 2
+	style.border_width_bottom = 2
+	style.border_color        = RARITY_COLORS.get(rarity, Color.WHITE)
+	style.corner_radius_top_left     = 4
+	style.corner_radius_top_right    = 4
+	style.corner_radius_bottom_left  = 4
+	style.corner_radius_bottom_right = 4
+	panel.add_theme_stylebox_override("panel", style)
+	panel.visible = false
+	cl.add_child(panel)
+	_tooltip = panel
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	panel.add_child(vbox)
+
+	# Title
+	var title := Label.new()
+	title.text = _get_display_name()
+	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_color_override("font_color", RARITY_COLORS.get(rarity, Color.WHITE))
+	vbox.add_child(title)
+
+	# Separator line
+	var sep := ColorRect.new()
+	sep.color                = RARITY_COLORS.get(rarity, Color.WHITE)
+	sep.modulate.a           = 0.4
+	sep.custom_minimum_size  = Vector2(0, 1)
+	vbox.add_child(sep)
+
+	# Stat lines
+	for key in stats:
+		var stat_label := Label.new()
+		stat_label.text = "%s: %s" % [_format_stat_key(key), _format_stat_val(key, stats[key])]
+		stat_label.add_theme_font_size_override("font_size", 11)
+		stat_label.add_theme_color_override("font_color", Color(0.85, 0.82, 0.75))
+		vbox.add_child(stat_label)
+
+func _format_stat_key(key: String) -> String:
+	match key:
+		"attack_damage":           return "Attack Damage"
+		"hp_bonus":                return "Max HP"
+		"move_speed_multiplier":   return "Move Speed"
+		"attack_speed_multiplier": return "Attack Speed"
+		"range_bonus":             return "Range"
+	return key.capitalize()
+
+func _format_stat_val(key: String, val) -> String:
+	match key:
+		"move_speed_multiplier":   return "+%.0f%%" % (float(val) * 100.0)
+		"attack_speed_multiplier": return "%.0f%%" % (float(val) * 100.0)
+		"range_bonus":             return "+%d" % int(val)
+	return "+%s" % str(val)
 
 func _apply_icon() -> void:
 	var tex      : Texture2D  = preload("res://assets/items/Freebies_Full_Icons.png")
-	var cell     : Vector2i   = ITEM_ICONS.get(item_type, Vector2i(0, 0))
+	var icons    : Array      = ITEM_ICONS.get(item_type, [Vector2i(0,0), Vector2i(0,0), Vector2i(0,0)])
+	var cell     : Vector2i   = icons[clamp(int(rarity), 0, icons.size() - 1)]
 	var atlas    := AtlasTexture.new()
 	atlas.atlas  = tex
-	atlas.region = Rect2(
-		cell.x * ICON_STRIDE + ICON_PADDING * 0.5,
-		cell.y * ICON_STRIDE + ICON_PADDING * 0.5,
-		ICON_SIZE, ICON_SIZE
-	)
+	atlas.region = Rect2(cell.x * ICON_STRIDE, cell.y * ICON_STRIDE, ICON_SIZE, ICON_SIZE)
 	_sprite.texture = atlas
 
 func _apply_rarity_visuals() -> void:
@@ -151,6 +214,23 @@ func pop_from(origin: Vector2, target: Vector2) -> void:
 func _input(event: InputEvent) -> void:
 	if not _on_ground:
 		return
+	if event is InputEventMouseMotion:
+		var world_mouse : Vector2 = get_viewport().get_canvas_transform().affine_inverse() * event.position
+		var local       : Vector2 = to_local(world_mouse)
+		var over        : bool    = local.length() < 28.0
+		if over != _hovered:
+			_hovered = over
+			if _tooltip != null:
+				_tooltip.visible = _hovered and not _dragging
+		if _hovered and _tooltip != null:
+			# Position tooltip near cursor in screen space with edge clamping
+			var vp_size  : Vector2 = get_viewport().get_visible_rect().size
+			var tip_size : Vector2 = _tooltip.size
+			var offset   : Vector2 = Vector2(16, -tip_size.y - 8)
+			var pos      : Vector2 = event.position + offset
+			pos.x = clampf(pos.x, 4, vp_size.x - tip_size.x - 4)
+			pos.y = clampf(pos.y, 4, vp_size.y - tip_size.y - 4)
+			_tooltip.position = pos
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			var world_mouse : Vector2 = get_viewport().get_canvas_transform().affine_inverse() * event.position
@@ -159,9 +239,11 @@ func _input(event: InputEvent) -> void:
 				_dragging    = true
 				_drag_offset = position - world_mouse
 				_label.visible = true
+				if _tooltip != null:
+					_tooltip.visible = false
 				z_index = _base_z_index + 50
 				set_process(true)
-				get_viewport().set_input_as_handled()  # block unit_selection drag
+				get_viewport().set_input_as_handled()
 		else:
 			if _dragging:
 				_dragging = false

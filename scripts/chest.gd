@@ -100,17 +100,13 @@ func _spawn_items() -> void:
 	var count  : int   = ITEM_COUNTS[chest_type]
 	var radius : float = 60.0
 	for i in count:
-		var angle    : float = (float(i) / count) * TAU + _rng.randf() * 0.5
+		var angle    : float   = (float(i) / count) * TAU + _rng.randf() * 0.5
 		var land_pos : Vector2 = position + Vector2(cos(angle), sin(angle)) * radius
-
-		var item : Node2D = ITEM_SCENE.instantiate()
-		get_parent().add_child(item)
-
-		# Pick item type and rarity
-		var chosen_type   : int = _rng.randi_range(0, 5)  # ItemType enum has 6 values
+		var chosen_type   : int = _rng.randi_range(0, 5)
 		var chosen_rarity : int = _roll_rarity()
-
+		var item : Node2D = ITEM_SCENE.instantiate()
 		item.call("setup", chosen_type, chosen_rarity)
+		get_parent().add_child(item)
 		item.call("pop_from", position, land_pos)
 
 func _roll_rarity() -> int:

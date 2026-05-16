@@ -18,7 +18,7 @@ const XP_PER_DAMAGE : int = 1
 const XP_KILL_BONUS : int = 25
 
 const CHEST_SCENE        : PackedScene = preload("res://scenes/chest.tscn")
-const DROP_CHANCE_COMMON : float       = 1.00
+const DROP_CHANCE_COMMON : float       = 0.20
 const DROP_CHANCE_RARE   : float       = 0.08
 const DROP_CHANCE_EPIC   : float       = 0.03
 
@@ -285,8 +285,8 @@ func _try_drop_chest(drop_pos: Vector2) -> void:
 	print("Spawn Chest! ", chest_type)
 	var chest : Node2D = CHEST_SCENE.instantiate()
 	chest.position = drop_pos
-	get_tree().root.add_child(chest)
 	chest.call("setup", chest_type)
+	get_tree().root.add_child(chest)
 
 # =========================================================================== #
 #  Virtual overrides

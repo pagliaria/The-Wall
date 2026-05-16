@@ -247,7 +247,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click"]
-size = Vector2(106, 77)
+size = Vector2(64, 47)
 
 [node name="Chest" type="Node2D"]
 z_index = 10
@@ -255,8 +255,8 @@ script = ExtResource("1_s2tek")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 z_index = 3
-position = Vector2(26, -19)
-scale = Vector2(3, 3)
+position = Vector2(15, -16)
+scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_sysaw")
 animation = &"common_closed"
 
@@ -264,5 +264,5 @@ animation = &"common_closed"
 z_index = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ClickArea"]
-position = Vector2(13, -10.5)
+position = Vector2(-1, -5.5)
 shape = SubResource("RectangleShape2D_click")
