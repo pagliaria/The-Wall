@@ -100,6 +100,47 @@ func _play_level_up_effect() -> void:
 
 var max_hp : int = 10
 var hp     : int = 10
+var _item_bonuses : Dictionary = {}
+
+func _init_item_bonuses() -> void:
+	_item_bonuses = {
+		"attack_damage":           0,
+		"attack_speed_multiplier": 1.0,
+		"move_speed_multiplier":   1.0,
+		"hp_bonus":                0,
+		"range_bonus":             0.0,
+	}
+
+func apply_item(item: Node) -> void:
+	var s : Dictionary = item.stats
+	_item_bonuses["attack_damage"]           += int(s.get("attack_damage", 0))
+	_item_bonuses["hp_bonus"]                += int(s.get("hp_bonus", 0))
+	_item_bonuses["range_bonus"]             += float(s.get("range_bonus", 0.0))
+	var spd_bonus : float = float(s.get("attack_speed_multiplier", 0.0))
+	if spd_bonus != 0.0:
+		_item_bonuses["attack_speed_multiplier"] += spd_bonus
+	var mv_bonus : float = float(s.get("move_speed_multiplier", 0.0))
+	if mv_bonus != 0.0:
+		_item_bonuses["move_speed_multiplier"] += mv_bonus
+	# Apply HP increase immediately
+	var hp_gain : int = int(s.get("hp_bonus", 0))
+	if hp_gain > 0:
+		max_hp += hp_gain
+		hp      = mini(hp + hp_gain, max_hp)
+		_update_hp_bar()
+	# Show primary stat as combat number
+	var show_val : int = 0
+	if s.has("attack_damage"): show_val = int(s["attack_damage"])
+	elif s.has("hp_bonus"):    show_val = int(s["hp_bonus"])
+	elif s.has("range_bonus"): show_val = int(s["range_bonus"])
+	else:                       show_val = 1
+	CombatNumbers.show_number(global_position, show_val, true, false)
+
+func get_item_attack_damage_bonus()     -> int:   return int(_item_bonuses.get("attack_damage", 0))
+func get_item_attack_speed_multiplier() -> float: return float(_item_bonuses.get("attack_speed_multiplier", 1.0))
+func get_item_move_speed_multiplier()   -> float: return float(_item_bonuses.get("move_speed_multiplier", 1.0))
+func get_item_range_bonus()             -> float: return float(_item_bonuses.get("range_bonus", 0.0))
+
 var _building_bonuses := {
 	"attack_damage": 0,
 	"attack_speed_multiplier": 1.0,
@@ -134,6 +175,8 @@ func _ready() -> void:
 	_spawn_pos = position
 	_badge     = LEVEL_BADGE_SCENE.instantiate()
 	add_child(_badge)
+	add_to_group("player_units")
+	_init_item_bonuses()
 	call_deferred("_on_unit_ready")
 
 func _on_unit_ready() -> void:

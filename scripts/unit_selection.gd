@@ -79,6 +79,10 @@ func _is_mouse_over_ui(event: InputEvent) -> bool:
 	return get_viewport().gui_get_hovered_control() != null
 
 func _on_lmb_down(screen_pos: Vector2) -> void:
+	# Don't start selection drag if an item is being picked up
+	for item in get_tree().get_nodes_in_group("ground_items"):
+		if item.get("_dragging") == true:
+			return
 	_pressing     = true
 	_drag_active  = false
 	_press_screen = screen_pos

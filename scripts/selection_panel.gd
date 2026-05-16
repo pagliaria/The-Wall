@@ -211,19 +211,41 @@ func _apply_stats(unit: Node, type_key: String) -> void:
 func _resolve_stat(unit: Node, stat_id: String, fallback):
 	match stat_id:
 		"attack_range":
-			if unit.has_method("get_building_range_bonus") and fallback != null:
-				return float(fallback) + unit.get_building_range_bonus()
+			if fallback == null:
+				return null
+			var range_bonus : float = 0.0
+			if unit.has_method("get_building_range_bonus"):
+				range_bonus += unit.get_building_range_bonus()
+			if unit.has_method("get_item_range_bonus"):
+				range_bonus += unit.get_item_range_bonus()
+			return float(fallback) + range_bonus
 		"attack_damage":
+			if fallback == null:
+				return null
+			var dmg_bonus : int = 0
 			if unit.has_method("get_building_attack_damage_bonus"):
-				if fallback == null:
-					return null
-				return int(fallback) + unit.get_building_attack_damage_bonus()
+				dmg_bonus += unit.get_building_attack_damage_bonus()
+			if unit.has_method("get_item_attack_damage_bonus"):
+				dmg_bonus += unit.get_item_attack_damage_bonus()
+			return int(fallback) + dmg_bonus
 		"attack_speed":
-			if unit.has_method("get_building_attack_speed_multiplier") and fallback != null:
-				return float(fallback) * unit.get_building_attack_speed_multiplier()
+			if fallback == null:
+				return null
+			var spd : float = float(fallback)
+			if unit.has_method("get_building_attack_speed_multiplier"):
+				spd *= unit.get_building_attack_speed_multiplier()
+			if unit.has_method("get_item_attack_speed_multiplier"):
+				spd *= unit.get_item_attack_speed_multiplier()
+			return spd
 		"move_speed":
-			if unit.has_method("get_building_move_speed_multiplier") and fallback != null:
-				return float(fallback) * unit.get_building_move_speed_multiplier()
+			if fallback == null:
+				return null
+			var spd : float = float(fallback)
+			if unit.has_method("get_building_move_speed_multiplier"):
+				spd *= unit.get_building_move_speed_multiplier()
+			if unit.has_method("get_item_move_speed_multiplier"):
+				spd *= unit.get_item_move_speed_multiplier()
+			return spd
 	return fallback
 
 func _format_stat_value(value) -> String:
@@ -301,6 +323,7 @@ func _process(_delta: float) -> void:
 		return
 	_apply_hp(_tracked_unit)
 	_apply_name_and_level(_tracked_unit, _unit_type(_tracked_unit))
+	_apply_stats(_tracked_unit, _unit_type(_tracked_unit))
 	_status_label.text = _get_status(_tracked_unit)
 
 # =========================================================================== #

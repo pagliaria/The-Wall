@@ -17,6 +17,11 @@ const HP_FILL_FULL_SCALE_X := 1.3
 const XP_PER_DAMAGE : int = 1
 const XP_KILL_BONUS : int = 25
 
+const CHEST_SCENE        : PackedScene = preload("res://scenes/chest.tscn")
+const DROP_CHANCE_COMMON : float       = 1.00
+const DROP_CHANCE_RARE   : float       = 0.08
+const DROP_CHANCE_EPIC   : float       = 0.03
+
 var faction : String = "enemy"
 var hp      : int    = 0
 
@@ -33,6 +38,10 @@ var _target       : Node  = null
 var _attack_timer : float = 0.0
 var _is_striking  : bool  = false
 
+const RETARGET_THRESHOLD : float = 0.70
+const CHASE_ABANDON_TIME : float = 4.0
+var _chase_timer  : float = 0.0
+
 @onready var _sprite  : AnimatedSprite2D  = $Sprite
 @onready var _nav     : NavigationAgent2D = $NavAgent
 @onready var _hp_bar  : Control           = $HpBar
@@ -41,9 +50,13 @@ var _is_striking  : bool  = false
 
 var original_mod := Color.WHITE
 
+# =========================================================================== #
+#  Lifecycle
+# =========================================================================== #
+
 func _ready() -> void:
 	_rng.randomize()
-	hp = max_hp
+	hp         = max_hp
 	_spawn_pos = position
 	original_mod = _sprite.modulate
 	call_deferred("_initial_state")
@@ -52,6 +65,10 @@ func _initial_state() -> void:
 	if _battle_ready:
 		return
 	_enter_state(State.IDLE)
+
+# =========================================================================== #
+#  Physics loop
+# =========================================================================== #
 
 func _physics_process(delta: float) -> void:
 	if _state == State.DEAD:
@@ -82,6 +99,10 @@ func _physics_process(delta: float) -> void:
 				_do_attack_tick(delta)
 				_do_attack_hit()
 
+# =========================================================================== #
+#  State machine
+# =========================================================================== #
+
 func _enter_state(new_state: State) -> void:
 	_state       = new_state
 	_state_timer = 0.0
@@ -103,10 +124,13 @@ func start_battle(player_units: Array) -> void:
 	_pick_target(player_units)
 	_enter_state(State.BATTLE)
 
+# =========================================================================== #
+#  Battle / targeting
+# =========================================================================== #
+
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
-		# Pick new target in place rather than re-entering BATTLE
 		if wave_manager != null and wave_manager.has_method("get_player_units"):
 			_pick_target(wave_manager.get_player_units())
 		if not is_instance_valid(_target):
@@ -114,13 +138,11 @@ func _do_battle(delta: float) -> void:
 			return
 	var dist : float = position.distance_to(_target.position)
 	if dist <= _get_engage_range():
-		# In range — face target, stand still
 		_sprite.flip_h = _target.position.x < position.x
 		if _sprite.animation == "run":
 			_on_enter_idle_state()
 		_enter_state(State.ATTACKING)
 		return
-	# Out of range — chase
 	_chase_timer += delta
 	if _sprite.animation != "run" and _sprite.sprite_frames.has_animation("run"):
 		_sprite.play("run")
@@ -128,13 +150,8 @@ func _do_battle(delta: float) -> void:
 	_do_nav_move(delta)
 	_move()
 
-const RETARGET_THRESHOLD : float = 0.70
-const CHASE_ABANDON_TIME : float = 4.0
-
-var _chase_timer : float = 0.0
-
 func _pick_target(units: Array) -> void:
-	_target = _best_target(units)
+	_target      = _best_target(units)
 	_chase_timer = 0.0
 
 func _best_target(candidates: Array) -> Node:
@@ -168,11 +185,15 @@ func _consider_retarget(candidates: Array) -> void:
 func update_target(player_units: Array) -> void:
 	_consider_retarget(player_units)
 
+# =========================================================================== #
+#  Navigation
+# =========================================================================== #
+
 func _do_nav_move(delta: float) -> void:
 	if _state != State.BATTLE and _nav.is_navigation_finished():
 		_apply_separation(delta)
 		return
-	var next := _nav.get_next_path_position()
+	var next : Vector2 = _nav.get_next_path_position()
 	var dir  : Vector2
 	if next.distance_to(position) < 2.0 and _target != null and is_instance_valid(_target):
 		dir = position.direction_to(_target.position)
@@ -193,13 +214,16 @@ func _apply_separation(delta: float) -> void:
 		if sibling == self or not sibling is CharacterBody2D:
 			continue
 		var diff : Vector2 = position - sibling.position
-		var dist := diff.length()
+		var dist : float   = diff.length()
 		if dist > 0.0 and dist < SEPARATION_RADIUS:
 			sep += diff.normalized() * (SEPARATION_RADIUS - dist)
 	if sep != Vector2.ZERO:
 		move_and_collide(sep.normalized() * SEPARATION_FORCE * delta)
 
-# attacker: the player unit that hit this enemy — receives XP
+# =========================================================================== #
+#  Damage / death
+# =========================================================================== #
+
 func take_damage(amount: int, attacker: Node = null) -> void:
 	flash_red()
 	if _state == State.DEAD:
@@ -218,47 +242,68 @@ func take_damage(amount: int, attacker: Node = null) -> void:
 func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
 		return
-	var ratio        := clampf(float(hp) / float(max_hp), 0.0, 1.0)
-	_hp_bar.visible   = ratio < 1.0
-	_hp_fill.scale.x  = HP_FILL_FULL_SCALE_X * ratio
+	var ratio       : float = clampf(float(hp) / float(max_hp), 0.0, 1.0)
+	_hp_bar.visible  = ratio < 1.0
+	_hp_fill.scale.x = HP_FILL_FULL_SCALE_X * ratio
+
+func _on_enter_dead_state() -> void:
+	var drop_pos : Vector2 = position
+	if _sprite.sprite_frames.has_animation("death"):
+		_sprite.play("death")
+		await _sprite.animation_finished
+	_try_drop_chest(drop_pos)
+	die()
 
 func die() -> void:
 	_state = State.DEAD
 	emit_signal("died")
 	queue_free()
 
-func _on_enter_dead_state() -> void:
-	if _sprite.sprite_frames.has_animation("death"):
-		_sprite.play("death")
-		await _sprite.animation_finished
-		die()
-	else:
-		die()
-
 func flash_red() -> void:
-	_sprite.modulate  = Color.RED
+	_sprite.modulate = Color.RED
 	await get_tree().create_timer(0.1).timeout
-	_sprite.modulate  = original_mod
-	
-	# should not heppen but if sprite gets stuck red this will at least put it back to a default state
-	if _sprite.modulate  == Color.RED:
-		_sprite.modulate  = Color.WHITE
-		
+	if is_instance_valid(self):
+		_sprite.modulate = original_mod
 
-func _move()                -> void: pass
-func _get_engage_range()    -> float: return 48.0
-func _get_disengage_range() -> float: return _get_engage_range() * 1.6
-func _get_attack_rate()     -> float: return 1.2
+# =========================================================================== #
+#  Chest drops
+# =========================================================================== #
+
+func _try_drop_chest(drop_pos: Vector2) -> void:
+	var rng        := RandomNumberGenerator.new()
+	rng.randomize()
+	var roll       : float = rng.randf()
+	var chest_type : int   = -1
+	if roll < DROP_CHANCE_EPIC:
+		chest_type = 2
+	elif roll < DROP_CHANCE_RARE:
+		chest_type = 1
+	elif roll < DROP_CHANCE_COMMON:
+		chest_type = 0
+	if chest_type == -1:
+		return
+	print("Spawn Chest! ", chest_type)
+	var chest : Node2D = CHEST_SCENE.instantiate()
+	chest.position = drop_pos
+	get_tree().root.add_child(chest)
+	chest.call("setup", chest_type)
+
+# =========================================================================== #
+#  Virtual overrides
+# =========================================================================== #
+
+func _move()                      -> void:  pass
+func _get_engage_range()          -> float: return 48.0
+func _get_disengage_range()       -> float: return _get_engage_range() * 1.6
+func _get_attack_rate()           -> float: return 1.2
+func _get_attack_sound()          -> String: return "enemy_attack"
 func _do_attack_tick(_delta: float) -> void: pass
 func _do_attacking_move(_delta: float) -> void: pass
 
 func _do_attack_hit() -> void:
 	if is_instance_valid(_target):
 		CombatAudio.play(_get_attack_sound())
-		_target.take_damage(4)   # no attacker — player units don't grant XP when hit
-
-func _get_attack_sound() -> String:
-	return "enemy_attack"
+		_target.take_damage(4)
 
 func _on_enter_idle_state() -> void:
 	if _sprite.sprite_frames.has_animation("idle"):
