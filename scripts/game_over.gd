@@ -17,8 +17,7 @@ func _on_restart() -> void:
 	get_tree().reload_current_scene()
 
 func _on_menu() -> void:
-	# Main menu not yet built — placeholder reloads game
-	get_tree().reload_current_scene()
+	get_tree().change_scene_to_file("res://scenes/title_screen.tscn")
 
 func _on_exit() -> void:
 	get_tree().quit()

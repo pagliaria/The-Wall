@@ -1,0 +1,189 @@
+[gd_scene load_steps=7 format=3 uid="uid://cj5xkjpkoyfjd"]
+
+[ext_resource type="Script" uid="uid://6ramhtnb4ww1" path="res://scripts/title_screen.gd" id="1_title"]
+[ext_resource type="Texture2D" uid="uid://endkpu60uge8" path="res://assets/images/wall_warriors_high_res.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://v8obx710aekl" path="res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png" id="4_blue_reg"]
+[ext_resource type="FontFile" uid="uid://h8mcpmdp27jb" path="res://assets/fonts/Cardo-Italic.ttf" id="4_e54dn"]
+[ext_resource type="Texture2D" uid="uid://bv6qq5jguh6yv" path="res://assets/UI Elements/UI Elements/Buttons/BigRedButton_Regular.png" id="6_red_reg"]
+[ext_resource type="PackedScene" uid="uid://b1fea6knbgvwi" path="res://scenes/settings_screen.tscn" id="7_settings"]
+
+[node name="TitleScreen" type="Node"]
+script = ExtResource("1_title")
+
+[node name="BG" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Vignette" type="ColorRect" parent="BG"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.28)
+
+[node name="ButtonRow" type="HBoxContainer" parent="BG"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -460.0
+offset_top = -110.0
+offset_right = 460.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="StartBtn" type="NinePatchRect" parent="BG/ButtonRow"]
+custom_minimum_size = Vector2(220, 64)
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("6_red_reg")
+region_rect = Rect2(30, 35, 260, 255)
+patch_margin_left = 18
+patch_margin_top = 14
+patch_margin_right = 18
+patch_margin_bottom = 14
+
+[node name="Label" type="Label" parent="BG/ButtonRow/StartBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.5, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("4_e54dn")
+theme_override_font_sizes/font_size = 26
+text = "Start"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ContinueBtn" type="NinePatchRect" parent="BG/ButtonRow"]
+custom_minimum_size = Vector2(190, 64)
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("4_blue_reg")
+region_rect = Rect2(30, 35, 260, 255)
+patch_margin_left = 16
+patch_margin_top = 12
+patch_margin_right = 16
+patch_margin_bottom = 12
+
+[node name="Label" type="Label" parent="BG/ButtonRow/ContinueBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.95, 0.9, 0.75, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("4_e54dn")
+theme_override_font_sizes/font_size = 22
+text = "Continue"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="OptionsBtn" type="NinePatchRect" parent="BG/ButtonRow"]
+custom_minimum_size = Vector2(180, 64)
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("4_blue_reg")
+region_rect = Rect2(30, 35, 260, 255)
+patch_margin_left = 16
+patch_margin_top = 12
+patch_margin_right = 16
+patch_margin_bottom = 12
+
+[node name="Label" type="Label" parent="BG/ButtonRow/OptionsBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.95, 0.9, 0.75, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("4_e54dn")
+theme_override_font_sizes/font_size = 22
+text = "Options"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CreditsBtn" type="NinePatchRect" parent="BG/ButtonRow"]
+custom_minimum_size = Vector2(180, 64)
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("4_blue_reg")
+region_rect = Rect2(30, 35, 260, 255)
+patch_margin_left = 16
+patch_margin_top = 12
+patch_margin_right = 16
+patch_margin_bottom = 12
+
+[node name="Label" type="Label" parent="BG/ButtonRow/CreditsBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.95, 0.9, 0.75, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("4_e54dn")
+theme_override_font_sizes/font_size = 22
+text = "Credits"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExitBtn" type="NinePatchRect" parent="BG/ButtonRow"]
+custom_minimum_size = Vector2(160, 64)
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("6_red_reg")
+region_rect = Rect2(30, 35, 260, 255)
+patch_margin_left = 18
+patch_margin_top = 14
+patch_margin_right = 18
+patch_margin_bottom = 14
+
+[node name="Label" type="Label" parent="BG/ButtonRow/ExitBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.5, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("4_e54dn")
+theme_override_font_sizes/font_size = 22
+text = "Exit"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SettingsScreen" parent="." instance=ExtResource("7_settings")]
+visible = false

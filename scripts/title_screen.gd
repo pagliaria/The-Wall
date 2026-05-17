@@ -1,0 +1,50 @@
+extends Node
+
+# title_screen.gd
+
+@onready var _start_btn       : NinePatchRect = $BG/ButtonRow/StartBtn
+@onready var _continue_btn    : NinePatchRect = $BG/ButtonRow/ContinueBtn
+@onready var _options_btn     : NinePatchRect = $BG/ButtonRow/OptionsBtn
+@onready var _credits_btn     : NinePatchRect = $BG/ButtonRow/CreditsBtn
+@onready var _exit_btn        : NinePatchRect = $BG/ButtonRow/ExitBtn
+@onready var _settings_screen : Node          = $SettingsScreen
+
+func _ready() -> void:
+	_start_btn.gui_input.connect(_on_btn_input.bind("start"))
+	_continue_btn.gui_input.connect(_on_btn_input.bind("continue"))
+	_options_btn.gui_input.connect(_on_btn_input.bind("options"))
+	_credits_btn.gui_input.connect(_on_btn_input.bind("credits"))
+	_exit_btn.gui_input.connect(_on_btn_input.bind("exit"))
+	# Relabel Resume -> Close since there's nothing to resume on title screen
+	var resume_btn : Button = _settings_screen.get_node_or_null("Panel/MarginContainer/VBox/Buttons/BtnResume")
+	if resume_btn != null:
+		resume_btn.text = "Close"
+	_settings_screen.closed.connect(func() -> void: _settings_screen.visible = false)
+	_update_continue_visibility()
+
+func _update_continue_visibility() -> void:
+	var has_save : bool = FileAccess.file_exists("user://savegame.dat")
+	_continue_btn.modulate.a   = 1.0 if has_save else 0.45
+	_continue_btn.mouse_filter = Control.MOUSE_FILTER_STOP if has_save else Control.MOUSE_FILTER_IGNORE
+
+func _on_btn_input(event: InputEvent, btn_id: String) -> void:
+	if event is InputEventMouseButton \
+			and event.button_index == MOUSE_BUTTON_LEFT \
+			and event.pressed:
+		UiAudio.play()
+		match btn_id:
+			"start":    _on_start()
+			"continue": _on_continue()
+			"options":  _on_options()
+			"credits":  pass
+			"exit":     get_tree().quit()
+
+func _on_start() -> void:
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+func _on_continue() -> void:
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+func _on_options() -> void:
+	# Settings open() pauses via time_scale — on title that's fine, nothing is running
+	_settings_screen.open()
