@@ -45,9 +45,10 @@ var _castle_placed := false
 @onready var selection_panel  : CanvasLayer        = $HUD/SelectionPanel
 @onready var building_upgrade_panel : CanvasLayer  = $HUD/BuildingUpgradePanel
 
-var _castle_prompt : CanvasLayer = null
-var _wave_manager  : Node        = null
+var _castle_prompt    : CanvasLayer = null
+var _wave_manager     : Node        = null
 var _opening_building_panel := false
+var _selected_building : Node       = null
 
 func _ready() -> void:
 	_fit_camera_to_screen()
@@ -315,9 +316,17 @@ func _on_building_clicked(_building: Node) -> void:
 func _show_building_upgrades(building: Node) -> void:
 	if building == null or not is_instance_valid(building):
 		return
+	# Deselect previous
+	if _selected_building != null and is_instance_valid(_selected_building):
+		_selected_building.set_selected(false)
+	_selected_building = building
+	building.set_selected(true)
 	building_upgrade_panel.show_building(building)
 
 func _clear_building_selection() -> void:
+	if _selected_building != null and is_instance_valid(_selected_building):
+		_selected_building.set_selected(false)
+		_selected_building = null
 	if building_upgrade_panel != null and building_upgrade_panel.has_method("hide_panel"):
 		building_upgrade_panel.hide_panel()
 

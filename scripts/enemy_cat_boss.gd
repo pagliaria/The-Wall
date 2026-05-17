@@ -82,6 +82,8 @@ func _play_attack_anim_and_fire() -> void:
 		var shoot_time = total_duration / 2.0
 	
 		await get_tree().create_timer(shoot_time).timeout
+		if not is_instance_valid(_target) or _target.hp <= 0:
+			return
 		CombatAudio.play("enemy_cat_nade")
 		_target.take_damage(nade_damage)
 		await _sprite.animation_finished
@@ -102,4 +104,7 @@ func _play_attack_anim_and_fire() -> void:
 
 
 func _on_gun_timer_timeout() -> void:
+	if not is_instance_valid(_target) or _target.hp <= 0:
+		gun_timer.stop()
+		return
 	_target.take_damage(range_damage)

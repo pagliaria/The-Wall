@@ -512,6 +512,72 @@ func _make_dust_gradient() -> Gradient:
 	g.offsets = PackedFloat32Array([0.0, 1.0])
 	return g
 
+# =========================================================================== #
+#  Selection indicator
+# =========================================================================== #
+
+var _selection_node : Node2D = null
+
+func set_selected(on: bool) -> void:
+	if on and _selection_node == null:
+		_selection_node = Node2D.new()
+		_selection_node.z_index = 20
+		_selection_node.set_script(null)
+		add_child(_selection_node)
+		# Store tex_size so draw can use it
+		var sprite : Sprite2D = get_node_or_null("Sprite2D") as Sprite2D
+		var size   : Vector2  = sprite.texture.get_size() if sprite and sprite.texture else Vector2(128, 128)
+		_selection_node.set_meta("half", size * 0.5)
+		_selection_node.draw.connect(_draw_selection_brackets.bind(_selection_node))
+		_selection_node.queue_redraw()
+		_animate_selection_pulse()
+	elif not on and _selection_node != null:
+		_selection_node.queue_free()
+		_selection_node = null
+
+func _draw_selection_brackets(node: Node2D) -> void:
+	var half   : Vector2 = node.get_meta("half", Vector2(64, 64))
+	var corner : float   = minf(half.x, half.y) * 0.35
+	var pad    : float   = 8.0
+	var tl     : Vector2 = Vector2(-half.x - pad, -half.y - pad)
+	var tr     : Vector2 = Vector2( half.x + pad, -half.y - pad)
+	var bl     : Vector2 = Vector2(-half.x - pad,  half.y + pad)
+	var br     : Vector2 = Vector2( half.x + pad,  half.y + pad)
+	var col    : Color   = Color(1.0, 0.85, 0.3, node.get_meta("alpha", 1.0))
+	var w      : float   = 3.0
+	# Top-left
+	node.draw_line(tl, tl + Vector2(corner, 0),  col, w)
+	node.draw_line(tl, tl + Vector2(0, corner),  col, w)
+	# Top-right
+	node.draw_line(tr, tr + Vector2(-corner, 0), col, w)
+	node.draw_line(tr, tr + Vector2(0, corner),  col, w)
+	# Bottom-left
+	node.draw_line(bl, bl + Vector2(corner, 0),  col, w)
+	node.draw_line(bl, bl + Vector2(0, -corner), col, w)
+	# Bottom-right
+	node.draw_line(br, br + Vector2(-corner, 0), col, w)
+	node.draw_line(br, br + Vector2(0, -corner), col, w)
+
+func _animate_selection_pulse() -> void:
+	if _selection_node == null:
+		return
+	_selection_node.set_meta("alpha", 1.0)
+	var tw := create_tween().set_loops()
+	tw.tween_method(func(a: float) -> void:
+		if is_instance_valid(_selection_node):
+			_selection_node.set_meta("alpha", a)
+			_selection_node.queue_redraw()
+		else:
+			tw.stop()
+	, 1.0, 0.4, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_method(func(a: float) -> void:
+		if is_instance_valid(_selection_node):
+			_selection_node.set_meta("alpha", a)
+			_selection_node.queue_redraw()
+		else:
+			tw.stop()
+	, 0.4, 1.0, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
 func _tile_center(tile: Vector2i) -> Vector2:
 	return Vector2(
 		tile.x * TILE_SIZE + TILE_SIZE * 0.5,
