@@ -30,6 +30,14 @@ var _gather_cursor_active : bool = false
 var current_formation : int = FormationManager.Formation.LINE
 var current_spacing   : int = FormationManager.Spacing.NORMAL
 
+# RMB formation drag state
+var _rmb_down         : bool    = false
+var _rmb_drag_active  : bool    = false
+var _rmb_press_screen : Vector2 = Vector2.ZERO
+var _rmb_anchor_world : Vector2 = Vector2.ZERO
+var _rmb_live_units   : Array   = []
+var _rmb_slots        : Array   = []
+
 # Injected by main.gd
 var units_layer     : Node2D   = null
 var camera          : Camera2D = null
@@ -56,14 +64,11 @@ func _input(event: InputEvent) -> void:
 			else:
 				_on_lmb_up(event.position, event.shift_pressed)
 
-		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			if selected_units.size() > 0:
-				var world_pos := _screen_to_world(event.position)
-				var resource  := _resource_at(world_pos)
-				if resource != null:
-					_issue_gather_order(resource, event.position)
-				else:
-					_issue_move_order(event.position)
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			if event.pressed:
+				_on_rmb_down(event.position)
+			else:
+				_on_rmb_up(event.position)
 
 	elif event is InputEventMouseMotion:
 		if _pressing:
@@ -71,6 +76,9 @@ func _input(event: InputEvent) -> void:
 			if event.position.distance_to(_press_screen) >= DRAG_THRESHOLD:
 				_drag_active = true
 			_get_overlay().queue_redraw()
+		if _rmb_down and event.position.distance_to(_rmb_press_screen) >= DRAG_THRESHOLD:
+			_rmb_drag_active = true
+			_on_rmb_drag(event.position)
 		_update_cursor(event.position)
 
 func _is_mouse_over_ui(event: InputEvent) -> bool:
@@ -87,6 +95,56 @@ func _on_lmb_down(screen_pos: Vector2) -> void:
 	_drag_active  = false
 	_press_screen = screen_pos
 	_drag_end     = screen_pos
+
+func _on_rmb_down(screen_pos: Vector2) -> void:
+	if selected_units.is_empty():
+		return
+	_rmb_down         = true
+	_rmb_drag_active  = false
+	_rmb_press_screen = screen_pos
+	_rmb_anchor_world = _screen_to_world(screen_pos)
+	_rmb_live_units   = selected_units.filter(
+		func(u): return is_instance_valid(u) and not _is_in_battle(u)
+	)
+	_rmb_slots = []
+
+func _on_rmb_drag(screen_pos: Vector2) -> void:
+	if _rmb_live_units.is_empty():
+		return
+	var mouse_world : Vector2 = _screen_to_world(screen_pos)
+	var dir : Vector2 = (mouse_world - _rmb_anchor_world).normalized()
+	if dir == Vector2.ZERO:
+		dir = Vector2(0, -1)
+	_rmb_slots = FormationManager.get_slots(
+		_rmb_live_units, _rmb_anchor_world, dir,
+		current_formation, current_spacing
+	)
+	if _rmb_live_units.size() > 1:
+		_get_overlay().show_formation_markers(_rmb_slots)
+	_get_overlay().show_formation_drag(_rmb_press_screen, screen_pos)
+	_get_overlay().queue_redraw()
+
+func _on_rmb_up(screen_pos: Vector2) -> void:
+	if not _rmb_down:
+		return
+	_rmb_down = false
+	_get_overlay().hide_formation_drag()
+	if _rmb_drag_active:
+		# Commit the formation drag
+		_rmb_drag_active = false
+		if not _rmb_live_units.is_empty() and not _rmb_slots.is_empty():
+			for i in _rmb_live_units.size():
+				_rmb_live_units[i].move_to(_rmb_slots[i])
+			_get_overlay().show_ping(screen_pos)
+	else:
+		# Plain click — original behaviour
+		if selected_units.size() > 0:
+			var world_pos : Vector2 = _screen_to_world(screen_pos)
+			var resource  : Node    = _resource_at(world_pos)
+			if resource != null:
+				_issue_gather_order(resource, screen_pos)
+			else:
+				_issue_move_order(screen_pos)
 
 func _on_lmb_up(screen_pos: Vector2, additive: bool) -> void:
 	if not _pressing:

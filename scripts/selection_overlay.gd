@@ -30,7 +30,21 @@ func show_formation_markers(world_slots: Array) -> void:
 	_marker_active  = true
 	set_process(true)
 
-# ── Called by unit_selection.gd when a move order is issued ──────────────────
+# ── Formation drag preview ─────────────────────────────────────────────────
+var _drag_anchor_screen : Vector2 = Vector2.ZERO
+var _drag_mouse_screen  : Vector2 = Vector2.ZERO
+var _drag_active        : bool    = false
+
+func show_formation_drag(anchor: Vector2, mouse: Vector2) -> void:
+	_drag_anchor_screen = anchor
+	_drag_mouse_screen  = mouse
+	_drag_active        = true
+	set_process(true)
+	queue_redraw()
+
+func hide_formation_drag() -> void:
+	_drag_active = false
+	queue_redraw()
 func show_ping(screen_pos: Vector2) -> void:
 	_ping_screen  = screen_pos
 	_ping_elapsed = 0.0
@@ -55,7 +69,7 @@ func _process(delta: float) -> void:
 			_marker_slots  = []
 		else:
 			any_active = true
-	if not any_active:
+	if not any_active and not _drag_active:
 		set_process(false)
 	queue_redraw()
 
@@ -67,6 +81,26 @@ func _draw() -> void:
 		_draw_ping()
 	if _marker_active:
 		_draw_formation_markers()
+	if _drag_active:
+		_draw_formation_drag()
+
+func _draw_formation_drag() -> void:
+	var col  : Color = Color(1.0, 0.85, 0.3, 0.8)
+	var dir  : Vector2 = (_drag_mouse_screen - _drag_anchor_screen)
+	var len  : float   = dir.length()
+	if len < 4.0:
+		return
+	# Main line
+	draw_line(_drag_anchor_screen, _drag_mouse_screen, col, 2.0)
+	# Arrowhead
+	var tip   : Vector2 = _drag_mouse_screen
+	var norm  : Vector2 = dir.normalized()
+	var perp  : Vector2 = Vector2(-norm.y, norm.x)
+	var arrow : float   = 12.0
+	draw_line(tip, tip - norm * arrow + perp * arrow * 0.5, col, 2.0)
+	draw_line(tip, tip - norm * arrow - perp * arrow * 0.5, col, 2.0)
+	# Dot at anchor
+	draw_circle(_drag_anchor_screen, 5.0, col)
 
 func _draw_formation_markers() -> void:
 	var canvas_xform : Transform2D = get_viewport().get_canvas_transform()
