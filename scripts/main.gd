@@ -126,6 +126,7 @@ func _on_wave_countdown_changed(seconds: float) -> void:
 func _on_wave_started(wave_number: int) -> void:
 	hud.set_wave_active(wave_number)
 	hud.hide_rush_button()
+	unit_selection.deselect_battling_units()
 	UiAudio.play_trimmed("deep_thumps", 0.0, 1.0)
 	_clear_building_selection()
 	unit_selection.clear_selection()

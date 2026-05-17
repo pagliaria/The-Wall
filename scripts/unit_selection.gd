@@ -102,6 +102,12 @@ func _on_lmb_up(screen_pos: Vector2, additive: bool) -> void:
 
 # -- Orders -------------------------------------------------------------------
 
+func _is_in_battle(unit: Node) -> bool:
+	if not is_instance_valid(unit):
+		return false
+	var target = unit.get("_target")
+	return target != null and is_instance_valid(target)
+
 func _issue_gather_order(resource_node: Node, screen_pos: Vector2) -> void:
 	for unit in selected_units:
 		if is_instance_valid(unit) and unit.has_method("gather_resource"):
@@ -116,7 +122,9 @@ func contains_pawns() -> bool:
 
 func _issue_move_order(screen_pos: Vector2) -> void:
 	var world_target : Vector2 = _screen_to_world(screen_pos)
-	var live_units   : Array   = selected_units.filter(func(u): return is_instance_valid(u))
+	var live_units   : Array   = selected_units.filter(
+		func(u): return is_instance_valid(u) and not _is_in_battle(u)
+	)
 	if live_units.is_empty():
 		return
 	# Compute move direction from group centroid to target
@@ -187,6 +195,8 @@ func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 		for unit in units_layer.get_children():
 			if not unit.has_method("set_selected"):
 				continue
+			if _is_in_battle(unit):
+				continue
 			if unit.position.distance_to(world_pos) <= 32.0:
 				hit = unit
 				break
@@ -205,6 +215,8 @@ func _do_box_select(additive: bool) -> void:
 	if units_layer:
 		for unit in units_layer.get_children():
 			if not unit.has_method("set_selected"):
+				continue
+			if _is_in_battle(unit):
 				continue
 			if rect_screen.has_point(_world_to_screen(unit.position)):
 				_select_unit(unit)
@@ -233,6 +245,11 @@ func _deselect_all() -> void:
 
 func clear_selection() -> void:
 	_deselect_all()
+
+func deselect_battling_units() -> void:
+	var to_deselect : Array = selected_units.filter(func(u): return _is_in_battle(u))
+	for unit in to_deselect:
+		_deselect_unit(unit)
 
 func _on_unit_died(unit: Node) -> void:
 	selected_units.erase(unit)
