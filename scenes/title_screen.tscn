@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://cj5xkjpkoyfjd"]
 
 [ext_resource type="Script" uid="uid://6ramhtnb4ww1" path="res://scripts/title_screen.gd" id="1_title"]
-[ext_resource type="Texture2D" uid="uid://endkpu60uge8" path="res://assets/images/wall_warriors_high_res.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://thka3lwwjic5" path="res://assets/images/wall_warriors_high_res_art_style.png" id="2_e54dn"]
 [ext_resource type="Texture2D" uid="uid://v8obx710aekl" path="res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png" id="4_blue_reg"]
 [ext_resource type="FontFile" uid="uid://h8mcpmdp27jb" path="res://assets/fonts/Cardo-Italic.ttf" id="4_e54dn"]
 [ext_resource type="Texture2D" uid="uid://bv6qq5jguh6yv" path="res://assets/UI Elements/UI Elements/Buttons/BigRedButton_Regular.png" id="6_red_reg"]
@@ -16,7 +16,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("2_bg")
+texture = ExtResource("2_e54dn")
 expand_mode = 1
 stretch_mode = 6
 
@@ -50,7 +50,7 @@ custom_minimum_size = Vector2(220, 64)
 layout_mode = 2
 mouse_filter = 0
 texture = ExtResource("6_red_reg")
-region_rect = Rect2(80.4092, 78.4332, 158.053, 163.698)
+region_rect = Rect2(80.4092, 78.4332, 158.053, 154.102)
 patch_margin_left = 18
 patch_margin_top = 14
 patch_margin_right = 18
@@ -78,7 +78,7 @@ custom_minimum_size = Vector2(190, 64)
 layout_mode = 2
 mouse_filter = 0
 texture = ExtResource("4_blue_reg")
-region_rect = Rect2(81.5382, 79.5621, 155.795, 161.44)
+region_rect = Rect2(81.5382, 79.5621, 155.795, 152.973)
 patch_margin_left = 16
 patch_margin_top = 12
 patch_margin_right = 16
@@ -106,7 +106,7 @@ custom_minimum_size = Vector2(180, 64)
 layout_mode = 2
 mouse_filter = 0
 texture = ExtResource("4_blue_reg")
-region_rect = Rect2(83.2316, 81.2555, 153.537, 159.746)
+region_rect = Rect2(83, 81, 154, 150.406)
 patch_margin_left = 16
 patch_margin_top = 12
 patch_margin_right = 16
@@ -134,7 +134,7 @@ custom_minimum_size = Vector2(180, 64)
 layout_mode = 2
 mouse_filter = 0
 texture = ExtResource("4_blue_reg")
-region_rect = Rect2(82.1026, 80.6911, 154.102, 158.617)
+region_rect = Rect2(83, 81, 154, 150.97)
 patch_margin_left = 16
 patch_margin_top = 12
 patch_margin_right = 16
@@ -162,7 +162,7 @@ custom_minimum_size = Vector2(160, 64)
 layout_mode = 2
 mouse_filter = 0
 texture = ExtResource("6_red_reg")
-region_rect = Rect2(83.2316, 80.1266, 153.537, 160.311)
+region_rect = Rect2(83.2316, 80.1266, 153.537, 151.844)
 patch_margin_left = 18
 patch_margin_top = 14
 patch_margin_right = 18
