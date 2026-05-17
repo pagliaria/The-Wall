@@ -171,10 +171,12 @@ func _do_shoot() -> void:
 		_shooting = false
 		return
 	_sprite.flip_h = _target.position.x < position.x
+	var frames   : int   = _sprite.sprite_frames.get_frame_count("shoot")
+	var fps      : float = _sprite.sprite_frames.get_animation_speed("shoot")
+	var anim_dur : float = frames / fps
+	_sprite.speed_scale = maxf(1.0, anim_dur / _get_attack_rate())
 	_sprite.play("shoot")
-	var frames   := _sprite.sprite_frames.get_frame_count("shoot")
-	var fps      := _sprite.sprite_frames.get_animation_speed("shoot")
-	var half_dur := (frames / fps) * 0.5
+	var half_dur : float = (anim_dur / _sprite.speed_scale) * 0.5
 	await get_tree().create_timer(half_dur).timeout
 	_spawn_arrow()
 
@@ -189,6 +191,7 @@ func _spawn_arrow() -> void:
 	_shooting     = false
 	_attack_timer = _get_attack_rate()
 	await _sprite.animation_finished
+	_sprite.speed_scale = 1.0
 	_sprite.play("idle")
 
 func _pick_target(enemies: Array) -> void:

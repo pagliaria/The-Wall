@@ -79,10 +79,15 @@ func _process_state(delta: float) -> void:
 			if _attack_timer <= 0.0:
 				_is_striking  = true
 				_attack_timer = _get_attack_rate()
-				var dir  : Vector2 = _target.position - position
-				var anim := _pick_attack_anim(dir)
+				var dir       : Vector2 = _target.position - position
+				var anim      : String  = _pick_attack_anim(dir)
+				var frames    : int     = _sprite.sprite_frames.get_frame_count(anim)
+				var fps       : float   = _sprite.sprite_frames.get_animation_speed(anim)
+				var anim_dur  : float   = frames / fps
+				_sprite.speed_scale = maxf(1.0, anim_dur / _get_attack_rate())
 				_sprite.play(anim)
 				await _sprite.animation_finished
+				_sprite.speed_scale = 1.0
 				if is_instance_valid(_target) and _target.hp > 0:
 					_target.take_damage(_get_attack_damage(), self)
 				_sprite.play("idle")
