@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://cj5xkjpkoyfjd"]
 
 [ext_resource type="Script" uid="uid://6ramhtnb4ww1" path="res://scripts/title_screen.gd" id="1_title"]
-[ext_resource type="Texture2D" uid="uid://thka3lwwjic5" path="res://assets/images/wall_warriors_high_res_art_style.png" id="2_e54dn"]
+[ext_resource type="Texture2D" uid="uid://du3tn6qnp4ttt" path="res://assets/images/wall_warriors_high_res_backing_fixed.png" id="2_e54dn"]
 [ext_resource type="Texture2D" uid="uid://v8obx710aekl" path="res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png" id="4_blue_reg"]
 [ext_resource type="FontFile" uid="uid://h8mcpmdp27jb" path="res://assets/fonts/Cardo-Italic.ttf" id="4_e54dn"]
 [ext_resource type="Texture2D" uid="uid://bv6qq5jguh6yv" path="res://assets/UI Elements/UI Elements/Buttons/BigRedButton_Regular.png" id="6_red_reg"]
