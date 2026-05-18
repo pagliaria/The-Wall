@@ -20,7 +20,7 @@ const BATTLEFIELD_MID   = 640.0
 const BATTLEFIELD_RIGHT = 1280.0
 
 const WAVE_COMPOSITIONS : Array = [
-	[{ "path": "res://scenes/enemy_witch_doctor.tscn", "count": 1 }],
+	#[{ "path": "res://scenes/enemy_witch_doctor.tscn", "count": 1 }],
 	# Wave 1
 	[{ "path": "res://scenes/enemy_slime.tscn", "count": 2 },
 	{ "path": "res://scenes/enemy_warrior.tscn", "count": 2 },
@@ -36,6 +36,9 @@ const WAVE_COMPOSITIONS : Array = [
 	# Wave 4 BOSS
 	[{ "path": "res://scenes/enemy_cat_boss.tscn", "count": 1 },
 	{ "path": "res://scenes/enemy_boar.tscn", "count": 3 }],
+	# Wave 5
+	[{ "path": "res://scenes/enemy_witch_doctor.tscn", "count": 1 },
+	{ "path": "res://scenes/enemy_badger.tscn", "count": 5 }],
 ]
 const LATE_WAVE_SCALE : float = 1.5
 

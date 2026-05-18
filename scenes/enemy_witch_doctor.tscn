@@ -301,10 +301,10 @@ radius = 64.0
 visible = false
 layout_mode = 3
 anchors_preset = 0
-offset_left = -8.0
-offset_top = -42.0
-offset_right = 32.0
-offset_bottom = -2.0
+offset_left = -2.0
+offset_top = -68.0
+offset_right = 38.0
+offset_bottom = -28.0
 scale = Vector2(0.75, 0.75)
 
 [node name="left" type="TextureRect" parent="HpBar"]
