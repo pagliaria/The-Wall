@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dfqrqlv26iy82"
-path="res://.godot/imported/skeleton_idle.png-1e5300bb1f3b30da2073c4809138595e.ctex"
+uid="uid://btoqsyxc4g00m"
+path="res://.godot/imported/Die3.png-bf61c9f23261467734ee80f98c113a5b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Enemies/skeleton/skeleton_idle.png"
-dest_files=["res://.godot/imported/skeleton_idle.png-1e5300bb1f3b30da2073c4809138595e.ctex"]
+source_file="res://assets/Enemies/witch_doc/Die3.png"
+dest_files=["res://.godot/imported/Die3.png-bf61c9f23261467734ee80f98c113a5b.ctex"]
 
 [params]
 

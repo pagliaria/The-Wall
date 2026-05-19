@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cx3270omxax1e"
-path="res://.godot/imported/Witch_Doctor_Idle.png-4207f25e8aad32f94c24892bb3edb6bf.ctex"
+uid="uid://dpp3o6hbhvw08"
+path="res://.godot/imported/Attack.png-1dcbda0cf4bea4212d06db63976da1e6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Enemies/witch_doc/Witch_Doctor_Idle.png"
-dest_files=["res://.godot/imported/Witch_Doctor_Idle.png-4207f25e8aad32f94c24892bb3edb6bf.ctex"]
+source_file="res://assets/Enemies/witch_doc/Attack.png"
+dest_files=["res://.godot/imported/Attack.png-1dcbda0cf4bea4212d06db63976da1e6.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxlk72ngjnefp"
-path="res://.godot/imported/Witch_Doctor_Move.png-f559735619fc7aaedbc61ebefd3a9c5e.ctex"
+uid="uid://bly8ymj30ip6c"
+path="res://.godot/imported/walk1.png-8b08737b0d1019540cafbc8851198074.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Enemies/witch_doc/Witch_Doctor_Move.png"
-dest_files=["res://.godot/imported/Witch_Doctor_Move.png-f559735619fc7aaedbc61ebefd3a9c5e.ctex"]
+source_file="res://assets/Enemies/witch_doc/walk1.png"
+dest_files=["res://.godot/imported/walk1.png-8b08737b0d1019540cafbc8851198074.ctex"]
 
 [params]
 

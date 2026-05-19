@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bnbdkeyh0ftry"
-path="res://.godot/imported/Witch_Doctor_Skill.png-3d6e8fbdf9bf9f5517e71a6ba247b0bf.ctex"
+uid="uid://du5craelj567w"
+path="res://.godot/imported/Special attack spritesheet copy.png-039219f81dfe4e682ba1c1cf51110eea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Enemies/witch_doc/Witch_Doctor_Skill.png"
-dest_files=["res://.godot/imported/Witch_Doctor_Skill.png-3d6e8fbdf9bf9f5517e71a6ba247b0bf.ctex"]
+source_file="res://assets/Enemies/witch_doc/Special attack spritesheet copy.png"
+dest_files=["res://.godot/imported/Special attack spritesheet copy.png-039219f81dfe4e682ba1c1cf51110eea.ctex"]
 
 [params]
 
