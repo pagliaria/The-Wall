@@ -50,11 +50,16 @@ func _do_attacking_move(delta: float) -> void:
 
 func _on_enter_idle_state() -> void:
 	_retreating = false
+	_summoning  = false
 	_sprite.play("idle")
 
 func _on_enter_battle_state() -> void:
 	_retreating = false
-	_sprite.play("run")
+	_summoning  = false
+	if _sprite.sprite_frames.has_animation("run"):
+		_sprite.play("run")
+	else:
+		_sprite.play("idle")
 
 func _on_enter_attacking_state() -> void:
 	# Immediately summon a skeleton on first engagement
