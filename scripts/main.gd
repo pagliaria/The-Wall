@@ -257,7 +257,7 @@ func _on_building_placed(building_id: String, tile: Vector2i) -> void:
 	if building_id == "castle" and not _castle_placed:
 		_castle_placed = true
 		hud.set_build_button_enabled(true)
-		hud.show_rush_button()
+		#hud.show_rush_button()
 		if _castle_prompt != null:
 			_castle_prompt.queue_free()
 			_castle_prompt = null

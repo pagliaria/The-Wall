@@ -238,7 +238,7 @@ position = Vector2(1, -6)
 scale = Vector2(1.5, 1.5)
 sprite_frames = SubResource("enemy_warrior_frames")
 animation = &"run"
-frame_progress = 0.167137
+frame_progress = 0.129389
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0, 10)

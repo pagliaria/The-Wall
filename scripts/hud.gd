@@ -69,6 +69,7 @@ func _on_speed_button_pressed(btn: Button) -> void:
 
 func _set_speed(speed: float) -> void:
 	_current_speed    = speed
+	print("Set Speed ", speed)
 	Engine.time_scale = speed
 	_highlight_speed(speed)
 
@@ -148,6 +149,7 @@ func update_rush_button(reward: Dictionary) -> void:
 
 func show_rush_button() -> void:
 	rush_button.visible = true
+	_set_speed(1.0)
 
 func hide_rush_button() -> void:
 	rush_button.visible = false
@@ -158,7 +160,6 @@ func is_rush_button_visible() -> bool:
 func set_wave_active(_wave_number: int) -> void:
 	wave_label.text     = "Fight!"
 	wave_label.modulate = Color(1.0, 0.3, 0.3)
-	_set_speed(1.0)
 
 func set_wave_ended(player_won: bool) -> void:
 	victory.visible    = true
