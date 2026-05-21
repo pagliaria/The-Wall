@@ -92,44 +92,66 @@ func _spawn_open_effect() -> void:
 		ChestType.RARE:   rarity_color = Color(0.4,  0.6,  1.0)
 		ChestType.EPIC:   rarity_color = Color(0.85, 0.3,  1.0)
 		_:                rarity_color = Color.WHITE
-	# Burst of sparkle nodes flying outward
-	var count : int = 8 + chest_type * 4  # 8 common, 12 rare, 16 epic
+	# Scale everything by rarity
+	var count       : int   = [8,   16,  28][chest_type]
+	var radius_min  : float = [50,  80,  120][chest_type]
+	var radius_max  : float = [110, 180, 280][chest_type]
+	var duration    : float = [0.45, 0.6, 0.85][chest_type]
+	var spark_scale : float = [0.22, 0.30, 0.42][chest_type]
+	var shake_steps : int   = [5,    8,   14][chest_type]
+	var shake_mag   : float = [4.0,  7.0, 14.0][chest_type]
 	for i in count:
 		var spark  : Node2D   = Node2D.new()
 		var sprite : Sprite2D = Sprite2D.new()
 		sprite.texture  = preload("res://assets/Particle FX/Explosion_01.png")
-		var cell_size : int = 192
 		var atlas     := AtlasTexture.new()
 		atlas.atlas   = sprite.texture
-		atlas.region  = Rect2(0, 0, cell_size, cell_size)
+		atlas.region  = Rect2(0, 0, 192, 192)
 		sprite.texture  = atlas
-		sprite.scale    = Vector2(0.25, 0.25)
+		sprite.scale    = Vector2(spark_scale, spark_scale)
 		sprite.modulate = rarity_color
 		spark.add_child(sprite)
 		spark.position = position
 		get_parent().add_child(spark)
 		spark.z_index = 30
-		var angle   : float  = (float(i) / count) * TAU + _rng.randf() * 0.4
-		var dist    : float  = _rng.randf_range(60.0, 130.0)
-		var dest    : Vector2 = position + Vector2(cos(angle), sin(angle)) * dist
-		var tw      : Tween  = spark.create_tween()
+		var angle : float   = (float(i) / count) * TAU + _rng.randf() * 0.5
+		var dist  : float   = _rng.randf_range(radius_min, radius_max)
+		var dest  : Vector2 = position + Vector2(cos(angle), sin(angle)) * dist
+		var tw    : Tween   = spark.create_tween()
 		tw.set_parallel(true)
-		tw.tween_property(spark, "position", dest, 0.45) \
+		tw.tween_property(spark, "position", dest, duration) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw.tween_property(sprite, "scale", Vector2(0.05, 0.05), 0.45) \
+		tw.tween_property(sprite, "scale", Vector2(0.04, 0.04), duration) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw.tween_property(spark, "modulate:a", 0.0, 0.45) \
+		tw.tween_property(spark, "modulate:a", 0.0, duration) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.chain().tween_callback(spark.queue_free)
-	# Camera shake
+	# Camera shake — scales with rarity
 	var cam : Camera2D = get_tree().current_scene.get_node_or_null("Camera2D")
 	if cam != null:
-		var shake_tw : Tween = cam.create_tween()
+		var shake_tw : Tween  = cam.create_tween()
 		var origin   : Vector2 = cam.offset
-		for _s in 6:
+		for _s in shake_steps:
 			shake_tw.tween_property(cam, "offset",
-				origin + Vector2(_rng.randf_range(-5.0, 5.0), _rng.randf_range(-4.0, 4.0)), 0.04)
-		shake_tw.tween_property(cam, "offset", origin, 0.05)
+				origin + Vector2(_rng.randf_range(-shake_mag, shake_mag),
+								 _rng.randf_range(-shake_mag * 0.7, shake_mag * 0.7)), 0.04)
+		shake_tw.tween_property(cam, "offset", origin, 0.06)
+	# Epic only — full screen flash
+	if chest_type == ChestType.EPIC:
+		var canvas    := CanvasLayer.new()
+		canvas.layer   = 50
+		get_tree().current_scene.add_child(canvas)
+		var flash     := ColorRect.new()
+		flash.color    = Color(0.85, 0.3, 1.0, 0.0)
+		flash.anchors_preset = 15
+		flash.anchor_right   = 1.0
+		flash.anchor_bottom  = 1.0
+		flash.mouse_filter   = Control.MOUSE_FILTER_IGNORE
+		canvas.add_child(flash)
+		var ftw : Tween = flash.create_tween()
+		ftw.tween_property(flash, "color:a", 0.45, 0.08)
+		ftw.tween_property(flash, "color:a", 0.0,  0.55)
+		ftw.tween_callback(canvas.queue_free)
 
 func _on_open_anim_finished() -> void:
 	_spawn_items()

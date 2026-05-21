@@ -12,6 +12,7 @@ const SOUNDS : Dictionary = {
 	"deep_thumps":   preload("res://assets/audio/general/deep-thumps.mp3"),
 	"chest_open":    preload("res://assets/audio/loot/chest_open.mp3"),
 	"loot_interact": preload("res://assets/audio/loot/loot_interact.mp3"),
+	"chest_drop":    preload("res://assets/audio/loot/chest_drop.mp3"),
 }
 
 const DEFAULT_SOUND : String = "click1"

@@ -285,8 +285,10 @@ func _try_drop_chest(drop_pos: Vector2) -> void:
 	print("Spawn Chest! ", chest_type)
 	var chest : Node2D = CHEST_SCENE.instantiate()
 	chest.position = drop_pos
+	chest.z_index   = 2
 	chest.call("setup", chest_type)
 	get_tree().root.add_child(chest)
+	UiAudio.play("chest_drop")
 
 # =========================================================================== #
 #  Virtual overrides

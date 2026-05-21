@@ -96,6 +96,7 @@ func _enter_state(new_state: State) -> void:
 	_state       = new_state
 	_state_timer = 0.0
 	_shooting    = false
+	_sprite.speed_scale = 1.0
 	match _state:
 		State.IDLE:
 			_state_dur = _rng.randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
@@ -181,6 +182,7 @@ func _do_shoot() -> void:
 	_spawn_arrow()
 
 func _spawn_arrow() -> void:
+	_sprite.speed_scale = 1.0
 	if _state != State.SHOOTING or not _shooting:
 		return
 	if is_instance_valid(_target) and _target.hp > 0:
