@@ -38,6 +38,11 @@ var _rmb_anchor_world : Vector2 = Vector2.ZERO
 var _rmb_live_units   : Array   = []
 var _rmb_slots        : Array   = []
 
+var _last_click_time   : float   = -1.0
+var _last_click_screen : Vector2 = Vector2.ZERO
+const DOUBLE_CLICK_TIME : float  = 0.35
+const DOUBLE_CLICK_DIST : float  = 12.0
+
 # Injected by main.gd
 var units_layer     : Node2D   = null
 var camera          : Camera2D = null
@@ -247,8 +252,8 @@ func _resource_at(world_pos: Vector2) -> Node:
 # -- Selection ----------------------------------------------------------------
 
 func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
-	var world_pos := _screen_to_world(screen_pos)
-	var hit : Node = null
+	var world_pos : Vector2 = _screen_to_world(screen_pos)
+	var hit       : Node    = null
 	if units_layer:
 		for unit in units_layer.get_children():
 			if not unit.has_method("set_selected"):
@@ -258,6 +263,16 @@ func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 			if unit.position.distance_to(world_pos) <= 32.0:
 				hit = unit
 				break
+	# Double-click detection
+	var now          : float = Time.get_ticks_msec() / 1000.0
+	var is_double    : bool  = hit != null \
+		and (now - _last_click_time) <= DOUBLE_CLICK_TIME \
+		and screen_pos.distance_to(_last_click_screen) <= DOUBLE_CLICK_DIST
+	_last_click_time   = now
+	_last_click_screen = screen_pos
+	if is_double:
+		_select_all_of_type(hit)
+		return
 	if not additive:
 		_deselect_all()
 	if hit:
@@ -265,6 +280,26 @@ func _do_point_select(screen_pos: Vector2, additive: bool) -> void:
 			_deselect_unit(hit)
 		else:
 			_select_unit(hit)
+
+func _unit_type_key(unit: Node) -> String:
+	var script : Script = unit.get_script()
+	if script:
+		return script.resource_path.get_file().get_basename().to_lower()
+	return ""
+
+func _select_all_of_type(reference_unit: Node) -> void:
+	var type_key : String = _unit_type_key(reference_unit)
+	if type_key == "":
+		return
+	_deselect_all()
+	if units_layer:
+		for unit in units_layer.get_children():
+			if not unit.has_method("set_selected"):
+				continue
+			if _is_in_battle(unit):
+				continue
+			if _unit_type_key(unit) == type_key:
+				_select_unit(unit)
 
 func _do_box_select(additive: bool) -> void:
 	var rect_screen := Rect2(_press_screen, _drag_end - _press_screen).abs()
