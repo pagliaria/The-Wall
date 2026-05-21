@@ -283,5 +283,5 @@ func _on_end_battle() -> void:
 	_enemies.clear(); _attack_target = null; _heal_target = null
 	_casting = false; _enter_state(State.IDLE)
 
-func _get_move_speed()   -> float: return MOVE_SPEED * get_building_move_speed_multiplier()
-func _get_attack_rate()  -> float: return CAST_RATE * get_building_attack_speed_multiplier()
+func _get_move_speed()   -> float: return MOVE_SPEED * get_building_move_speed_multiplier() * get_item_move_speed_multiplier()
+func _get_attack_rate()  -> float: return CAST_RATE * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier()

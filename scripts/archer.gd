@@ -50,7 +50,7 @@ func _get_attack_damage() -> int:
 	return BASE_ATTACK_DAMAGE + _level_damage_bonus + get_building_attack_damage_bonus()
 
 func _get_attack_rate() -> float:
-	return maxf(0.1, BASE_ATTACK_RATE + _level_attack_rate_bonus) * get_building_attack_speed_multiplier()
+	return maxf(0.1, BASE_ATTACK_RATE + _level_attack_rate_bonus) * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier()
 
 func _get_attack_range() -> float:
 	return SHOOT_RANGE + get_building_range_bonus()
@@ -174,11 +174,7 @@ func _do_shoot() -> void:
 	var frames   : int   = _sprite.sprite_frames.get_frame_count("shoot")
 	var fps      : float = _sprite.sprite_frames.get_animation_speed("shoot")
 	var anim_dur : float = frames / fps
-	print("anim_dur ", anim_dur)
-	print("attack rate ", _get_attack_rate())
-	print("ratio ",anim_dur / _get_attack_rate())
 	_sprite.speed_scale = maxf(1, anim_dur / _get_attack_rate())
-	print("speed scale ", _sprite.speed_scale)
 	_sprite.play("shoot")
 	var half_dur : float = (anim_dur / _sprite.speed_scale) * 0.5
 	await get_tree().create_timer(half_dur).timeout
