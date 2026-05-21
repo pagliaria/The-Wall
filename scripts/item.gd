@@ -269,6 +269,7 @@ func _try_apply_to_unit() -> void:
 			best_dist  = d
 			best_unit  = body
 	if best_unit != null and best_unit.has_method("apply_item"):
+		UiAudio.play("loot_interact")
 		best_unit.apply_item(self)
 		queue_free()
 	else:

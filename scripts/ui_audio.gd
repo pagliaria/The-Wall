@@ -10,6 +10,8 @@ const SOUNDS : Dictionary = {
 	"toggle":        preload("res://assets/audio/UI/toggle_001.ogg"),
 	"building_land": preload("res://assets/audio/general/universfield-giant-fall-impact-352446.mp3"),
 	"deep_thumps":   preload("res://assets/audio/general/deep-thumps.mp3"),
+	"chest_open":    preload("res://assets/audio/loot/chest_open.mp3"),
+	"loot_interact": preload("res://assets/audio/loot/loot_interact.mp3"),
 }
 
 const DEFAULT_SOUND : String = "click1"
