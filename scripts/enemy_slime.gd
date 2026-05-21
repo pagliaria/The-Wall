@@ -29,20 +29,29 @@ func _do_duplicate() -> void:
 		wave_manager.register_enemy(clone)
 
 # -- Virtual overrides -------------------------------------------------------
-func _move() -> void:
-	if _splitting:
+func _physics_process(delta: float) -> void:
+	super._physics_process(delta)
+	if _state == State.DEAD or has_split or _splitting:
 		return
 	SPLIT_COOLDOWN -= 1
-	if SPLIT_COOLDOWN <= 0 and not has_split:
-		has_split  = true
-		_splitting = true
-		_sprite.play("special")
-		await _sprite.animation_finished
-		_do_duplicate()
-		_splitting     = false
-		SPLIT_COOLDOWN = 180
-		if _state != State.DEAD:
-			_sprite.play("run")
+	if SPLIT_COOLDOWN <= 0:
+		_do_split()
+
+func _do_split() -> void:
+	has_split  = true
+	_splitting = true
+	_sprite.play("special")
+	await _sprite.animation_finished
+	_do_duplicate()
+	_splitting = false
+	if _state != State.DEAD:
+		match _state:
+			State.BATTLE:    _sprite.play("run")
+			State.ATTACKING: _sprite.play("idle")
+			_:               _sprite.play("idle")
+
+func _move() -> void:
+	pass  # split logic moved to _physics_process
 
 func _get_engage_range() -> float:
 	return engage_range
