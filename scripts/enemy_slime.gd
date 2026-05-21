@@ -11,7 +11,8 @@ extends "res://scripts/enemy_base.gd"
 # based on frames assuming 60 FPS
 var SPLIT_COOLDOWN = 180
 
-var has_split = false
+var has_split    : bool = false
+var _splitting   : bool = false
 
 func _ready() -> void:
 	# Set base exports before super._ready() initialises hp.
@@ -29,16 +30,19 @@ func _do_duplicate() -> void:
 
 # -- Virtual overrides -------------------------------------------------------
 func _move() -> void:
+	if _splitting:
+		return
 	SPLIT_COOLDOWN -= 1
 	if SPLIT_COOLDOWN <= 0 and not has_split:
-		has_split = true
-		SPLIT_COOLDOWN = 180
+		has_split  = true
+		_splitting = true
 		_sprite.play("special")
 		await _sprite.animation_finished
 		_do_duplicate()
-		_sprite.play("run")
-		print("Slime Special")
-	pass
+		_splitting     = false
+		SPLIT_COOLDOWN = 180
+		if _state != State.DEAD:
+			_sprite.play("run")
 
 func _get_engage_range() -> float:
 	return engage_range
