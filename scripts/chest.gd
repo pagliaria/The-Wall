@@ -146,9 +146,24 @@ func _on_open_anim_finished() -> void:
 func _spawn_items() -> void:
 	var count  : int   = ITEM_COUNTS[chest_type]
 	var radius : float = 60.0
+	# Compute visible world bounds from camera so items don't land offscreen
+	var cam       : Camera2D = get_tree().current_scene.get_node_or_null("Camera2D")
+	var pad       : float    = 80.0  # inset from screen edge
+	var world_min : Vector2  = Vector2.ZERO
+	var world_max : Vector2  = Vector2(3072, 1728)
+	if cam != null:
+		var vp_size  : Vector2 = get_viewport().get_visible_rect().size
+		var zoom     : Vector2 = cam.zoom
+		var half     : Vector2 = (vp_size / zoom) * 0.5
+		world_min = cam.global_position - half + Vector2(pad, pad)
+		world_max = cam.global_position + half - Vector2(pad, pad)
 	for i in count:
 		var angle    : float   = (float(i) / count) * TAU + _rng.randf() * 0.5
-		var land_pos : Vector2 = position + Vector2(cos(angle), sin(angle)) * radius
+		var raw_pos  : Vector2 = position + Vector2(cos(angle), sin(angle)) * radius
+		var land_pos : Vector2 = Vector2(
+			clampf(raw_pos.x, world_min.x, world_max.x),
+			clampf(raw_pos.y, world_min.y, world_max.y)
+		)
 		var chosen_type   : int = _rng.randi_range(0, 5)
 		var chosen_rarity : int = _roll_rarity()
 		var item : Node2D = ITEM_SCENE.instantiate()
