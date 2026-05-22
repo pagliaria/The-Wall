@@ -113,6 +113,9 @@ func _spawn_hired_unit(entry: Dictionary) -> void:
 	var scene    : PackedScene      = load(entry["scene"])
 	var unit     : CharacterBody2D  = scene.instantiate()
 	unit.set_meta("hire_id", entry["id"])
+	unit.set_meta("selection_label", entry.get("label", entry.get("id", "Unit")))
+	unit.set_meta("selection_icon", entry.get("icon", ""))
+	unit.set_meta("selection_icon_frame", entry.get("icon_frame", Rect2(0, 0, 0, 0)))
 	# Flip allegiance — keeps all subclass behaviour intact
 	unit.call("set_hired")
 	# Spawn below the house tile

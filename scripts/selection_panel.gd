@@ -116,19 +116,21 @@ func _show_single(unit: Node) -> void:
 	_tracked_unit = unit
 
 	var type_key := _unit_type(unit)
-	_portrait.texture  = load(AVATARS.get(type_key, DEFAULT_AVATAR))
-	_apply_name_and_level(unit, type_key)
+	_portrait.texture  = _resolve_portrait(unit, type_key)
+	_apply_name_and_level(unit, _display_name(unit, type_key))
 	_apply_hp(unit)
 	_status_label.text = _get_status(unit)
 	_apply_stats(unit, type_key)
 
-func _apply_name_and_level(unit: Node, type_key: String) -> void:
-	_name_label.text = type_key
+func _apply_name_and_level(unit: Node, display_name: String) -> void:
+	_name_label.text = display_name
 	
 	var lvl : int = unit.get("level") if unit.get("level") != null else 0
 	if lvl > 0:
 		# Show level as roman numerals for flavour — clean and compact
 		_level_label.text = "%s" % [_to_roman(lvl)]
+	else:
+		_level_label.text = ""
 
 func _to_roman(n: int) -> String:
 	match n:
@@ -153,6 +155,13 @@ func _get_status(unit: Node) -> String:
 		return "Ready"
 
 	var s := int(unit._state)
+	if _is_hired_unit(unit):
+		match s:
+			0: return "Idle"
+			1: return "Engaging"
+			2: return "Attacking"
+			3: return "Dead"
+		return "Ready"
 
 	if _unit_type(unit) == "Pawn":
 		match s:
@@ -185,6 +194,9 @@ func _get_status(unit: Node) -> String:
 	return "Ready"
 
 func _apply_stats(unit: Node, type_key: String) -> void:
+	if _is_hired_unit(unit):
+		_apply_hired_stats(unit)
+		return
 	var stats : Dictionary = UNIT_STATS.get(type_key, {})
 	if type_key == "Monk":
 		_attack_range_title.text  = "Cast Range"
@@ -207,6 +219,15 @@ func _apply_stats(unit: Node, type_key: String) -> void:
 	_attack_damage_label.text = _format_stat_value(_resolve_stat(unit, "attack_damage", stats.get("attack_damage")))
 	_attack_speed_label.text  = _format_attack_speed(_resolve_stat(unit, "attack_speed", stats.get("attack_speed")))
 	_move_speed_label.text    = _format_stat_value(_resolve_stat(unit, "move_speed",    stats.get("move_speed")))
+
+func _apply_hired_stats(unit: Node) -> void:
+	_attack_range_title.text  = "Attack Range"
+	_attack_damage_title.text = "Attack Damage"
+	_attack_speed_title.text  = "Attack Speed"
+	_attack_range_label.text  = _format_stat_value(_resolve_hired_attack_range(unit))
+	_attack_damage_label.text = _format_stat_value(_resolve_hired_attack_damage(unit))
+	_attack_speed_label.text  = _format_attack_speed(_resolve_hired_attack_speed(unit))
+	_move_speed_label.text    = _format_stat_value(_resolve_hired_move_speed(unit))
 
 func _resolve_stat(unit: Node, stat_id: String, fallback):
 	match stat_id:
@@ -322,13 +343,64 @@ func _process(_delta: float) -> void:
 	if not _single_view.visible or not is_instance_valid(_tracked_unit):
 		return
 	_apply_hp(_tracked_unit)
-	_apply_name_and_level(_tracked_unit, _unit_type(_tracked_unit))
-	_apply_stats(_tracked_unit, _unit_type(_tracked_unit))
+	var type_key := _unit_type(_tracked_unit)
+	_portrait.texture = _resolve_portrait(_tracked_unit, type_key)
+	_apply_name_and_level(_tracked_unit, _display_name(_tracked_unit, type_key))
+	_apply_stats(_tracked_unit, type_key)
 	_status_label.text = _get_status(_tracked_unit)
 
 # =========================================================================== #
 #  Helpers
 # =========================================================================== #
+
+func _resolve_portrait(unit: Node, type_key: String) -> Texture2D:
+	var icon_path := str(unit.get_meta("selection_icon", ""))
+	if icon_path != "":
+		var base_texture := load(icon_path) as Texture2D
+		if base_texture != null:
+			var frame = unit.get_meta("selection_icon_frame", Rect2(0, 0, 0, 0))
+			if frame is Rect2 and frame.size.x > 0.0 and frame.size.y > 0.0:
+				var atlas := AtlasTexture.new()
+				atlas.atlas = base_texture
+				atlas.region = frame
+				return atlas
+			return base_texture
+	return load(AVATARS.get(type_key, DEFAULT_AVATAR))
+
+func _display_name(unit: Node, type_key: String) -> String:
+	return str(unit.get_meta("selection_label", type_key))
+
+func _is_hired_unit(unit: Node) -> bool:
+	return bool(unit.get("hired")) or str(unit.get("faction")) == "hired"
+
+func _resolve_hired_attack_range(unit: Node):
+	if unit.has_method("_get_engage_range"):
+		return unit._get_engage_range()
+	var engage_range = unit.get("engage_range")
+	if engage_range != null:
+		return engage_range
+	return null
+
+func _resolve_hired_attack_damage(unit: Node):
+	for property_name in ["attack_damage", "range_damage", "melee_damage", "nade_damage"]:
+		var value = unit.get(property_name)
+		if value != null:
+			return value
+	return null
+
+func _resolve_hired_attack_speed(unit: Node):
+	if unit.has_method("_get_attack_rate"):
+		return unit._get_attack_rate()
+	var attack_rate = unit.get("attack_rate")
+	if attack_rate != null:
+		return attack_rate
+	return null
+
+func _resolve_hired_move_speed(unit: Node):
+	var move_speed = unit.get("move_speed")
+	if move_speed != null:
+		return move_speed
+	return null
 
 func _unit_type(unit: Node) -> String:
 	var script : Script = unit.get_script()
