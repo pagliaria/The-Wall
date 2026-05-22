@@ -122,12 +122,13 @@ func _show_hire_ui() -> void:
 	if ctrl == null or not ctrl.has_method("get_hire_roster"):
 		return
 	var roster : Array = ctrl.get_hire_roster()
+	var grid : GridContainer = $Panel/Margin/VBox/Grid
+	grid.columns = 4
 	if _hire_buttons.size() != roster.size():
 		for b in _hire_buttons:
 			if is_instance_valid(b):
 				b.queue_free()
 		_hire_buttons.clear()
-		var grid : GridContainer = $Panel/Margin/VBox/Grid
 		for entry in roster:
 			# Container button
 			var btn := Button.new()
@@ -152,11 +153,15 @@ func _show_hire_ui() -> void:
 			if icon_path != "":
 				var full_tex : Texture2D = load(icon_path)
 				if full_tex != null:
-					# Crop to first frame — assume square frames (height = frame size)
-					var frame_h : int = full_tex.get_height()
 					var atlas   := AtlasTexture.new()
 					atlas.atlas  = full_tex
-					atlas.region = Rect2(0, 0, frame_h, frame_h)
+					var frame_rect : Rect2 = entry.get("icon_frame", Rect2(0, 0, 0, 0))
+					if frame_rect.size.x > 0.0 and frame_rect.size.y > 0.0:
+						atlas.region = frame_rect
+					else:
+						# Fallback for simple horizontal strips when no frame rect is provided.
+						var frame_h : int = full_tex.get_height()
+						atlas.region = Rect2(0, 0, frame_h, frame_h)
 					tex_rect.texture = atlas
 				tex_rect.set_meta("icon_path", icon_path)
 			vbox.add_child(tex_rect)
@@ -195,6 +200,7 @@ func _show_hire_ui() -> void:
 		btn.show()
 
 func _hide_hire_ui() -> void:
+	($Panel/Margin/VBox/Grid as GridContainer).columns = 2
 	for b in _hire_buttons:
 		if is_instance_valid(b):
 			b.hide()
