@@ -198,7 +198,7 @@ func setup(id: String, tile: Vector2i, p_units_layer: Node2D) -> void:
 	_attach_controller(id)
 
 	# ── Spawn indicator (only for unit-producing buildings) ───────────────────
-	if _controller != null:
+	if _controller != null and id != "house1":
 		_indicator = Node2D.new()
 		_indicator.z_index = 0
 		_indicator.set_script(load("res://scripts/building_indicator.gd"))
@@ -245,7 +245,13 @@ func _attach_controller(id: String) -> void:
 			add_child(ctrl)
 			ctrl.units_layer   = units_layer
 			_controller        = ctrl
-		# Future: "house1"
+		"house1":
+			var ctrl          := Node.new()
+			ctrl.set_script(load("res://scripts/house.gd"))
+			ctrl.name          = "HouseController"
+			add_child(ctrl)
+			ctrl.units_layer   = units_layer
+			_controller        = ctrl
 
 func _process(_delta: float) -> void:
 	_process_upgrade(_delta)
@@ -309,9 +315,11 @@ func get_controller() -> Node:
 	return _controller
 
 func supports_upgrades() -> bool:
-	return BUILDING_UPGRADE_IDS.has(building_id)
+	return BUILDING_UPGRADE_IDS.has(building_id) or building_id == "house1"
 
 func get_display_name() -> String:
+	if building_id == "house1":
+		return "House"
 	return building_id.capitalize() if building_id != "" else "Building"
 
 func get_upgrade_definitions() -> Dictionary:

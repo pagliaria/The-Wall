@@ -22,8 +22,20 @@ const DROP_CHANCE_COMMON : float       = 0.20
 const DROP_CHANCE_RARE   : float       = 0.08
 const DROP_CHANCE_EPIC   : float       = 0.03
 
-var faction : String = "enemy"
-var hp      : int    = 0
+const SELECTION_CIRCLE_SCRIPT : GDScript = preload("res://scripts/selection_circle.gd")
+const HIRED_TINT              : Color    = Color(0.6, 1.0, 0.65, 1.0)
+
+var faction     : String = "enemy"
+var hp          : int    = 0
+
+# =========================================================================== #
+#  Hired unit flag — set to true by house.gd to flip allegiance
+# =========================================================================== #
+var hired       : bool   = false
+var is_selected : bool   = false
+var _select_node : Node2D = null
+var _hired_move_target : Vector2 = Vector2.ZERO
+var _hired_moving      : bool    = false
 
 enum State { IDLE, BATTLE, ATTACKING, DEAD }
 
@@ -56,8 +68,8 @@ var original_mod := Color.WHITE
 
 func _ready() -> void:
 	_rng.randomize()
-	hp         = max_hp
-	_spawn_pos = position
+	hp           = max_hp
+	_spawn_pos   = position
 	original_mod = _sprite.modulate
 	call_deferred("_initial_state")
 
@@ -67,6 +79,56 @@ func _initial_state() -> void:
 	_enter_state(State.IDLE)
 
 # =========================================================================== #
+#  Hired — called by house.gd after instantiating
+# =========================================================================== #
+
+func set_hired() -> void:
+	hired    = true
+	faction  = "hired"
+	z_index  = 3
+	# Green tint
+	original_mod     = HIRED_TINT
+	if is_instance_valid(_sprite):
+		_sprite.modulate = HIRED_TINT
+	else:
+		call_deferred("_apply_hired_tint")
+	add_to_group("hired_units")
+	# No chest drops for hired units
+	# Don't drop chests when they die
+
+func _apply_hired_tint() -> void:
+	if is_instance_valid(_sprite):
+		_sprite.modulate = HIRED_TINT
+		original_mod     = HIRED_TINT
+
+# =========================================================================== #
+#  Selection API — used by unit_selection when hired = true
+# =========================================================================== #
+
+func set_selected(on: bool) -> void:
+	if not hired:
+		return
+	is_selected = on
+	if _select_node == null:
+		_select_node         = Node2D.new()
+		_select_node.z_index = 2
+		_select_node.set_script(SELECTION_CIRCLE_SCRIPT)
+		add_child(_select_node)
+	_select_node.visible = on
+	_select_node.queue_redraw()
+
+func move_to(world_pos: Vector2) -> void:
+	if not hired:
+		return
+	if _state == State.BATTLE or _state == State.ATTACKING:
+		return
+	_hired_move_target = world_pos
+	_hired_moving      = true
+	_nav.target_position = world_pos
+	if _sprite.sprite_frames.has_animation("run"):
+		_sprite.play("run")
+
+# =========================================================================== #
 #  Physics loop
 # =========================================================================== #
 
@@ -74,6 +136,16 @@ func _physics_process(delta: float) -> void:
 	if _state == State.DEAD:
 		return
 	_state_timer += delta
+	# Hired manual movement
+	if hired and _hired_moving and _state == State.IDLE:
+		_nav.target_position = _hired_move_target
+		if position.distance_to(_hired_move_target) > 24.0:
+			_do_nav_move(delta)
+		else:
+			_hired_moving = false
+			if _sprite.sprite_frames.has_animation("idle"):
+				_sprite.play("idle")
+		return
 	match _state:
 		State.IDLE:
 			_apply_separation(delta)
@@ -119,20 +191,24 @@ func _enter_state(new_state: State) -> void:
 			_on_enter_dead_state()
 			set_physics_process(false)
 
-func start_battle(player_units: Array) -> void:
+func start_battle(targets: Array) -> void:
 	_battle_ready = true
-	_pick_target(player_units)
+	_pick_target(targets)
 	_enter_state(State.BATTLE)
 
 # =========================================================================== #
 #  Battle / targeting
 # =========================================================================== #
 
+func _get_battle_targets() -> Array:
+	if hired:
+		return wave_manager.get_enemies() if wave_manager != null else []
+	return wave_manager.get_player_units() if wave_manager != null else []
+
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
-		if wave_manager != null and wave_manager.has_method("get_player_units"):
-			_pick_target(wave_manager.get_player_units())
+		_pick_target(_get_battle_targets())
 		if not is_instance_valid(_target):
 			_enter_state(State.IDLE)
 			return
@@ -160,6 +236,16 @@ func _best_target(candidates: Array) -> Node:
 	for u in candidates:
 		if not is_instance_valid(u) or u.hp <= 0:
 			continue
+		# Hired units must not target other hired units or player units
+		if hired and u.get("hired") == true:
+			continue
+		if hired and u.get("faction") == "player":
+			continue
+		# Regular enemies must not target other enemies or hired units
+		if not hired and u.get("faction") == "enemy":
+			continue
+		if not hired and u.get("hired") == true:
+			continue
 		var d     : float = position.distance_to(u.position)
 		var score : float = d - (1.0 - float(u.hp) / float(u.max_hp)) * 30.0
 		if score < best_score:
@@ -182,8 +268,11 @@ func _consider_retarget(candidates: Array) -> void:
 		_target      = alt
 		_chase_timer = 0.0
 
-func update_target(player_units: Array) -> void:
-	_consider_retarget(player_units)
+func update_target(targets: Array) -> void:
+	_consider_retarget(targets)
+
+func update_hired_target(enemies: Array) -> void:
+	_consider_retarget(enemies)
 
 # =========================================================================== #
 #  Navigation
@@ -225,6 +314,13 @@ func _apply_separation(delta: float) -> void:
 # =========================================================================== #
 
 func take_damage(amount: int, attacker: Node = null) -> void:
+	# Block friendly fire
+	if hired and attacker != null and is_instance_valid(attacker):
+		if attacker.get("faction") == "player" or attacker.get("hired") == true:
+			return
+	if not hired and attacker != null and is_instance_valid(attacker):
+		if attacker.get("faction") == "enemy" or attacker.get("hired") == true:
+			return
 	flash_red()
 	if _state == State.DEAD:
 		return
@@ -251,7 +347,8 @@ func _on_enter_dead_state() -> void:
 	if _sprite.sprite_frames.has_animation("death"):
 		_sprite.play("death")
 		await _sprite.animation_finished
-	_try_drop_chest(drop_pos)
+	if not hired:
+		_try_drop_chest(drop_pos)
 	die()
 
 func die() -> void:
@@ -294,12 +391,12 @@ func _try_drop_chest(drop_pos: Vector2) -> void:
 #  Virtual overrides
 # =========================================================================== #
 
-func _move()                      -> void:  pass
-func _get_engage_range()          -> float: return 48.0
-func _get_disengage_range()       -> float: return _get_engage_range() * 1.6
-func _get_attack_rate()           -> float: return 1.2
-func _get_attack_sound()          -> String: return "enemy_attack"
-func _do_attack_tick(_delta: float) -> void: pass
+func _move()                        -> void:  pass
+func _get_engage_range()            -> float: return 48.0
+func _get_disengage_range()         -> float: return _get_engage_range() * 1.6
+func _get_attack_rate()             -> float: return 1.2
+func _get_attack_sound()            -> String: return "enemy_attack"
+func _do_attack_tick(_delta: float) -> void:  pass
 func _do_attacking_move(_delta: float) -> void: pass
 
 func _do_attack_hit() -> void:

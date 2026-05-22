@@ -85,28 +85,127 @@ func _refresh() -> void:
 		return
 
 	var display_name : String = _tracked_building.get_display_name() if _tracked_building.has_method("get_display_name") else "Building"
-	_title_label.text = "%s Upgrades" % display_name
+	_title_label.text  = "%s" % display_name
 	_status_label.text = _tracked_building.get_upgrade_status_text() if _tracked_building.has_method("get_upgrade_status_text") else ""
 
-	var upgrade_defs: Dictionary = _tracked_building.get_upgrade_definitions()
-	var available_upgrade_ids: Array = _tracked_building.get_available_upgrade_ids()
-	var selected_id: String = _tracked_building.get_active_upgrade_id() if _tracked_building.has_method("get_active_upgrade_id") else ""
+	# House — show hire UI instead of upgrade buttons
+	if _tracked_building.building_id == "house1":
+		_show_hire_ui()
+		return
+
+	_hide_hire_ui()
+	var upgrade_defs         : Dictionary = _tracked_building.get_upgrade_definitions()
+	var available_upgrade_ids : Array     = _tracked_building.get_available_upgrade_ids()
+	var selected_id          : String     = _tracked_building.get_active_upgrade_id() if _tracked_building.has_method("get_active_upgrade_id") else ""
 
 	for upgrade_id in BUTTON_ORDER:
-		var button: Button = _buttons[upgrade_id]
+		var button : Button = _buttons[upgrade_id]
 		if not available_upgrade_ids.has(upgrade_id):
 			button.hide()
 			continue
 		button.show()
-		var upgrade_def: Dictionary = upgrade_defs.get(upgrade_id, {})
-		var current_level: int = _tracked_building.get_upgrade_level(upgrade_id) if _tracked_building.has_method("get_upgrade_level") else 0
-		var max_level: int = int(upgrade_def.get("max_level", 0))
-		var is_maxed := current_level >= max_level and max_level > 0
-		var is_active : Variant = selected_id == upgrade_id
-
-		button.text = "%s %d/%d" % [UPGRADE_LABELS[upgrade_id], current_level, max_level]
+		var upgrade_def   : Dictionary = upgrade_defs.get(upgrade_id, {})
+		var current_level : int        = _tracked_building.get_upgrade_level(upgrade_id) if _tracked_building.has_method("get_upgrade_level") else 0
+		var max_level     : int        = int(upgrade_def.get("max_level", 0))
+		var is_maxed      := current_level >= max_level and max_level > 0
+		var is_active     : Variant    = selected_id == upgrade_id
+		button.text         = "%s %d/%d" % [UPGRADE_LABELS[upgrade_id], current_level, max_level]
 		button.tooltip_text = _build_tooltip(upgrade_def, current_level, max_level)
-		button.disabled = is_maxed or is_active or not _tracked_building.can_start_upgrade(upgrade_id)
+		button.disabled     = is_maxed or is_active or not _tracked_building.can_start_upgrade(upgrade_id)
+
+var _hire_buttons : Array = []
+
+func _show_hire_ui() -> void:
+	for btn : Button in _buttons.values():
+		btn.hide()
+	var ctrl : Node = _tracked_building.get_controller()
+	if ctrl == null or not ctrl.has_method("get_hire_roster"):
+		return
+	var roster : Array = ctrl.get_hire_roster()
+	if _hire_buttons.size() != roster.size():
+		for b in _hire_buttons:
+			if is_instance_valid(b):
+				b.queue_free()
+		_hire_buttons.clear()
+		var grid : GridContainer = $Panel/Margin/VBox/Grid
+		for entry in roster:
+			# Container button
+			var btn := Button.new()
+			btn.custom_minimum_size = Vector2(80, 80)
+			btn.clip_contents = true
+			grid.add_child(btn)
+			btn.pressed.connect(_on_hire_pressed.bind(entry))
+			_hire_buttons.append(btn)
+			# VBox inside button
+			var vbox := VBoxContainer.new()
+			vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+			vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+			vbox.add_theme_constant_override("separation", 2)
+			btn.add_child(vbox)
+			# Icon
+			var tex_rect := TextureRect.new()
+			tex_rect.custom_minimum_size = Vector2(40, 40)
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex_rect.expand_mode  = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+			tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var icon_path : String = entry.get("icon", "")
+			if icon_path != "":
+				var full_tex : Texture2D = load(icon_path)
+				if full_tex != null:
+					# Crop to first frame — assume square frames (height = frame size)
+					var frame_h : int = full_tex.get_height()
+					var atlas   := AtlasTexture.new()
+					atlas.atlas  = full_tex
+					atlas.region = Rect2(0, 0, frame_h, frame_h)
+					tex_rect.texture = atlas
+				tex_rect.set_meta("icon_path", icon_path)
+			vbox.add_child(tex_rect)
+			# Name label
+			var name_lbl := Label.new()
+			name_lbl.text = entry["label"]
+			name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			name_lbl.add_theme_font_size_override("font_size", 9)
+			name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			vbox.add_child(name_lbl)
+			# Cost label
+			var cost_lbl := Label.new()
+			cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			cost_lbl.add_theme_font_size_override("font_size", 8)
+			cost_lbl.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
+			cost_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			vbox.add_child(cost_lbl)
+			btn.set_meta("cost_label", cost_lbl)
+			btn.set_meta("name_label", name_lbl)
+	# Refresh state
+	for i in roster.size():
+		if i >= _hire_buttons.size():
+			break
+		var entry  : Dictionary = roster[i]
+		var btn    : Button     = _hire_buttons[i]
+		var hired  : int        = ctrl.get_hired_count(entry["id"])
+		var max_c  : int        = int(entry["max"])
+		var cost   : Dictionary = entry["cost"]
+		var cost_lbl : Label = btn.get_meta("cost_label") if btn.has_meta("cost_label") else null
+		var name_lbl : Label = btn.get_meta("name_label") if btn.has_meta("name_label") else null
+		if cost_lbl != null:
+			cost_lbl.text = "%s\n%d/%d" % [_format_cost(cost), hired, max_c]
+		if name_lbl != null:
+			name_lbl.text = entry["label"]
+		btn.disabled = not ctrl.can_hire(entry)
+		btn.show()
+
+func _hide_hire_ui() -> void:
+	for b in _hire_buttons:
+		if is_instance_valid(b):
+			b.hide()
+
+func _on_hire_pressed(entry: Dictionary) -> void:
+	if not is_instance_valid(_tracked_building):
+		return
+	var ctrl : Node = _tracked_building.get_controller()
+	if ctrl != null and ctrl.has_method("try_hire"):
+		ctrl.try_hire(entry)
+	_refresh()
 
 func _build_tooltip(upgrade_def: Dictionary, current_level: int, max_level: int) -> String:
 	var description: String = upgrade_def.get("description", "")

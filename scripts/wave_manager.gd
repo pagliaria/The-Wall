@@ -54,6 +54,7 @@ var _spawn_step     : float = 0.0
 
 var _enemies      : Array = []
 var _player_units : Array = []
+var _hired_units  : Array = []
 var _spawn_queue  : Array = []
 var _battle_start_positions : Dictionary = {}
 
@@ -119,6 +120,10 @@ func _begin_battle() -> void:
 	for u in _player_units:
 		if is_instance_valid(u) and u.has_method("start_battle"):
 			u.start_battle(_enemies)
+	_hired_units = _hired_units.filter(func(u): return is_instance_valid(u))
+	for h in _hired_units:
+		if h.has_method("start_battle"):
+			h.start_battle(_enemies)
 
 # =========================================================================== #
 #  Rush wave — public API called by main.gd
@@ -129,6 +134,12 @@ func get_enemies() -> Array:
 
 func get_player_units() -> Array:
 	return _player_units
+
+func register_hired_unit(unit: Node) -> void:
+	_hired_units.append(unit)
+	# If battle already in progress start it immediately
+	if _phase == Phase.BATTLE and not _enemies.is_empty():
+		unit.call("start_battle", _enemies)
 
 func is_in_prep() -> bool:
 	return _phase == Phase.PREP
@@ -237,13 +248,17 @@ func _is_in_enemy_battlefield(pos: Vector2) -> bool:
 	return pos.x >= BATTLEFIELD_LEFT and pos.x < BATTLEFIELD_RIGHT
 
 func _do_retarget() -> void:
-	_enemies = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
+	_enemies      = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
 	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
+	_hired_units  = _hired_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	for e in _enemies:
 		e.update_target(_player_units)
 	for u in _player_units:
 		if u.has_method("update_battle_target"):
 			u.update_battle_target(_enemies)
+	for h in _hired_units:
+		if h.has_method("update_hired_target"):
+			h.update_hired_target(_enemies)
 
 func _check_battle_over() -> void:
 	_enemies = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
