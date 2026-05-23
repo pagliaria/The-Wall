@@ -371,7 +371,8 @@ func _display_name(unit: Node, type_key: String) -> String:
 	return str(unit.get_meta("selection_label", type_key))
 
 func _is_hired_unit(unit: Node) -> bool:
-	return bool(unit.get("hired")) or str(unit.get("faction")) == "hired"
+	var h = unit.get("hired")
+	return (h != null and h == true) or str(unit.get("faction")) == "hired"
 
 func _resolve_hired_attack_range(unit: Node):
 	if unit.has_method("_get_engage_range"):

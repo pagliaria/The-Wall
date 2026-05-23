@@ -3,15 +3,17 @@ extends Area2D
 
 const SPEED : float = 280.0
 
-var damage  : int     = 6
-var _target : Node    = null
-var _dir    : Vector2 = Vector2.RIGHT
-var _dead   : bool    = false
-var _t      : float   = 0.0
+var damage   : int     = 6
+var _target  : Node    = null
+var _dir     : Vector2 = Vector2.RIGHT
+var _dead    : bool    = false
+var _t       : float   = 0.0
+var _hired   : bool    = false
 
-func init(target: Node, dmg: int, start_pos: Vector2) -> void:
+func init(target: Node, dmg: int, start_pos: Vector2, fired_by_hired: bool = false) -> void:
 	damage          = dmg
 	_target         = target
+	_hired          = fired_by_hired
 	global_position = start_pos
 	if is_instance_valid(target):
 		_dir     = (target.global_position - start_pos).normalized()
@@ -52,8 +54,16 @@ func _on_body_entered(body: Node) -> void:
 		return
 	if not body.has_method("take_damage"):
 		return
-	if body.get("faction") == "enemy":
-		return
+	var body_faction : String = str(body.get("faction"))
+	var body_hired   : bool   = body.get("hired") == true
+	if _hired:
+		# Fired by hired unit — only hit real enemies (not hired, not player)
+		if body_faction != "enemy" or body_hired:
+			return
+	else:
+		# Fired by enemy — hit player units and hired units, not other enemies
+		if body_faction == "enemy" and not body_hired:
+			return
 	_dead = true
 	body.take_damage(damage)
 	_spawn_impact()

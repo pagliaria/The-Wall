@@ -6,7 +6,7 @@
 
 [node name="BadgerOrb" type="Area2D"]
 collision_layer = 0
-collision_mask = 4
+collision_mask = 6
 script = ExtResource("1_orb")
 
 [node name="Collision" type="CollisionShape2D" parent="."]

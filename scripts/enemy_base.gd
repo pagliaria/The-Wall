@@ -23,7 +23,6 @@ const DROP_CHANCE_RARE   : float       = 0.08
 const DROP_CHANCE_EPIC   : float       = 0.03
 
 const SELECTION_CIRCLE_SCRIPT : GDScript = preload("res://scripts/selection_circle.gd")
-const HIRED_TINT              : Color    = Color(0.6, 1.0, 0.65, 1.0)
 
 var faction     : String = "enemy"
 var hp          : int    = 0
@@ -82,24 +81,23 @@ func _initial_state() -> void:
 #  Hired — called by house.gd after instantiating
 # =========================================================================== #
 
+const HP_FILL_BLUE : Texture2D = preload("res://assets/UI Elements/UI Elements/Bars/SmallBar_Fill_blue.png")
+
 func set_hired() -> void:
 	hired    = true
 	faction  = "hired"
 	z_index  = 3
-	# Green tint
-	original_mod     = HIRED_TINT
+	original_mod = Color.WHITE
 	if is_instance_valid(_sprite):
-		_sprite.modulate = HIRED_TINT
-	else:
-		call_deferred("_apply_hired_tint")
+		_sprite.modulate = Color.WHITE
 	add_to_group("hired_units")
-	# No chest drops for hired units
-	# Don't drop chests when they die
+	call_deferred("_apply_hired_hp_bar")
 
-func _apply_hired_tint() -> void:
-	if is_instance_valid(_sprite):
-		_sprite.modulate = HIRED_TINT
-		original_mod     = HIRED_TINT
+func _apply_hired_hp_bar() -> void:
+	var fill : TextureRect = get_node_or_null("HpBar/health")
+	if fill != null:
+		fill.texture  = HP_FILL_BLUE
+		fill.modulate = Color.WHITE
 
 # =========================================================================== #
 #  Selection API — used by unit_selection when hired = true
@@ -203,7 +201,13 @@ func start_battle(targets: Array) -> void:
 func _get_battle_targets() -> Array:
 	if hired:
 		return wave_manager.get_enemies() if wave_manager != null else []
-	return wave_manager.get_player_units() if wave_manager != null else []
+	# Regular enemies target player units AND hired units
+	var targets : Array = []
+	if wave_manager != null:
+		targets.append_array(wave_manager.get_player_units())
+		if wave_manager.has_method("get_hired_units"):
+			targets.append_array(wave_manager.get_hired_units())
+	return targets
 
 func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
@@ -236,16 +240,16 @@ func _best_target(candidates: Array) -> Node:
 	for u in candidates:
 		if not is_instance_valid(u) or u.hp <= 0:
 			continue
-		# Hired units must not target other hired units or player units
-		if hired and u.get("hired") == true:
-			continue
-		if hired and u.get("faction") == "player":
-			continue
-		# Regular enemies must not target other enemies or hired units
-		if not hired and u.get("faction") == "enemy":
-			continue
-		if not hired and u.get("hired") == true:
-			continue
+		var u_faction : String = str(u.get("faction"))
+		var u_hired   : bool   = u.get("hired") == true
+		if hired:
+			# Hired unit — only target real enemies
+			if u_faction != "enemy" or u_hired:
+				continue
+		else:
+			# Regular enemy — skip other regular enemies, but CAN hit hired units
+			if u_faction == "enemy" and not u_hired:
+				continue
 		var d     : float = position.distance_to(u.position)
 		var score : float = d - (1.0 - float(u.hp) / float(u.max_hp)) * 30.0
 		if score < best_score:
@@ -319,13 +323,13 @@ func take_damage(amount: int, attacker: Node = null) -> void:
 		if attacker.get("faction") == "player" or attacker.get("hired") == true:
 			return
 	if not hired and attacker != null and is_instance_valid(attacker):
-		if attacker.get("faction") == "enemy" or attacker.get("hired") == true:
+		if attacker.get("faction") == "enemy" and not attacker.get("hired") == true:
 			return
-	flash_red()
 	if _state == State.DEAD:
 		return
 	hp -= amount
 	_update_hp_bar()
+	flash_red()
 	CombatNumbers.show_number(global_position, amount, false)
 	if attacker != null and is_instance_valid(attacker) and attacker.has_method("grant_xp"):
 		if hp <= 0:
@@ -333,6 +337,7 @@ func take_damage(amount: int, attacker: Node = null) -> void:
 		else:
 			attacker.grant_xp(amount * XP_PER_DAMAGE)
 	if hp <= 0:
+		hp = 0
 		_enter_state(State.DEAD)
 
 func _update_hp_bar() -> void:

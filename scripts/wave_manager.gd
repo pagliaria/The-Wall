@@ -112,10 +112,14 @@ func _begin_battle() -> void:
 	for u in _player_units:
 		if is_instance_valid(u):
 			_battle_start_positions[u] = u.global_position
+	for h in _hired_units:
+		if is_instance_valid(h):
+			_battle_start_positions[h] = h.global_position
 
+	var all_friendlies : Array = _player_units + _hired_units
 	for e in _enemies:
 		if is_instance_valid(e):
-			e.start_battle(_player_units)
+			e.start_battle(all_friendlies)
 
 	for u in _player_units:
 		if is_instance_valid(u) and u.has_method("start_battle"):
@@ -134,6 +138,9 @@ func get_enemies() -> Array:
 
 func get_player_units() -> Array:
 	return _player_units
+
+func get_hired_units() -> Array:
+	return _hired_units
 
 func register_hired_unit(unit: Node) -> void:
 	_hired_units.append(unit)
@@ -251,8 +258,9 @@ func _do_retarget() -> void:
 	_enemies      = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
 	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	_hired_units  = _hired_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
+	var all_friendlies : Array = _player_units + _hired_units
 	for e in _enemies:
-		e.update_target(_player_units)
+		e.update_target(all_friendlies)
 	for u in _player_units:
 		if u.has_method("update_battle_target"):
 			u.update_battle_target(_enemies)
@@ -261,11 +269,12 @@ func _do_retarget() -> void:
 			h.update_hired_target(_enemies)
 
 func _check_battle_over() -> void:
-	_enemies = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
+	_enemies      = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
 	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
+	_hired_units  = _hired_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	if _enemies.is_empty():
 		_end_wave(true)
-	elif _player_units.is_empty():
+	elif _player_units.is_empty() and _hired_units.is_empty():
 		_end_wave(false)
 
 func _end_wave(player_won: bool) -> void:
@@ -278,11 +287,21 @@ func _end_wave(player_won: bool) -> void:
 	for u in _player_units:
 		if is_instance_valid(u) and _battle_start_positions.has(u):
 			u.global_position = _battle_start_positions[u]
+	for h in _hired_units:
+		if is_instance_valid(h) and _battle_start_positions.has(h):
+			h.global_position = _battle_start_positions[h]
 	_battle_start_positions.clear()
 
 	for u in _player_units:
 		if is_instance_valid(u) and u.has_method("end_battle"):
 			u.end_battle()
+	for h in _hired_units:
+		if is_instance_valid(h):
+			h.set("_target", null)
+			h.set("_battle_ready", false)
+			h.set("_hired_moving", false)
+			if h.has_method("_enter_state"):
+				h.call("_enter_state", 0)  # State.IDLE = 0
 
 	for e in _enemies:
 		if is_instance_valid(e):

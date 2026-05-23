@@ -109,4 +109,4 @@ func _launch_orb() -> void:
 	var orb    : Area2D = ORB_SCENE.instantiate()
 	var offset : Vector2 = (_target.global_position - global_position).normalized() * 24.0
 	get_tree().current_scene.add_child(orb)
-	orb.init(_target, attack_damage, global_position + offset)
+	orb.init(_target, attack_damage, global_position + offset, hired)

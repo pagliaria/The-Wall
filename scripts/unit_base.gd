@@ -170,6 +170,8 @@ var home_node     : Node    = null
 const LEVEL_BADGE_SCENE := preload("res://scenes/level_badge.tscn")
 var _badge : Node2D = null
 
+const HP_FILL_BLUE : Texture2D = preload("res://assets/UI Elements/UI Elements/Bars/SmallBar_Fill_blue.png")
+
 func _ready() -> void:
 	_rng.randomize()
 	_spawn_pos = position
@@ -177,6 +179,7 @@ func _ready() -> void:
 	add_child(_badge)
 	add_to_group("player_units")
 	_init_item_bonuses()
+	_hp_fill.texture = HP_FILL_BLUE
 	call_deferred("_on_unit_ready")
 
 func _on_unit_ready() -> void:
