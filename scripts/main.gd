@@ -140,6 +140,7 @@ func _on_wave_ended(player_won: bool) -> void:
 	hud.hide_rush_button()
 	UiAudio.play_trimmed("deep_thumps", 3.0, 4.0)
 	CombatAudio.play("victory" if player_won else "defeat")
+	BloodFx.clear_splats()
 	if player_won:
 		MusicManager.play_chill()
 		if not building_placer.is_placing():

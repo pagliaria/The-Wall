@@ -24,6 +24,7 @@ var _start_gold       : int   = 100
 var _start_wood       : int   = 50
 var _start_meat       : int   = 10
 var _combat_numbers   : bool  = true
+var _blood_level      : int   = 2  # BloodLevel.NORMAL
 
 # =========================================================================== #
 #  Node refs
@@ -50,6 +51,7 @@ var _combat_numbers   : bool  = true
 @onready var _spin_start_wood     : SpinBox     = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinStartWood
 @onready var _spin_start_meat     : SpinBox     = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinStartMeat
 @onready var _check_combat_numbers: CheckButton = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/CheckCombatNumbers
+@onready var _option_blood        : OptionButton = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/OptionBlood
 
 # Buttons
 @onready var _btn_resume          : Button = $Panel/MarginContainer/VBox/Buttons/BtnResume
@@ -63,9 +65,17 @@ var _combat_numbers   : bool  = true
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_config()
+	_setup_blood_options()
 	_populate_controls()
 	_connect_signals()
 	visible = false
+
+func _setup_blood_options() -> void:
+	_option_blood.add_item("None")
+	_option_blood.add_item("Light")
+	_option_blood.add_item("Normal")
+	_option_blood.add_item("Heavy")
+	_option_blood.add_item("Insane")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -105,6 +115,7 @@ func _connect_signals() -> void:
 	_check_fullscreen.toggled.connect(_on_fullscreen_toggled)
 	_check_vsync.toggled.connect(_on_vsync_toggled)
 	_check_combat_numbers.toggled.connect(_on_combat_numbers_toggled)
+	_option_blood.item_selected.connect(_on_blood_level_changed)
 
 func _on_master_changed(value: float) -> void:
 	_vol_master = value
@@ -138,6 +149,10 @@ func _on_combat_numbers_toggled(pressed: bool) -> void:
 	_combat_numbers         = pressed
 	CombatNumbers.enabled   = pressed
 
+func _on_blood_level_changed(idx: int) -> void:
+	_blood_level      = idx
+	BloodFx.level     = idx as BloodFx.BloodLevel
+
 func _on_apply() -> void:
 	_wave_interval  = _spin_wave_interval.value
 	_start_gold     = int(_spin_start_gold.value)
@@ -157,10 +172,12 @@ func _on_defaults() -> void:
 	_start_wood     = 50
 	_start_meat     = 10
 	_combat_numbers = true
+	_blood_level    = 2
 	_apply_audio()
 	_populate_controls()
 	_save_config()
 	CombatNumbers.enabled = true
+	BloodFx.level = BloodFx.BloodLevel.NORMAL
 	UiAudio.play()
 
 # =========================================================================== #
@@ -181,6 +198,7 @@ func _populate_controls() -> void:
 	_spin_start_wood.value           = _start_wood
 	_spin_start_meat.value           = _start_meat
 	_check_combat_numbers.button_pressed = _combat_numbers
+	_option_blood.select(_blood_level)
 
 func _apply_audio() -> void:
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(_vol_master))
@@ -203,6 +221,7 @@ func _save_config() -> void:
 	cfg.set_value("gameplay", "start_wood",      _start_wood)
 	cfg.set_value("gameplay", "start_meat",      _start_meat)
 	cfg.set_value("gameplay", "combat_numbers",  _combat_numbers)
+	cfg.set_value("gameplay", "blood_level",     _blood_level)
 	cfg.save(CONFIG_PATH)
 
 func _load_config() -> void:
@@ -219,9 +238,11 @@ func _load_config() -> void:
 	_start_wood     = cfg.get_value("gameplay", "start_wood",     50)
 	_start_meat     = cfg.get_value("gameplay", "start_meat",     10)
 	_combat_numbers = cfg.get_value("gameplay", "combat_numbers", true)
+	_blood_level    = cfg.get_value("gameplay", "blood_level",    2)
 	_apply_audio()
 	_apply_display()
 	CombatNumbers.enabled = _combat_numbers
+	BloodFx.level = _blood_level as BloodFx.BloodLevel
 
 func _apply_display() -> void:
 	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen else DisplayServer.WINDOW_MODE_WINDOWED

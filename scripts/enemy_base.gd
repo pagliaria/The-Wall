@@ -330,6 +330,7 @@ func take_damage(amount: int, attacker: Node = null) -> void:
 	hp -= amount
 	_update_hp_bar()
 	flash_red()
+	BloodFx.show_blood(global_position, amount)
 	CombatNumbers.show_number(global_position, amount, false)
 	if attacker != null and is_instance_valid(attacker) and attacker.has_method("grant_xp"):
 		if hp <= 0:

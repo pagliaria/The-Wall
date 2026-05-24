@@ -467,7 +467,8 @@ script = ExtResource("1_m1hhn")
 range_damage = 5
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
-position = Vector2(-13, -18)
+position = Vector2(-19, -45)
+scale = Vector2(1.5, 1.5)
 sprite_frames = SubResource("enemy_warrior_frames")
 animation = &"special"
 

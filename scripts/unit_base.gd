@@ -261,6 +261,7 @@ func take_damage(amount: int) -> void:
 	flash_red()
 	hp -= amount
 	_update_hp_bar()
+	BloodFx.show_blood(global_position, amount)
 	CombatNumbers.show_number(global_position, amount, false)
 	if hp <= 0:
 		_on_die()
