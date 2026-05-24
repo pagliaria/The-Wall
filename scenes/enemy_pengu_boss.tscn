@@ -1,6 +1,6 @@
-[gd_scene load_steps=72 format=3 uid="uid://sm7nq57a56pu"]
+[gd_scene load_steps=73 format=3 uid="uid://sm7nq57a56pu"]
 
-[ext_resource type="Script" uid="uid://cvy18gatqj516" path="res://scripts/enemy_cat_boss.gd" id="1_m1hhn"]
+[ext_resource type="Script" uid="uid://djegq47o16vl8" path="res://scripts/enemy_pengu_boss.gd" id="1_m1hhn"]
 [ext_resource type="Texture2D" uid="uid://c5qm3nue7yrj7" path="res://assets/Enemies/pengu_boss/pengu_attack_peck.png" id="2_2a3jj"]
 [ext_resource type="Texture2D" uid="uid://bbvbnpfqvslkj" path="res://assets/Enemies/pengu_boss/pengu_attack_ice.png" id="3_m1hhn"]
 [ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="5_wktum"]
@@ -234,6 +234,10 @@ region = Rect2(4608, 0, 384, 128)
 atlas = ExtResource("7_o008e")
 region = Rect2(4992, 0, 384, 128)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_2a3jj"]
+atlas = ExtResource("7_o008e")
+region = Rect2(0, 0, 384, 128)
+
 [sub_resource type="SpriteFrames" id="enemy_warrior_frames"]
 animations = [{
 "frames": [{
@@ -429,6 +433,9 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_ae62p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2a3jj")
 }],
 "loop": false,
 "name": &"special",
@@ -454,16 +461,15 @@ region = Rect2(256.301, 15.5149, 19.2602, 29.3799)
 atlas = ExtResource("10_ef8b2")
 
 [node name="EnemyPenguBoss" type="CharacterBody2D"]
+position = Vector2(4, -14)
 collision_layer = 2
 script = ExtResource("1_m1hhn")
+range_damage = 5
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
-position = Vector2(-24, -65)
-scale = Vector2(2, 2)
+position = Vector2(-13, -18)
 sprite_frames = SubResource("enemy_warrior_frames")
 animation = &"special"
-frame = 13
-frame_progress = 1.0
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(-8, 9)
@@ -517,8 +523,3 @@ offset_right = 34.6667
 offset_bottom = 13.3333
 scale = Vector2(1.3, 1.5)
 texture = SubResource("AtlasTexture_jj3hi")
-
-[node name="gun_timer" type="Timer" parent="."]
-wait_time = 0.5
-
-[connection signal="timeout" from="gun_timer" to="." method="_on_gun_timer_timeout"]

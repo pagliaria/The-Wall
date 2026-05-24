@@ -1,6 +1,6 @@
 [gd_scene load_steps=135 format=3 uid="uid://sm7nq57a56pu"]
 
-[ext_resource type="Script" uid="uid://djegq47o16vl8" path="res://scripts/enemy_cat_boss.gd" id="1_6snvk"]
+[ext_resource type="Script" uid="uid://cvy18gatqj516" path="res://scripts/enemy_cat_boss.gd" id="1_6snvk"]
 [ext_resource type="Texture2D" uid="uid://cuewotmbavjow" path="res://assets/Enemies/cat_boss/cat_melee.png" id="2_iv5kb"]
 [ext_resource type="Texture2D" uid="uid://dokn1q8dst8g3" path="res://assets/Enemies/cat_boss/cat_outofammo.png" id="3_6f6ar"]
 [ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="4_6f6ar"]
@@ -891,6 +891,7 @@ atlas = ExtResource("9_xo1oi")
 [node name="EnemyCatBoss" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_6snvk")
+range_damage = 10
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 position = Vector2(1, -74)

@@ -88,13 +88,38 @@ func _play_attack_anim_and_fire() -> void:
 		
 	elif dist < engage_range:
 		_sprite.play("attack2")
-		var total_frames = _sprite.sprite_frames.get_frame_count("attack2")
-		var fps = _sprite.sprite_frames.get_animation_speed("attack2")
-		var total_duration = total_frames / fps
-		var shoot_time = total_duration / 4.0
-		
-		CombatAudio.play("enemy_cat_gun")
 		await _sprite.animation_finished
-		
-		# spawn ice on taregt
+		if not is_instance_valid(_target) or _target.hp <= 0:
+			return
 		_target.take_damage(range_damage)
+		_spawn_ice_on_target(_target)
+
+func _spawn_ice_on_target(tgt: Node) -> void:
+	if not is_instance_valid(tgt):
+		return
+	const ICE_TEX : Texture2D = preload("res://assets/Enemies/pengu_boss/pengu_fx_ice.png")
+	const ICE_FPS : float     = 20.0
+	var sprite    : AnimatedSprite2D = AnimatedSprite2D.new()
+	var sf        : SpriteFrames     = SpriteFrames.new()
+	sf.remove_animation("default")
+	sf.add_animation("anim")
+	sf.set_animation_speed("anim", ICE_FPS)
+	sf.set_animation_loop("anim", false)
+	var frame_w   : int = 48
+	var frame_h   : int = 128
+	var count     : int = max(1, ICE_TEX.get_width() / frame_w)
+	for i in count:
+		var atlas    := AtlasTexture.new()
+		atlas.atlas   = ICE_TEX
+		atlas.region  = Rect2(i * frame_w, 0, frame_w, frame_h)
+		sf.add_frame("anim", atlas)
+	sprite.sprite_frames = sf
+	sprite.scale         = Vector2(2.0, 2.0)
+	sprite.z_index       = 10
+	var fx : Node2D = Node2D.new()
+	fx.position = tgt.position + Vector2(0, -80.0)
+	fx.z_index  = 10
+	fx.add_child(sprite)
+	get_tree().current_scene.add_child(fx)
+	sprite.play("anim")
+	sprite.animation_finished.connect(fx.queue_free)
