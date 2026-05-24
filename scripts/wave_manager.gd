@@ -19,28 +19,113 @@ const BATTLEFIELD_LEFT  = 0.0
 const BATTLEFIELD_MID   = 640.0
 const BATTLEFIELD_RIGHT = 1280.0
 
+const TOTAL_WAVES    : int   = 15
+const BOSS_WAVE_CAT  : int   = 5
+const BOSS_WAVE_WITCH : int  = 10
+const BOSS_WAVE_PENGU : int  = 15
+
 const WAVE_COMPOSITIONS : Array = [
-	#[{ "path": "res://scenes/enemy_pengu_boss.tscn", "count": 1 }],
-	# Wave 1
-	[{ "path": "res://scenes/enemy_slime.tscn", "count": 2 },
-	{ "path": "res://scenes/enemy_warrior.tscn", "count": 2 },
-	{ "path": "res://scenes/enemy_badger.tscn", "count": 2 }],
-	# Wave 2
-	[{ "path": "res://scenes/enemy_slime.tscn", "count": 5 },
-	{ "path": "res://scenes/enemy_badger.tscn", "count": 2 },
-	{ "path": "res://scenes/enemy_warrior.tscn", "count": 5 }],
-	# Wave 3
-	[{ "path": "res://scenes/enemy_slime.tscn", "count": 10 },
-	{ "path": "res://scenes/enemy_badger.tscn", "count": 5 },
-	{ "path": "res://scenes/enemy_warrior.tscn", "count": 5 }],
-	# Wave 4 BOSS
-	[{ "path": "res://scenes/enemy_cat_boss.tscn", "count": 1 },
-	{ "path": "res://scenes/enemy_boar.tscn", "count": 3 }],
-	# Wave 5
-	[{ "path": "res://scenes/enemy_witch_doctor.tscn", "count": 1 },
-	{ "path": "res://scenes/enemy_badger.tscn", "count": 5 }],
+	# ── Wave 1 — Tutorial: slimes and a few warriors ──────────────────────
+	[
+		{"path": "res://scenes/enemy_slime.tscn",   "count": 3},
+		{"path": "res://scenes/enemy_warrior.tscn", "count": 3},
+	],
+	# ── Wave 2 — Badgers introduced ───────────────────────────────────────
+	[
+		{"path": "res://scenes/enemy_slime.tscn",   "count": 4},
+		{"path": "res://scenes/enemy_warrior.tscn", "count": 4},
+		{"path": "res://scenes/enemy_badger.tscn",  "count": 2},
+	],
+	# ── Wave 3 — More pressure, skeletons appear ──────────────────────────
+	[
+		{"path": "res://scenes/enemy_slime.tscn",    "count": 5},
+		{"path": "res://scenes/enemy_warrior.tscn",  "count": 5},
+		{"path": "res://scenes/enemy_badger.tscn",   "count": 3},
+		{"path": "res://scenes/enemy_skeleton.tscn", "count": 4},
+	],
+	# ── Wave 4 — Boars introduced, building up to boss ────────────────────
+	[
+		{"path": "res://scenes/enemy_warrior.tscn",  "count": 6},
+		{"path": "res://scenes/enemy_badger.tscn",   "count": 4},
+		{"path": "res://scenes/enemy_skeleton.tscn", "count": 6},
+		{"path": "res://scenes/enemy_boar.tscn",     "count": 2},
+	],
+	# ── Wave 5 — BOSS: Cat Boss + bodyguard boars ─────────────────────────
+	[
+		{"path": "res://scenes/enemy_cat_boss.tscn", "count": 1},
+		{"path": "res://scenes/enemy_boar.tscn",     "count": 3},
+		{"path": "res://scenes/enemy_warrior.tscn",  "count": 4},
+	],
+	# ── Wave 6 — Post-boss relief, witch doctors teased ───────────────────
+	[
+		{"path": "res://scenes/enemy_slime.tscn",       "count": 6},
+		{"path": "res://scenes/enemy_badger.tscn",       "count": 5},
+		{"path": "res://scenes/enemy_witch_doctor.tscn", "count": 1},
+	],
+	# ── Wave 7 — Skeleton swarms begin ────────────────────────────────────
+	[
+		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 12},
+		{"path": "res://scenes/enemy_warrior.tscn",     "count": 5},
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 2},
+	],
+	# ── Wave 8 — Boars and badgers combined ───────────────────────────────
+	[
+		{"path": "res://scenes/enemy_boar.tscn",        "count": 4},
+		{"path": "res://scenes/enemy_badger.tscn",       "count": 6},
+		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 8},
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 2},
+	],
+	# ── Wave 9 — Everything before boss 2, full chaos ─────────────────────
+	[
+		{"path": "res://scenes/enemy_slime.tscn",       "count": 8},
+		{"path": "res://scenes/enemy_warrior.tscn",     "count": 8},
+		{"path": "res://scenes/enemy_boar.tscn",        "count": 4},
+		{"path": "res://scenes/enemy_badger.tscn",      "count": 5},
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
+	],
+	# ── Wave 10 — BOSS: Witch Doctor Boss + skeleton army ─────────────────
+	[
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 1},
+		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 16},
+		{"path": "res://scenes/enemy_badger.tscn",      "count": 4},
+	],
+	# ── Wave 11 — Post-boss, pengu teased via environment ─────────────────
+	[
+		{"path": "res://scenes/enemy_warrior.tscn",     "count": 10},
+		{"path": "res://scenes/enemy_boar.tscn",        "count": 5},
+		{"path": "res://scenes/enemy_badger.tscn",      "count": 6},
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 2},
+	],
+	# ── Wave 12 — Skeleton flood ───────────────────────────────────────────
+	[
+		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 20},
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
+		{"path": "res://scenes/enemy_boar.tscn",        "count": 4},
+	],
+	# ── Wave 13 — All enemy types, max pressure ────────────────────────────
+	[
+		{"path": "res://scenes/enemy_slime.tscn",       "count": 8},
+		{"path": "res://scenes/enemy_warrior.tscn",     "count": 8},
+		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 10},
+		{"path": "res://scenes/enemy_boar.tscn",        "count": 5},
+		{"path": "res://scenes/enemy_badger.tscn",      "count": 6},
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
+	],
+	# ── Wave 14 — Final gauntlet before pengu ─────────────────────────────
+	[
+		{"path": "res://scenes/enemy_cat_boss.tscn",    "count": 1},
+		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 12},
+		{"path": "res://scenes/enemy_boar.tscn",        "count": 6},
+		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
+		{"path": "res://scenes/enemy_badger.tscn",      "count": 6},
+	],
+	# ── Wave 15 — FINAL BOSS: Pengu ───────────────────────────────────────
+	[
+		{"path": "res://scenes/enemy_pengu_boss.tscn",  "count": 1},
+		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 10},
+		{"path": "res://scenes/enemy_warrior.tscn",     "count": 6},
+	],
 ]
-const LATE_WAVE_SCALE : float = 1.5
 
 enum Phase { PREP, BATTLE , NONE}
 
@@ -173,22 +258,18 @@ func calc_rush_reward(seconds_left: float) -> Dictionary:
 	return reward
 
 func _prepare_next_wave() -> void:
+	if _wave_number >= TOTAL_WAVES:
+		return
 	_countdown = WAVE_INTERVAL
 	_phase = Phase.PREP
 	_spawn_queue.clear()
-	var comp_index := mini(_wave_number, WAVE_COMPOSITIONS.size() - 1)
-	var composition : Array = WAVE_COMPOSITIONS[comp_index]
-	var overflow := maxi(0, _wave_number + 1 - WAVE_COMPOSITIONS.size())
-	var scale := 1.0 + overflow * (LATE_WAVE_SCALE - 1.0)
-
+	var composition : Array = WAVE_COMPOSITIONS[_wave_number]
 	for entry in composition:
-		var count := int(ceil(float(entry["count"]) * scale))
 		var scene := _get_scene(entry["path"])
 		if scene == null:
 			continue
-		for _i in count:
+		for _i in entry["count"]:
 			_spawn_queue.append(scene)
-
 	if _spawn_queue.is_empty():
 		_spawn_step = 0.0
 	else:
@@ -309,7 +390,11 @@ func _end_wave(player_won: bool) -> void:
 			e.queue_free()
 	_enemies.clear()
 	_player_units.clear()
-	#_prepare_next_wave()
+
+	if player_won and _wave_number >= TOTAL_WAVES:
+		# Final boss defeated — game complete
+		emit_signal("wave_ended", true)
+		return
 
 	emit_signal("wave_ended", player_won)
 
