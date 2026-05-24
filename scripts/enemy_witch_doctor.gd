@@ -99,12 +99,9 @@ func _do_summon_sequence() -> void:
 
 func _summon_skeleton() -> void:
 	var wm : Node = get_tree().current_scene.get_node_or_null("WaveManager")
-	if wm == null or not wm.has_method("register_enemy"):
+	if wm == null:
 		return
-	if wm.get("_phase") != null and str(wm._phase) == "0":
-		return  # not in battle phase
 	var skeleton : CharacterBody2D = SKELETON_SCENE.instantiate()
-	# Spawn near the witch doctor with a small random offset
 	var rng    := RandomNumberGenerator.new()
 	rng.randomize()
 	var offset : Vector2 = Vector2(
@@ -112,7 +109,12 @@ func _summon_skeleton() -> void:
 		rng.randf_range(-40.0, 40.0)
 	)
 	skeleton.position = position + offset
-	wm.register_enemy(skeleton)
+	if hired:
+		skeleton.call("set_hired")
+		get_tree().current_scene.add_child(skeleton)
+		wm.register_hired_unit(skeleton)
+	else:
+		wm.register_enemy(skeleton)
 	# Visual summon flash
 	_sprite.modulate = Color(0.7, 0.3, 1.0)
 	var tw := create_tween()

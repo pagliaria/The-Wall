@@ -144,9 +144,10 @@ func get_hired_units() -> Array:
 
 func register_hired_unit(unit: Node) -> void:
 	_hired_units.append(unit)
-	# If battle already in progress start it immediately
+	# Defer start_battle so @onready vars are initialized first
 	if _phase == Phase.BATTLE and not _enemies.is_empty():
-		unit.call("start_battle", _enemies)
+		var enemies_copy : Array = _enemies.duplicate()
+		unit.call_deferred("start_battle", enemies_copy)
 
 func is_in_prep() -> bool:
 	return _phase == Phase.PREP

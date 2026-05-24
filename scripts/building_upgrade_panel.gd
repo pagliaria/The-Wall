@@ -124,28 +124,28 @@ func _show_hire_ui() -> void:
 	var roster : Array = ctrl.get_hire_roster()
 	var grid : GridContainer = $Panel/Margin/VBox/Grid
 	grid.columns = 4
+	# Widen panel for hire cards
+	_panel.custom_minimum_size = Vector2(560, 0)
+	_panel.offset_top = -420.0
 	if _hire_buttons.size() != roster.size():
 		for b in _hire_buttons:
 			if is_instance_valid(b):
 				b.queue_free()
 		_hire_buttons.clear()
 		for entry in roster:
-			# Container button
 			var btn := Button.new()
-			btn.custom_minimum_size = Vector2(80, 80)
-			btn.clip_contents = true
+			btn.custom_minimum_size = Vector2(110, 148)
+			btn.clip_contents = false
 			grid.add_child(btn)
 			btn.pressed.connect(_on_hire_pressed.bind(entry))
 			_hire_buttons.append(btn)
-			# VBox inside button
 			var vbox := VBoxContainer.new()
 			vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 			vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-			vbox.add_theme_constant_override("separation", 2)
+			vbox.add_theme_constant_override("separation", 4)
 			btn.add_child(vbox)
-			# Icon
 			var tex_rect := TextureRect.new()
-			tex_rect.custom_minimum_size = Vector2(40, 40)
+			tex_rect.custom_minimum_size = Vector2(64, 64)
 			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			tex_rect.expand_mode  = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 			tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -159,27 +159,32 @@ func _show_hire_ui() -> void:
 					if frame_rect.size.x > 0.0 and frame_rect.size.y > 0.0:
 						atlas.region = frame_rect
 					else:
-						# Fallback for simple horizontal strips when no frame rect is provided.
 						var frame_h : int = full_tex.get_height()
 						atlas.region = Rect2(0, 0, frame_h, frame_h)
 					tex_rect.texture = atlas
 				tex_rect.set_meta("icon_path", icon_path)
 			vbox.add_child(tex_rect)
-			# Name label
 			var name_lbl := Label.new()
 			name_lbl.text = entry["label"]
 			name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			name_lbl.add_theme_font_size_override("font_size", 9)
+			name_lbl.add_theme_font_size_override("font_size", 13)
 			name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			vbox.add_child(name_lbl)
-			# Cost label
 			var cost_lbl := Label.new()
 			cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			cost_lbl.add_theme_font_size_override("font_size", 8)
+			cost_lbl.add_theme_font_size_override("font_size", 11)
 			cost_lbl.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
+			cost_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			cost_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			vbox.add_child(cost_lbl)
+			var count_lbl := Label.new()
+			count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			count_lbl.add_theme_font_size_override("font_size", 11)
+			count_lbl.add_theme_color_override("font_color", Color(0.75, 0.85, 1.0))
+			count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			vbox.add_child(count_lbl)
 			btn.set_meta("cost_label", cost_lbl)
+			btn.set_meta("count_label", count_lbl)
 			btn.set_meta("name_label", name_lbl)
 	# Refresh state
 	for i in roster.size():
@@ -190,10 +195,13 @@ func _show_hire_ui() -> void:
 		var hired  : int        = ctrl.get_hired_count(entry["id"])
 		var max_c  : int        = int(entry["max"])
 		var cost   : Dictionary = entry["cost"]
-		var cost_lbl : Label = btn.get_meta("cost_label") if btn.has_meta("cost_label") else null
-		var name_lbl : Label = btn.get_meta("name_label") if btn.has_meta("name_label") else null
+		var cost_lbl  : Label = btn.get_meta("cost_label")  if btn.has_meta("cost_label")  else null
+		var count_lbl : Label = btn.get_meta("count_label") if btn.has_meta("count_label") else null
+		var name_lbl  : Label = btn.get_meta("name_label")  if btn.has_meta("name_label")  else null
 		if cost_lbl != null:
-			cost_lbl.text = "%s\n%d/%d" % [_format_cost(cost), hired, max_c]
+			cost_lbl.text = _format_hire_cost(cost)
+		if count_lbl != null:
+			count_lbl.text = "%d / %d" % [hired, max_c]
 		if name_lbl != null:
 			name_lbl.text = entry["label"]
 		btn.disabled = not ctrl.can_hire(entry)
@@ -201,6 +209,8 @@ func _show_hire_ui() -> void:
 
 func _hide_hire_ui() -> void:
 	($Panel/Margin/VBox/Grid as GridContainer).columns = 2
+	_panel.custom_minimum_size = Vector2(0, 0)
+	_panel.offset_top = -360.0
 	for b in _hire_buttons:
 		if is_instance_valid(b):
 			b.hide()
@@ -233,6 +243,17 @@ func _build_tooltip(upgrade_def: Dictionary, current_level: int, max_level: int)
 		_format_cost(cost),
 		_format_time(time_seconds),
 	]
+
+func _format_hire_cost(cost: Dictionary) -> String:
+	var parts : Array[String] = []
+	var gold  : int = int(cost.get("gold", 0)) * 10
+	var meat  : int = int(cost.get("meat", 0))
+	var wood  : int = int(cost.get("wood", 0))
+	if gold > 0: parts.append("%d gold" % gold)
+	if wood > 0: parts.append("%d wood" % wood)
+	if meat > 0: parts.append("%d meat" % meat)
+	if parts.is_empty(): return "Free"
+	return ", ".join(parts)
 
 func _format_cost(cost: Dictionary) -> String:
 	var parts: Array[String] = []

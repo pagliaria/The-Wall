@@ -410,13 +410,18 @@ func _do_attack_hit() -> void:
 		_target.take_damage(4)
 
 func _on_enter_idle_state() -> void:
-	if _sprite.sprite_frames.has_animation("idle"):
-		_sprite.play("idle")
+	if _sprite == null or not _sprite.sprite_frames.has_animation("idle"):
+		return
+	_sprite.play("idle")
 
 func _on_enter_battle_state() -> void:
+	if _sprite == null:
+		return
 	if _sprite.sprite_frames.has_animation("run"):
 		_sprite.play("run")
 
 func _on_enter_attacking_state() -> void:
+	if _sprite == null:
+		return
 	if _sprite.sprite_frames.has_animation("attack1"):
 		_sprite.play("attack1")
