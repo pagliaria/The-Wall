@@ -1,6 +1,6 @@
-[gd_scene load_steps=72 format=3 uid="uid://c7e68e62wbgiq"]
+[gd_scene load_steps=72 format=3 uid="uid://sm7nq57a56pu"]
 
-[ext_resource type="Script" uid="uid://cvy18gatqj516" path="res://scripts/enemy_pengu_boss.gd" id="1_m1hhn"]
+[ext_resource type="Script" uid="uid://cvy18gatqj516" path="res://scripts/enemy_cat_boss.gd" id="1_m1hhn"]
 [ext_resource type="Texture2D" uid="uid://c5qm3nue7yrj7" path="res://assets/Enemies/pengu_boss/pengu_attack_peck.png" id="2_2a3jj"]
 [ext_resource type="Texture2D" uid="uid://bbvbnpfqvslkj" path="res://assets/Enemies/pengu_boss/pengu_attack_ice.png" id="3_m1hhn"]
 [ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="5_wktum"]

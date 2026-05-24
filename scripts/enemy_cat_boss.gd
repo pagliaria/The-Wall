@@ -1,13 +1,15 @@
 extends "res://scripts/enemy_base.gd"
-# enemy_pengu_boss.gd — Ranged magical enemy.
+# enemy_cat_boss.gd — Ranged magical enemy.
 
 @export var melee_damage : int   = 20
-@export var ray_damage : int   = 10
-@export var range_damage : int   = 10
+@export var nade_damage : int   = 5
+@export var range_damage : int   = 5
 @export var attack_rate   : float = 1
 @export var engage_range  : float = 1000
 @export var melee_range  : float = 64
-@export var ray_range  : float = 500
+@export var nade_range  : float = 500
+
+@onready var gun_timer = $gun_timer
 
 var _attack_anim_flip : bool = false
 
@@ -63,17 +65,17 @@ func _play_attack_anim_and_fire() -> void:
 			return
 		CombatAudio.play("enemy_cat_melee")
 		_target.take_damage(melee_damage)
-		## Knock target back
-		#if is_instance_valid(_target):
-			#var kb_dir : Vector2 = (_target.position - position).normalized()
-			#var kb_dest : Vector2 = _target.position + kb_dir * 320.0
-			#var tw : Tween = _target.create_tween()
-			#tw.tween_property(_target, "position", kb_dest, 0.25) \
-				#.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		# Knock target back
+		if is_instance_valid(_target):
+			var kb_dir : Vector2 = (_target.position - position).normalized()
+			var kb_dest : Vector2 = _target.position + kb_dir * 320.0
+			var tw : Tween = _target.create_tween()
+			tw.tween_property(_target, "position", kb_dest, 0.25) \
+				.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		
-	elif dist < ray_range:
+	elif dist < nade_range:
 		_sprite.play("special")
-		print("ray")
+		print("nade")
 		var total_frames = _sprite.sprite_frames.get_frame_count("special")
 		var fps = _sprite.sprite_frames.get_animation_speed("special")
 		var total_duration = total_frames / fps
@@ -83,7 +85,7 @@ func _play_attack_anim_and_fire() -> void:
 		if not is_instance_valid(_target) or _target.hp <= 0:
 			return
 		CombatAudio.play("enemy_cat_nade")
-		_target.take_damage(ray_damage)
+		_target.take_damage(nade_damage)
 		await _sprite.animation_finished
 		
 	elif dist < engage_range:
@@ -92,9 +94,17 @@ func _play_attack_anim_and_fire() -> void:
 		var fps = _sprite.sprite_frames.get_animation_speed("attack2")
 		var total_duration = total_frames / fps
 		var shoot_time = total_duration / 4.0
-		
+	
+		# Start timer and stop it after half the duration
+		gun_timer.start()
 		CombatAudio.play("enemy_cat_gun")
+		await get_tree().create_timer(shoot_time).timeout
+		gun_timer.stop()
 		await _sprite.animation_finished
-		
-		# spawn ice on taregt
-		_target.take_damage(range_damage)
+
+
+func _on_gun_timer_timeout() -> void:
+	if not is_instance_valid(_target) or _target.hp <= 0:
+		gun_timer.stop()
+		return
+	_target.take_damage(range_damage)
