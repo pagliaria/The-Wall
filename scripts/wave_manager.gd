@@ -409,6 +409,7 @@ func _on_enemy_died(enemy: Node) -> void:
 func register_enemy(enemy: CharacterBody2D) -> void:
 	if _phase != Phase.BATTLE:
 		return
+	enemy.set("summoned", true)
 	units_layer.add_child(enemy)
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	enemy.start_battle(_player_units)

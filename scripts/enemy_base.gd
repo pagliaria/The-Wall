@@ -26,6 +26,7 @@ const SELECTION_CIRCLE_SCRIPT : GDScript = preload("res://scripts/selection_circ
 
 var faction     : String = "enemy"
 var hp          : int    = 0
+var summoned    : bool   = false
 
 # =========================================================================== #
 #  Hired unit flag — set to true by house.gd to flip allegiance
@@ -353,7 +354,7 @@ func _on_enter_dead_state() -> void:
 	if _sprite.sprite_frames.has_animation("death"):
 		_sprite.play("death")
 		await _sprite.animation_finished
-	if not hired:
+	if not hired and not summoned:
 		_try_drop_chest(drop_pos)
 	die()
 
