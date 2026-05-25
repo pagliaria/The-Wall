@@ -1,0 +1,256 @@
+[gd_scene load_steps=5 format=3 uid="uid://how_to_play_scene"]
+
+[ext_resource type="Script" path="res://scripts/how_to_play.gd" id="1_htp"]
+[ext_resource type="FontFile" uid="uid://ctsrcyus6yvu" path="res://assets/fonts/Cardo-Bold.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://h8mcpmdp27jb" path="res://assets/fonts/Cardo-Italic.ttf" id="3_cardo"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.08, 0.05, 0.02, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.35, 0.08, 1.0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="HowToPlay" type="CanvasLayer"]
+layer = 15
+visible = false
+script = ExtResource("1_htp")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.0, 0.0, 0.0, 0.72)
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -400.0
+offset_right = 500.0
+offset_bottom = 400.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Title" type="Label" parent="Panel/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.82, 0.45, 1.0)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 32
+text = "  How To Play"
+vertical_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="Panel/VBox/Header"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 20
+text = "✕"
+
+[node name="Divider" type="ColorRect" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.55, 0.35, 0.08, 0.8)
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="Panel/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="MarginWrap" type="MarginContainer" parent="Panel/VBox/Scroll/Content"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Sections" type="VBoxContainer" parent="Panel/VBox/Scroll/Content/MarginWrap"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="GoalHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "🏰  Your Goal"
+
+[node name="GoalText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Defend your castle through 15 waves of enemies. Survive all waves to win. If your units and hired allies are all defeated during a wave, you lose."
+
+[node name="Div1" type="ColorRect" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.4, 0.25, 0.05, 0.5)
+
+[node name="BuildHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "🔨  Building"
+
+[node name="BuildText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Click the Build button (or press B) to open the build menu. Place buildings on the right side of the map. The Castle must be placed first — it anchors your defenses. Buildings cost Gold, Wood, or Meat to construct and can be upgraded by clicking them."
+
+[node name="Div2" type="ColorRect" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.4, 0.25, 0.05, 0.5)
+
+[node name="UnitsHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "⚔  Units"
+
+[node name="UnitsText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Left-click to select units. Drag to box-select a group. Double-click a unit to select all of that type. Right-click to move selected units. Hold right-click and drag to rotate the formation before releasing.\n\nUnit types:\n• Warrior — tough melee fighter\n• Lancer — heavy melee with long reach\n• Archer — ranged attacker, keep behind melee\n• Monk — heals allies and attacks at range\n• Pawn — gathers resources"
+
+[node name="Div3" type="ColorRect" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.4, 0.25, 0.05, 0.5)
+
+[node name="FormHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "🗺  Formations"
+
+[node name="FormText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "When multiple units are selected, choose a formation from the selection panel: Line, Wedge, Box, or Flanks. Adjust spacing with Tight, Normal, or Loose. Tougher units are automatically placed at the front."
+
+[node name="Div4" type="ColorRect" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.4, 0.25, 0.05, 0.5)
+
+[node name="ResHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "⛏  Resources"
+
+[node name="ResText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Gold, Wood, and Meat are gathered by Pawns. Right-click a resource node to assign a Pawn to gather from it. Resources respawn over time. Gold is used for most things, Wood for buildings, Meat for training units."
+
+[node name="Div5" type="ColorRect" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.4, 0.25, 0.05, 0.5)
+
+[node name="WaveHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "🌊  Waves"
+
+[node name="WaveText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Enemies spawn before each wave and attack when the countdown hits zero. Use the Rush button to start the wave early for bonus Gold, Wood, and Meat — the earlier you rush, the bigger the reward. There are 15 waves total with 3 boss encounters."
+
+[node name="Div6" type="ColorRect" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.4, 0.25, 0.05, 0.5)
+
+[node name="LootHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "📦  Loot & Items"
+
+[node name="LootText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Enemies occasionally drop chests when defeated — Common, Rare, or Epic. Click a chest to open it and items pop out. Drag an item onto a unit to boost their stats. Hover over an item to see what it does."
+
+[node name="Div7" type="ColorRect" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.4, 0.25, 0.05, 0.5)
+
+[node name="HireHeader" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1.0)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "🏠  Hired Units"
+
+[node name="HireText" type="Label" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1.0)
+theme_override_fonts/font = ExtResource("3_cardo")
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Build a House to hire enemy units to fight for you. Hired units have blue HP bars and can be selected and moved like your own units. They retain all their special abilities and fight alongside your army during waves."
+
+[node name="BottomPad" type="Control" parent="Panel/VBox/Scroll/Content/MarginWrap/Sections"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2

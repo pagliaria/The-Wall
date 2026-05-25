@@ -18,8 +18,8 @@
 [ext_resource type="Script" uid="uid://dfax1yj0q0ty2" path="res://scripts/unit_selection.gd" id="14_sel"]
 [ext_resource type="Texture2D" uid="uid://c5fkle31ll17f" path="res://assets/UI Elements/UI Elements/Ribbons/BigRibbons.png" id="15_0ld40"]
 [ext_resource type="Script" uid="uid://spnm5nytjrqx" path="res://scripts/selection_overlay.gd" id="15_overlay"]
-[ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="16_gqmmt"]
 [ext_resource type="Script" uid="uid://bari6wkicm3ly" path="res://scripts/battlefield_overlay.gd" id="17_battlefield"]
+[ext_resource type="FontFile" uid="uid://ctsrcyus6yvu" path="res://assets/fonts/Cardo-Bold.ttf" id="17_cardobold"]
 [ext_resource type="PackedScene" uid="uid://b1fea6knbgvwi" path="res://scenes/settings_screen.tscn" id="32_settings"]
 [ext_resource type="PackedScene" uid="uid://cqs7jkoc86811" path="res://scenes/selection_panel.tscn" id="33_sel_panel"]
 [ext_resource type="PackedScene" uid="uid://dye4wevxkcnrp" path="res://scenes/building_upgrade_panel.tscn" id="34_building_upgrades"]
@@ -485,7 +485,7 @@ grow_horizontal = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("16_gqmmt")
+theme_override_fonts/font = ExtResource("17_cardobold")
 theme_override_font_sizes/font_size = 28
 text = "Wave"
 horizontal_alignment = 1
@@ -503,7 +503,7 @@ grow_horizontal = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("16_gqmmt")
+theme_override_fonts/font = ExtResource("17_cardobold")
 theme_override_font_sizes/font_size = 28
 text = "Attack!"
 horizontal_alignment = 1
@@ -521,7 +521,7 @@ grow_horizontal = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("16_gqmmt")
+theme_override_fonts/font = ExtResource("17_cardobold")
 theme_override_font_sizes/font_size = 28
 text = "Attack!"
 horizontal_alignment = 1

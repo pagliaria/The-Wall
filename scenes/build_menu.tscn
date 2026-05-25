@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://03hji3qdk0hb" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Regular.png" id="3_red_reg"]
 [ext_resource type="Texture2D" uid="uid://c5fkle31ll17f" path="res://assets/UI Elements/UI Elements/Ribbons/BigRibbons.png" id="4_jp2d4"]
 [ext_resource type="Texture2D" uid="uid://cm0jpiu1lr3am" path="res://assets/UI Elements/UI Elements/Buttons/SmallRedSquareButton_Pressed.png" id="4_red_press"]
-[ext_resource type="FontFile" uid="uid://b0xhrci43goan" path="res://assets/fonts/MonteCarlo-Regular.ttf" id="5_4h3qg"]
+[ext_resource type="FontFile" uid="uid://ctsrcyus6yvu" path="res://assets/fonts/Cardo-Bold.ttf" id="5_4h3qg"]
 [ext_resource type="Texture2D" uid="uid://sycpf7s12rqd" path="res://assets/Buildings/Black Buildings/Archery.png" id="6_archery"]
 [ext_resource type="Texture2D" uid="uid://e6r3gfhdmlno" path="res://assets/Buildings/Black Buildings/Barracks.png" id="7_barracks"]
 [ext_resource type="Texture2D" uid="uid://bftuw36baylsj" path="res://assets/Buildings/Black Buildings/House1.png" id="9_house"]
