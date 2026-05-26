@@ -56,9 +56,11 @@ const ITEM_NAMES : Dictionary = {
 	ItemType.AMULET: "Amulet",
 }
 
-# =========================================================================== #
-#  State
-# =========================================================================== #
+const SELL_PRICES : Dictionary = {
+	Rarity.COMMON: 1,   # 10 gold
+	Rarity.RARE:   3,   # 30 gold
+	Rarity.EPIC:   8,   # 80 gold
+}
 
 var item_type : ItemType = ItemType.SWORD
 var rarity    : Rarity   = Rarity.COMMON
@@ -242,6 +244,7 @@ func _input(event: InputEvent) -> void:
 				if _tooltip != null:
 					_tooltip.visible = false
 				z_index = _base_z_index + 50
+				_show_sell_zone(true)
 				set_process(true)
 				get_viewport().set_input_as_handled()
 		else:
@@ -250,14 +253,29 @@ func _input(event: InputEvent) -> void:
 				set_process(false)
 				z_index = _base_z_index
 				get_viewport().set_input_as_handled()
+				_show_sell_zone(false)
 				_try_apply_to_unit()
 
 func _process(_delta: float) -> void:
 	if _dragging:
 		position = (get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_mouse_position()) + _drag_offset
+		# Highlight sell zone when dragging near it
+		var screen_pos : Vector2 = get_viewport().get_canvas_transform() * position
+		for zone in get_tree().get_nodes_in_group("sell_zone"):
+			if is_instance_valid(zone) and zone.has_method("set_highlighted"):
+				zone.set_highlighted(zone.get_global_rect().has_point(screen_pos))
 
 func _try_apply_to_unit() -> void:
-	# Find the nearest unit within drop radius
+	# Check sell zone first
+	var screen_pos : Vector2 = get_viewport().get_canvas_transform() * position
+	for zone in get_tree().get_nodes_in_group("sell_zone"):
+		if not is_instance_valid(zone):
+			continue
+		var rect : Rect2 = zone.get_global_rect()
+		if rect.has_point(screen_pos):
+			_sell()
+			return
+	# Find nearest unit within drop radius
 	const DROP_RADIUS : float = 60.0
 	var best_unit     : Node  = null
 	var best_dist     : float = DROP_RADIUS
@@ -273,6 +291,19 @@ func _try_apply_to_unit() -> void:
 		best_unit.apply_item(self)
 		queue_free()
 	else:
-		# Snap back to ground
 		var tw := create_tween()
 		tw.tween_property(self, "position", _landed_pos, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _show_sell_zone(on: bool) -> void:
+	for zone in get_tree().get_nodes_in_group("sell_zone"):
+		if is_instance_valid(zone):
+			zone.visible = on
+			if not on and zone.has_method("set_highlighted"):
+				zone.set_highlighted(false)
+
+func _sell() -> void:
+	var nuggets : int = SELL_PRICES.get(rarity, 1)
+	ResourceManager.add("gold", nuggets)
+	UiAudio.play("loot_interact")
+	CombatNumbers.show_number(position, nuggets * 10, true, false)
+	queue_free()
