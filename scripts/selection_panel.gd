@@ -36,8 +36,9 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 @onready var _btn_normal   : Button        = $Panel/MultiView/SpacingRow/NormalBtn
 @onready var _btn_loose    : Button        = $Panel/MultiView/SpacingRow/LooseBtn
 
-var _unit_selection : Node = null
-var _tracked_unit   : Node = null
+var _unit_selection  : Node = null
+var _tracked_unit    : Node = null
+var _item_slot_btns  : Array[Button] = []
 
 const UNIT_STATS := {
 	"Warrior": {"attack_range": 48.0,  "attack_damage": 5,    "attack_speed": 3.0, "move_speed": 60.0},
@@ -114,13 +115,86 @@ func _show_single(unit: Node) -> void:
 	_single_view.show()
 	_multi_view.hide()
 	_tracked_unit = unit
-
 	var type_key := _unit_type(unit)
 	_portrait.texture  = _resolve_portrait(unit, type_key)
 	_apply_name_and_level(unit, _display_name(unit, type_key))
 	_apply_hp(unit)
 	_status_label.text = _get_status(unit)
 	_apply_stats(unit, type_key)
+	_build_item_slots(unit)
+
+# =========================================================================== #
+#  Item slots
+# =========================================================================== #
+
+func _build_item_slots(unit: Node) -> void:
+	var old : Node = _single_view.get_node_or_null("Info/ItemSlots")
+	if old != null:
+		old.queue_free()
+	_item_slot_btns.clear()
+	if not unit.has_method("remove_item"):
+		return
+	var container := HBoxContainer.new()
+	container.name = "ItemSlots"
+	container.add_theme_constant_override("separation", 6)
+	_single_view.get_node("Info").add_child(container)
+	var max_items : int = unit.get("MAX_ITEMS") if unit.get("MAX_ITEMS") != null else 3
+	for i in max_items:
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(44, 44)
+		container.add_child(btn)
+		_item_slot_btns.append(btn)
+		var idx : int = i
+		btn.pressed.connect(func() -> void: _on_item_slot_pressed(idx))
+	_refresh_item_slots(unit)
+
+func _refresh_item_slots(unit: Node) -> void:
+	if not is_instance_valid(unit):
+		return
+	var equipped : Array = unit.get("_equipped_items") if unit.get("_equipped_items") != null else []
+	const ICONS_BY_TYPE : Array = [
+		[Vector2i(0,0),  Vector2i(17,1), Vector2i(15,2)],
+		[Vector2i(10,0), Vector2i(14,1), Vector2i(15,1)],
+		[Vector2i(2,1),  Vector2i(0,1),  Vector2i(0,2)],
+		[Vector2i(3,0),  Vector2i(5,1),  Vector2i(5,2)],
+		[Vector2i(19,0), Vector2i(19,1), Vector2i(20,2)],
+		[Vector2i(2,2),  Vector2i(2,3),  Vector2i(17,2)],
+	]
+	const RARITY_COLORS : Array = [
+		Color(0.85, 0.85, 0.85),
+		Color(0.3,  0.6,  1.0),
+		Color(0.8,  0.3,  1.0),
+	]
+	var icon_tex : Texture2D = load("res://assets/items/Freebies_Full_Icons.png")
+	for i in _item_slot_btns.size():
+		var btn : Button = _item_slot_btns[i]
+		if not is_instance_valid(btn):
+			continue
+		if i < equipped.size():
+			var entry  : Dictionary = equipped[i]
+			var rarity : int        = clamp(int(entry.get("rarity", 0)), 0, 2)
+			var itype  : int        = clamp(int(entry.get("type",   0)), 0, ICONS_BY_TYPE.size() - 1)
+			var cell   : Vector2i   = ICONS_BY_TYPE[itype][rarity]
+			var atlas  := AtlasTexture.new()
+			atlas.atlas  = icon_tex
+			atlas.region = Rect2(cell.x * 32, cell.y * 32, 32, 32)
+			btn.icon         = atlas
+			btn.modulate     = RARITY_COLORS[rarity]
+			btn.text         = ""
+			btn.tooltip_text = "%s\nClick to unequip" % str(entry.get("name", "Item"))
+			btn.disabled     = false
+		else:
+			btn.icon         = null
+			btn.text         = "+"
+			btn.modulate     = Color(0.4, 0.4, 0.4, 0.5)
+			btn.tooltip_text = "Empty slot"
+			btn.disabled     = true
+
+func _on_item_slot_pressed(index: int) -> void:
+	if not is_instance_valid(_tracked_unit) or not _tracked_unit.has_method("remove_item"):
+		return
+	_tracked_unit.remove_item(index)
+	_refresh_item_slots(_tracked_unit)
 
 func _apply_name_and_level(unit: Node, display_name: String) -> void:
 	_name_label.text = display_name
@@ -348,6 +422,7 @@ func _process(_delta: float) -> void:
 	_apply_name_and_level(_tracked_unit, _display_name(_tracked_unit, type_key))
 	_apply_stats(_tracked_unit, type_key)
 	_status_label.text = _get_status(_tracked_unit)
+	_refresh_item_slots(_tracked_unit)
 
 # =========================================================================== #
 #  Helpers

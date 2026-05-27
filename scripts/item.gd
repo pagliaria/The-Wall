@@ -287,6 +287,11 @@ func _try_apply_to_unit() -> void:
 			best_dist  = d
 			best_unit  = body
 	if best_unit != null and best_unit.has_method("apply_item"):
+		if not best_unit.can_equip_item(self):
+			# Can't equip — snap back
+			var tw := create_tween()
+			tw.tween_property(self, "position", _landed_pos, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			return
 		UiAudio.play("loot_interact")
 		best_unit.apply_item(self)
 		queue_free()

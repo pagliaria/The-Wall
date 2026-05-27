@@ -100,7 +100,9 @@ func _play_level_up_effect() -> void:
 
 var max_hp : int = 10
 var hp     : int = 10
-var _item_bonuses : Dictionary = {}
+const MAX_ITEMS     : int  = 3
+var _item_bonuses   : Dictionary = {}
+var _equipped_items : Array      = []  # Array of {type, rarity, stats, name}
 
 func _init_item_bonuses() -> void:
 	_item_bonuses = {
@@ -111,7 +113,19 @@ func _init_item_bonuses() -> void:
 		"range_bonus":             0.0,
 	}
 
+func can_equip_item(item: Node) -> bool:
+	if _equipped_items.size() >= MAX_ITEMS:
+		return false
+	# No duplicate item types
+	var item_type : int = int(item.get("item_type"))
+	for equipped in _equipped_items:
+		if int(equipped["type"]) == item_type:
+			return false
+	return true
+
 func apply_item(item: Node) -> void:
+	if not can_equip_item(item):
+		return
 	var s : Dictionary = item.stats
 	_item_bonuses["attack_damage"]           += int(s.get("attack_damage", 0))
 	_item_bonuses["hp_bonus"]                += int(s.get("hp_bonus", 0))
@@ -122,12 +136,18 @@ func apply_item(item: Node) -> void:
 	var mv_bonus : float = float(s.get("move_speed_multiplier", 0.0))
 	if mv_bonus != 0.0:
 		_item_bonuses["move_speed_multiplier"] += mv_bonus
-	# Apply HP increase immediately
 	var hp_gain : int = int(s.get("hp_bonus", 0))
 	if hp_gain > 0:
 		max_hp += hp_gain
 		hp      = mini(hp + hp_gain, max_hp)
 		_update_hp_bar()
+	# Track equipped item
+	_equipped_items.append({
+		"type":   int(item.get("item_type")),
+		"rarity": int(item.get("rarity")),
+		"stats":  s.duplicate(),
+		"name":   item.call("_get_display_name") if item.has_method("_get_display_name") else "Item",
+	})
 	# Show primary stat as combat number
 	var show_val : int = 0
 	if s.has("attack_damage"): show_val = int(s["attack_damage"])
@@ -135,6 +155,29 @@ func apply_item(item: Node) -> void:
 	elif s.has("range_bonus"): show_val = int(s["range_bonus"])
 	else:                       show_val = 1
 	CombatNumbers.show_number(global_position, show_val, true, false)
+
+func remove_item(index: int) -> void:
+	if index < 0 or index >= _equipped_items.size():
+		return
+	var equipped : Dictionary = _equipped_items[index]
+	var s        : Dictionary = equipped["stats"]
+	# Reverse all bonuses
+	_item_bonuses["attack_damage"]           -= int(s.get("attack_damage", 0))
+	_item_bonuses["hp_bonus"]                -= int(s.get("hp_bonus", 0))
+	_item_bonuses["range_bonus"]             -= float(s.get("range_bonus", 0.0))
+	var spd_bonus : float = float(s.get("attack_speed_multiplier", 0.0))
+	if spd_bonus != 0.0:
+		_item_bonuses["attack_speed_multiplier"] -= spd_bonus
+	var mv_bonus : float = float(s.get("move_speed_multiplier", 0.0))
+	if mv_bonus != 0.0:
+		_item_bonuses["move_speed_multiplier"] -= mv_bonus
+	# Reverse HP if applicable
+	var hp_loss : int = int(s.get("hp_bonus", 0))
+	if hp_loss > 0:
+		max_hp  = max(1, max_hp - hp_loss)
+		hp      = mini(hp, max_hp)
+		_update_hp_bar()
+	_equipped_items.remove_at(index)
 
 func get_item_attack_damage_bonus()     -> int:   return int(_item_bonuses.get("attack_damage", 0))
 func get_item_attack_speed_multiplier() -> float: return float(_item_bonuses.get("attack_speed_multiplier", 1.0))
