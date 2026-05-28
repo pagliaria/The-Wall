@@ -71,6 +71,7 @@ func _ready() -> void:
 	hud.rush_pressed.connect(_on_rush_pressed)
 	settings_screen.display_changed.connect(_fit_camera_to_screen)
 	settings_screen.debug_spawn_chest_requested.connect(_on_debug_spawn_chest_requested)
+	settings_screen.debug_max_resources_requested.connect(_on_debug_max_resources_requested)
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
@@ -357,6 +358,12 @@ func _on_debug_spawn_chest_requested() -> void:
 	chest.call("setup", 0)
 	chest.position = camera.global_position
 	add_child(chest)
+
+func _on_debug_max_resources_requested() -> void:
+	ResourceManager.gold = 1000
+	ResourceManager.wood = 1000
+	ResourceManager.meat = 1000
+	_push_resources()
 
 # =========================================================================== #
 #  Camera

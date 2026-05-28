@@ -5,6 +5,7 @@ signal closed
 signal resume_requested
 signal display_changed
 signal debug_spawn_chest_requested
+signal debug_max_resources_requested
 
 const CONFIG_PATH : String = "user://settings.cfg"
 
@@ -58,6 +59,7 @@ var _debug_tools      : bool  = false
 # Debug tab
 @onready var _check_debug_tools   : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/CheckDebugTools
 @onready var _btn_spawn_chest     : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnSpawnChest
+@onready var _btn_max_resources   : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnMaxResources
 
 # Buttons
 @onready var _btn_resume          : Button = $Panel/MarginContainer/VBox/Buttons/BtnResume
@@ -124,6 +126,7 @@ func _connect_signals() -> void:
 	_option_blood.item_selected.connect(_on_blood_level_changed)
 	_check_debug_tools.toggled.connect(_on_debug_tools_toggled)
 	_btn_spawn_chest.pressed.connect(_on_spawn_chest_pressed)
+	_btn_max_resources.pressed.connect(_on_max_resources_pressed)
 
 func _on_master_changed(value: float) -> void:
 	_vol_master = value
@@ -169,6 +172,11 @@ func _on_spawn_chest_pressed() -> void:
 	if not _debug_tools:
 		return
 	emit_signal("debug_spawn_chest_requested")
+
+func _on_max_resources_pressed() -> void:
+	if not _debug_tools:
+		return
+	emit_signal("debug_max_resources_requested")
 
 func _on_apply() -> void:
 	_wave_interval  = _spin_wave_interval.value
@@ -219,6 +227,7 @@ func _populate_controls() -> void:
 	_option_blood.select(_blood_level)
 	_check_debug_tools.button_pressed = _debug_tools
 	_btn_spawn_chest.disabled = not _debug_tools
+	_btn_max_resources.disabled = not _debug_tools
 
 func _apply_audio() -> void:
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(_vol_master))

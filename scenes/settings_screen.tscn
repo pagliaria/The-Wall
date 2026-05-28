@@ -442,6 +442,19 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Spawn"
 
+[node name="LabelMaxResources" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Set Resources to 1000"
+
+[node name="BtnMaxResources" type="Button" parent="Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Set"
+
 [node name="HSep2" type="HSeparator" parent="Panel/MarginContainer/VBox"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
