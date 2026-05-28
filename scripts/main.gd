@@ -2,6 +2,7 @@ extends Node2D
 
 const FIRE_EFFECT_SCRIPT : GDScript = preload("res://scripts/fire_effect.gd")
 const GAME_OVER_SCENE   : PackedScene = preload("res://scenes/game_over.tscn")
+const CHEST_SCENE       : PackedScene = preload("res://scenes/chest.tscn")
 
 # Town zone bounds — full map width including wall and battlefield
 const TOWN_LEFT   : float = 400.0
@@ -69,6 +70,7 @@ func _ready() -> void:
 	hud.settings_pressed.connect(settings_screen.open)
 	hud.rush_pressed.connect(_on_rush_pressed)
 	settings_screen.display_changed.connect(_fit_camera_to_screen)
+	settings_screen.debug_spawn_chest_requested.connect(_on_debug_spawn_chest_requested)
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
@@ -349,6 +351,12 @@ func _on_resources_changed(_gold: int, _wood: int, _meat: int) -> void:
 
 func _on_resource_depleted() -> void:
 	_rebake_nav()
+
+func _on_debug_spawn_chest_requested() -> void:
+	var chest : Node2D = CHEST_SCENE.instantiate()
+	chest.call("setup", 0)
+	chest.position = camera.global_position
+	add_child(chest)
 
 # =========================================================================== #
 #  Camera

@@ -26,6 +26,9 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 @onready var _attack_speed_title  : Label  = $Panel/SingleView/Info/StatsGrid/AttackSpeedTitle
 @onready var _hp_fill      : TextureRect   = $Panel/SingleView/Info/HpBarContainer/Fill
 @onready var _hp_label     : Label         = $Panel/SingleView/Info/HpBarContainer/HpLabel
+@onready var _item_slot_1  : Button        = $Panel/SingleView/ItemSlots/Slot1
+@onready var _item_slot_2  : Button        = $Panel/SingleView/ItemSlots/Slot2
+@onready var _item_slot_3  : Button        = $Panel/SingleView/ItemSlots/Slot3
 @onready var _multi_grid   : GridContainer = $Panel/MultiView/Grid
 @onready var _multi_total  : Label         = $Panel/MultiView/TotalLabel
 @onready var _btn_line     : Button        = $Panel/MultiView/FormationRow/LineBtn
@@ -63,6 +66,10 @@ func _ready() -> void:
 	_btn_tight.pressed.connect(func() -> void:  _set_spacing(FormationManager.Spacing.TIGHT))
 	_btn_normal.pressed.connect(func() -> void: _set_spacing(FormationManager.Spacing.NORMAL))
 	_btn_loose.pressed.connect(func() -> void:  _set_spacing(FormationManager.Spacing.LOOSE))
+	_item_slot_btns = [_item_slot_1, _item_slot_2, _item_slot_3]
+	for i in _item_slot_btns.size():
+		var idx : int = i
+		_item_slot_btns[i].pressed.connect(func() -> void: _on_item_slot_pressed(idx))
 	_update_formation_highlight()
 	_update_spacing_highlight()
 
@@ -121,36 +128,6 @@ func _show_single(unit: Node) -> void:
 	_apply_hp(unit)
 	_status_label.text = _get_status(unit)
 	_apply_stats(unit, type_key)
-	_build_item_slots(unit)
-
-# =========================================================================== #
-#  Item slots
-# =========================================================================== #
-
-func _build_item_slots(unit: Node) -> void:
-	# Only rebuild if unit changed
-	var old : Node = _single_view.get_node_or_null("Info/ItemSlots")
-	if old != null and old.get_meta("owner_unit", null) == unit:
-		_refresh_item_slots(unit)
-		return
-	if old != null:
-		old.free()
-	_item_slot_btns.clear()
-	if not unit.has_method("remove_item"):
-		return
-	var container := HBoxContainer.new()
-	container.name = "ItemSlots"
-	container.set_meta("owner_unit", unit)
-	container.add_theme_constant_override("separation", 6)
-	_single_view.get_node("Info").add_child(container)
-	for i in 3:
-		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(44, 44)
-		container.add_child(btn)
-		_item_slot_btns.append(btn)
-		var idx : int = i
-		btn.pressed.connect(func() -> void: _on_item_slot_pressed(idx))
-	_refresh_item_slots(unit)
 
 func _refresh_item_slots(unit: Node) -> void:
 	if not is_instance_valid(unit):
@@ -170,6 +147,8 @@ func _refresh_item_slots(unit: Node) -> void:
 		Color(0.8,  0.3,  1.0),
 	]
 	var icon_tex : Texture2D = load("res://assets/items/Freebies_Full_Icons.png")
+	if not unit.has_method("remove_item"):
+		equipped = []
 	for i in _item_slot_btns.size():
 		var btn : Button = _item_slot_btns[i]
 		if not is_instance_valid(btn):

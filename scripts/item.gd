@@ -72,6 +72,7 @@ var _on_ground     : bool    = false
 var _landed_pos    : Vector2 = Vector2.ZERO
 var _base_z_index  : int     = 0
 var _hovered       : bool    = false
+var _world_parent  : Node    = null
 
 @onready var _sprite   : Sprite2D = $Sprite2D
 @onready var _label    : Label    = $Label
@@ -238,32 +239,77 @@ func _input(event: InputEvent) -> void:
 			var world_mouse : Vector2 = get_viewport().get_canvas_transform().affine_inverse() * event.position
 			var local       : Vector2 = to_local(world_mouse)
 			if local.length() < 28.0:
-				_dragging    = true
-				_drag_offset = position - world_mouse
-				_label.visible = true
-				if _tooltip != null:
-					_tooltip.visible = false
-				z_index = _base_z_index + 50
-				_show_sell_zone(true)
-				set_process(true)
+				_begin_drag(event.position)
 				get_viewport().set_input_as_handled()
 		else:
 			if _dragging:
-				_dragging = false
-				set_process(false)
-				z_index = _base_z_index
+				_end_drag()
 				get_viewport().set_input_as_handled()
-				_show_sell_zone(false)
-				_try_apply_to_unit()
+
+func _begin_drag(screen_mouse: Vector2) -> void:
+	_dragging = true
+	_label.visible = true
+	if _tooltip != null:
+		_tooltip.visible = false
+	_world_parent = get_parent()
+	var screen_pos : Vector2 = get_viewport().get_canvas_transform() * position
+	_drag_offset = screen_pos - screen_mouse
+	_move_into_hud()
+	z_index = _base_z_index + 200
+	_show_sell_zone(true)
+	set_process(true)
+	position = screen_mouse + _drag_offset
+
+func _end_drag() -> void:
+	_dragging = false
+	set_process(false)
+	var screen_pos : Vector2 = position
+	var world_pos  : Vector2 = get_viewport().get_canvas_transform().affine_inverse() * screen_pos
+	_show_sell_zone(false)
+	if _is_over_sell_zone(screen_pos):
+		_sell()
+		return
+	_move_back_to_world(world_pos)
+	_try_apply_to_unit()
+
+func _move_into_hud() -> void:
+	var hud : CanvasLayer = get_tree().current_scene.get_node_or_null("HUD")
+	if hud == null or get_parent() == hud:
+		return
+	var old_parent : Node = get_parent()
+	if old_parent != null:
+		old_parent.remove_child(self)
+	hud.add_child(self)
+
+func _move_back_to_world(world_pos: Vector2) -> void:
+	if _world_parent != null and is_instance_valid(_world_parent) and get_parent() != _world_parent:
+		var current_parent : Node = get_parent()
+		if current_parent != null:
+			current_parent.remove_child(self)
+		_world_parent.add_child(self)
+	position = world_pos
+	z_index = _base_z_index
+	_world_parent = null
 
 func _process(_delta: float) -> void:
 	if _dragging:
-		position = (get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_mouse_position()) + _drag_offset
-		# Highlight sell zone when dragging near it
-		var screen_pos : Vector2 = get_viewport().get_canvas_transform() * position
+		position = get_viewport().get_mouse_position() + _drag_offset
+		var over_sell_zone : bool = false
+		var screen_pos : Vector2 = position
 		for zone in get_tree().get_nodes_in_group("sell_zone"):
 			if is_instance_valid(zone) and zone.has_method("set_highlighted"):
-				zone.set_highlighted(zone.get_global_rect().has_point(screen_pos))
+				var is_over : bool = zone.get_global_rect().has_point(screen_pos)
+				zone.set_highlighted(is_over)
+				if zone.has_method("set_preview_price"):
+					if is_over:
+						zone.set_preview_price(_get_sell_price())
+						over_sell_zone = true
+					else:
+						zone.clear_preview_price()
+		if not over_sell_zone:
+			for zone in get_tree().get_nodes_in_group("sell_zone"):
+				if is_instance_valid(zone) and zone.has_method("clear_preview_price"):
+					zone.clear_preview_price()
 
 func _try_apply_to_unit() -> void:
 	# Check sell zone first
@@ -305,10 +351,23 @@ func _show_sell_zone(on: bool) -> void:
 			zone.visible = on
 			if not on and zone.has_method("set_highlighted"):
 				zone.set_highlighted(false)
+			if not on and zone.has_method("clear_preview_price"):
+				zone.clear_preview_price()
+
+func _is_over_sell_zone(screen_pos: Vector2) -> bool:
+	for zone in get_tree().get_nodes_in_group("sell_zone"):
+		if not is_instance_valid(zone):
+			continue
+		if zone.get_global_rect().has_point(screen_pos):
+			return true
+	return false
 
 func _sell() -> void:
-	var nuggets : int = SELL_PRICES.get(rarity, 1)
-	ResourceManager.add("gold", nuggets)
+	var gold_value : int = _get_sell_price()
+	ResourceManager.add("gold", int(gold_value / 10))
 	UiAudio.play("loot_interact")
-	CombatNumbers.show_number(position, nuggets * 10, true, false)
+	CombatNumbers.show_number(position, gold_value, true, false)
 	queue_free()
+
+func _get_sell_price() -> int:
+	return int(SELL_PRICES.get(rarity, 1)) * 10

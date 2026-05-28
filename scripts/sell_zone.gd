@@ -12,9 +12,11 @@ const BORDER_NORMAL : Color = Color(0.45, 0.28, 0.06, 1.0)
 const BORDER_HOVER  : Color = Color(1.0,  0.85, 0.2,  1.0)
 
 var _style : StyleBoxFlat = null
+var _preview_price : int = -1
 
 func _ready() -> void:
 	add_to_group("sell_zone")
+	z_index = -5
 	_style                         = StyleBoxFlat.new()
 	_style.bg_color                = COLOR_NORMAL
 	_style.border_width_left       = 2
@@ -27,9 +29,22 @@ func _ready() -> void:
 	_style.corner_radius_bottom_left  = 6
 	_style.corner_radius_bottom_right = 6
 	add_theme_stylebox_override("panel", _style)
+	_price.text = ""
+	_price.visible = false
 
 func set_highlighted(on: bool) -> void:
 	if _style == null:
 		return
 	_style.bg_color     = COLOR_HOVER  if on else COLOR_NORMAL
 	_style.border_color = BORDER_HOVER if on else BORDER_NORMAL
+	_price.visible      = on and _preview_price >= 0
+
+func set_preview_price(price_gold: int) -> void:
+	_preview_price = price_gold
+	_price.text = "Sell for %d gold" % price_gold
+	_price.visible = visible and _style != null and _style.bg_color == COLOR_HOVER
+
+func clear_preview_price() -> void:
+	_preview_price = -1
+	_price.text = ""
+	_price.visible = false
