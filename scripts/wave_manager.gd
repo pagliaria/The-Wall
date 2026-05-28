@@ -293,11 +293,35 @@ func _spawn_remaining_prep_enemies() -> void:
 		var scene: PackedScene = _spawn_queue.pop_front()
 		_spawn_one(scene)
 
+# Formation tiers — X position bands (left = back, right = front/wall)
+const FORMATION_FRONT  : float = 480.0  # melee — closest to wall
+const FORMATION_MID    : float = 300.0  # skeletons, boars
+const FORMATION_BACK   : float = 140.0  # ranged, support
+const FORMATION_BOSS   : float = 220.0  # bosses — mid-back
+const FORMATION_JITTER : float = 60.0   # random spread within tier
+
+# Map scene filename to formation tier X
+const FORMATION_TIERS : Dictionary = {
+	"enemy_warrior":     FORMATION_FRONT,
+	"enemy_boar":        FORMATION_FRONT,
+	"enemy_skeleton":    FORMATION_MID,
+	"enemy_slime":       FORMATION_MID,
+	"enemy_badger":      FORMATION_BACK,
+	"enemy_witch_doctor": FORMATION_BACK,
+	"enemy_cat_boss":    FORMATION_BOSS,
+	"enemy_pengu_boss":  FORMATION_BOSS,
+}
+
+func _get_formation_x(scene: PackedScene) -> float:
+	var key : String = scene.resource_path.get_file().get_basename()
+	return FORMATION_TIERS.get(key, FORMATION_MID)
+
 func _spawn_one(scene: PackedScene) -> void:
 	var e : CharacterBody2D = scene.instantiate()
 	units_layer.add_child(e)
+	var base_x : float = _get_formation_x(scene)
 	e.position = Vector2(
-		_rng.randf_range(SPAWN_MIN_X, SPAWN_MAX_X),
+		base_x + _rng.randf_range(-FORMATION_JITTER, FORMATION_JITTER),
 		_rng.randf_range(SPAWN_MIN_Y, SPAWN_MAX_Y)
 	)
 	e.died.connect(_on_enemy_died.bind(e))

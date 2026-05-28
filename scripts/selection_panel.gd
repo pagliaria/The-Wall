@@ -128,18 +128,22 @@ func _show_single(unit: Node) -> void:
 # =========================================================================== #
 
 func _build_item_slots(unit: Node) -> void:
+	# Only rebuild if unit changed
 	var old : Node = _single_view.get_node_or_null("Info/ItemSlots")
+	if old != null and old.get_meta("owner_unit", null) == unit:
+		_refresh_item_slots(unit)
+		return
 	if old != null:
-		old.queue_free()
+		old.free()
 	_item_slot_btns.clear()
 	if not unit.has_method("remove_item"):
 		return
 	var container := HBoxContainer.new()
 	container.name = "ItemSlots"
+	container.set_meta("owner_unit", unit)
 	container.add_theme_constant_override("separation", 6)
 	_single_view.get_node("Info").add_child(container)
-	var max_items : int = unit.get("MAX_ITEMS") if unit.get("MAX_ITEMS") != null else 3
-	for i in max_items:
+	for i in 3:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(44, 44)
 		container.add_child(btn)
