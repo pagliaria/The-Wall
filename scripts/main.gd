@@ -66,7 +66,6 @@ var _castle_placed := false
 
 var _castle_prompt    : CanvasLayer = null
 var _wave_manager     : Node        = null
-var _opening_building_panel := false
 var _selected_building : Node       = null
 
 func _ready() -> void:
@@ -340,12 +339,21 @@ func _on_nav_bake_complete() -> void:
 func _on_building_clicked(_building: Node) -> void:
 	if _building == null or not is_instance_valid(_building):
 		return
-	if not _building.supports_upgrades():
+	# Defer the decision to idle time so it runs after this frame's unit
+	# selection has fully resolved, whichever handler fired first.
+	call_deferred("_resolve_building_click", _building)
+
+func _resolve_building_click(building: Node) -> void:
+	if not is_instance_valid(building):
+		return
+	# Units always take priority — if this click (or the drag it was part of)
+	# left any unit selected, leave that alone and ignore the building entirely.
+	if not unit_selection.selected_units.is_empty():
+		return
+	if not building.supports_upgrades():
 		_clear_building_selection()
 		return
-	_opening_building_panel = true
-	unit_selection.clear_selection()
-	call_deferred("_show_building_upgrades", _building)
+	_show_building_upgrades(building)
 
 func _show_building_upgrades(building: Node) -> void:
 	if building == null or not is_instance_valid(building):
@@ -365,8 +373,6 @@ func _clear_building_selection() -> void:
 		building_upgrade_panel.hide_panel()
 
 func _on_unit_selection_changed(_units: Array) -> void:
-	if _opening_building_panel:
-		return
 	_clear_building_selection()
 
 # =========================================================================== #
@@ -509,8 +515,6 @@ func _clamped(pos: Vector2) -> Vector2:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-			_opening_building_panel = false
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
 				if event.pressed: _zoom_toward_mouse(ZOOM_STEP)

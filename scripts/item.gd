@@ -25,6 +25,12 @@ const ITEM_ROW : Dictionary = {
 const ICON_GRID_COLS : int = 3
 const ICON_GRID_ROWS : int = 6
 
+# Fraction of each cell's edge to crop off (per side) when reading the sheet.
+# item_drops.png leaves gutter space baked around each icon inside its cell,
+# so this zooms into the actual art instead of showing that empty border.
+# 0.0 = no crop (full cell). Raise to crop tighter, lower if art starts clipping.
+const ICON_CELL_INSET_RATIO : float = 0.06
+
 # Final on-screen icon size in px, whatever the source sheet's raw cell resolution is
 const ICON_DISPLAY_SIZE : float = 96.0
 
@@ -196,11 +202,15 @@ func _apply_icon() -> void:
 	var cell_h     : float     = float(tex.get_height()) / float(ICON_GRID_ROWS)
 	var row        : int       = ITEM_ROW.get(item_type, 0)
 	var col        : int       = clamp(int(rarity), 0, ICON_GRID_COLS - 1)
+	var inset_w    : float     = cell_w * ICON_CELL_INSET_RATIO
+	var inset_h    : float     = cell_h * ICON_CELL_INSET_RATIO
+	var crop_w     : float     = cell_w - inset_w * 2.0
+	var crop_h     : float     = cell_h - inset_h * 2.0
 	var atlas      := AtlasTexture.new()
 	atlas.atlas    = tex
-	atlas.region   = Rect2(col * cell_w, row * cell_h, cell_w, cell_h)
+	atlas.region   = Rect2(col * cell_w + inset_w, row * cell_h + inset_h, crop_w, crop_h)
 	_sprite.texture = atlas
-	var uniform_scale : float = ICON_DISPLAY_SIZE / cell_w
+	var uniform_scale : float = ICON_DISPLAY_SIZE / crop_w
 	_sprite.scale     = Vector2(uniform_scale, uniform_scale)
 
 func _apply_rarity_visuals() -> void:

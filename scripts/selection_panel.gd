@@ -133,20 +133,17 @@ func _refresh_item_slots(unit: Node) -> void:
 	if not is_instance_valid(unit):
 		return
 	var equipped : Array = unit.get("_equipped_items") if unit.get("_equipped_items") != null else []
-	const ICONS_BY_TYPE : Array = [
-		[Vector2i(0,0),  Vector2i(17,1), Vector2i(15,2)],
-		[Vector2i(10,0), Vector2i(14,1), Vector2i(15,1)],
-		[Vector2i(2,1),  Vector2i(0,1),  Vector2i(0,2)],
-		[Vector2i(3,0),  Vector2i(5,1),  Vector2i(5,2)],
-		[Vector2i(19,0), Vector2i(19,1), Vector2i(20,2)],
-		[Vector2i(2,2),  Vector2i(2,3),  Vector2i(17,2)],
-	]
-	const RARITY_COLORS : Array = [
-		Color(0.85, 0.85, 0.85),
-		Color(0.3,  0.6,  1.0),
-		Color(0.8,  0.3,  1.0),
-	]
-	var icon_tex : Texture2D = load("res://assets/items/Freebies_Full_Icons.png")
+	# item_drops.png layout: 6 rows (item type), 3 cols (rarity: common, rare, epic left to right)
+	# Row order MUST match item.gd's ITEM_ROW — flip here too if that changes
+	const ITEM_ROWS   : int = 6
+	const ITEM_COLS   : int = 3
+	const SLOT_ICON_SIZE : float = 60.0
+	# Same crop as item.gd's ICON_CELL_INSET_RATIO — trims the sheet's built-in
+	# gutter space so the slot icon isn't swimming in dead space. Keep matched.
+	const ICON_CELL_INSET_RATIO : float = 0.06
+	var icon_tex : Texture2D = load("res://assets/items/item_drops.png")
+	var cell_w   : float     = float(icon_tex.get_width())  / float(ITEM_COLS)
+	var cell_h   : float     = float(icon_tex.get_height()) / float(ITEM_ROWS)
 	if not unit.has_method("remove_item"):
 		equipped = []
 	for i in _item_slot_btns.size():
@@ -155,14 +152,19 @@ func _refresh_item_slots(unit: Node) -> void:
 			continue
 		if i < equipped.size():
 			var entry  : Dictionary = equipped[i]
-			var rarity : int        = clamp(int(entry.get("rarity", 0)), 0, 2)
-			var itype  : int        = clamp(int(entry.get("type",   0)), 0, ICONS_BY_TYPE.size() - 1)
-			var cell   : Vector2i   = ICONS_BY_TYPE[itype][rarity]
+			var rarity : int        = clamp(int(entry.get("rarity", 0)), 0, ITEM_COLS - 1)
+			var row    : int        = clamp(int(entry.get("type",   0)), 0, ITEM_ROWS - 1)
 			var atlas  := AtlasTexture.new()
 			atlas.atlas  = icon_tex
-			atlas.region = Rect2(cell.x * 32, cell.y * 32, 32, 32)
+			var inset_w : float = cell_w * ICON_CELL_INSET_RATIO
+			var inset_h : float = cell_h * ICON_CELL_INSET_RATIO
+			atlas.region = Rect2(rarity * cell_w + inset_w, row * cell_h + inset_h, cell_w - inset_w * 2.0, cell_h - inset_h * 2.0)
 			btn.icon         = atlas
-			btn.modulate     = RARITY_COLORS[rarity]
+			btn.add_theme_constant_override("icon_max_width", int(SLOT_ICON_SIZE))
+			btn.icon_alignment          = HORIZONTAL_ALIGNMENT_CENTER
+			btn.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+			btn.expand_icon  = false
+			btn.modulate     = Color.WHITE
 			btn.text         = ""
 			btn.tooltip_text = "%s\nClick to unequip" % str(entry.get("name", "Item"))
 			btn.disabled     = false

@@ -154,6 +154,15 @@ var _active_upgrade_id: String = ""
 var _upgrade_time_left: float = 0.0
 var _upgrade_total_time: float = 0.0
 
+# Click vs drag tracking for the building's click area — a click only counts
+# if press and release land within this distance, same threshold as
+# unit_selection.gd's box-select drag detection. Prevents a box-select drag
+# that starts or ends on top of a building from stealing selection away from
+# whatever units just got selected.
+const CLICK_DRAG_THRESHOLD : float = 6.0
+var _area_press_pos    : Vector2 = Vector2.ZERO
+var _area_press_active : bool    = false
+
 func setup(id: String, tile: Vector2i, p_units_layer: Node2D) -> void:
 	building_id = id
 	units_layer = p_units_layer
@@ -298,8 +307,14 @@ func _process_upgrade(delta: float) -> void:
 	_apply_upgrades_to_live_units()
 
 func _on_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		emit_signal("building_clicked", self)
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_area_press_pos    = event.position
+			_area_press_active = true
+		else:
+			if _area_press_active and event.position.distance_to(_area_press_pos) < CLICK_DRAG_THRESHOLD:
+				emit_signal("building_clicked", self)
+			_area_press_active = false
 
 func get_nav_footprint() -> Rect2:
 	# Returns the world-space rect used to carve the nav mesh for this building.
