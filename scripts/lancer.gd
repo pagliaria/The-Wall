@@ -13,10 +13,11 @@ const LEVEL_STATS := {
 	"reach":  8.0,
 }
 
-enum State { IDLE, MOVE, MOVE_TO, BATTLE, ATTACKING }
+enum State { IDLE, MOVE, MOVE_TO, BATTLE, ATTACKING, TRAINING }
 
 var _state        : State = State.IDLE
-var _target       : Node  = null
+var _target         : Node  = null
+var _training_dummy : Node  = null
 var _attack_timer : float = 0.0
 var _is_striking  : bool  = false
 
@@ -66,6 +67,8 @@ func _process_state(delta: float) -> void:
 			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
+		State.TRAINING:
+			_do_training(delta)
 		State.BATTLE:
 			_do_battle(delta)
 		State.ATTACKING:
@@ -139,6 +142,8 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 		State.BATTLE:
 			pass  # animation set dynamically in _do_battle
+		State.TRAINING:
+			_attack_timer = _get_attack_rate()
 		State.ATTACKING:
 			_attack_timer = _get_attack_rate()
 
@@ -216,4 +221,48 @@ func _get_attack_rate() -> float: return ATTACK_RATE * get_building_attack_speed
 
 func _on_selected()   -> void: CombatAudio.play("male_ready")
 func _on_move_to()    -> void: CombatAudio.play("male_go"); _enter_state(State.MOVE_TO)
-func _on_end_battle() -> void: _target = null; _enter_state(State.IDLE)
+func _on_end_battle() -> void: _target = null; _training_dummy = null; _enter_state(State.IDLE)
+func _enter_training_idle() -> void: _enter_state(State.IDLE)
+
+func _on_start_training(dummy: Node) -> void:
+	_training_dummy = dummy
+	_enter_state(State.TRAINING)
+
+func _do_training(delta: float) -> void:
+	if not is_instance_valid(_training_dummy) or not _training_dummy.get("is_active"):
+		var next : Node = _find_training_target()
+		if next != null:
+			_training_dummy = next
+		else:
+			_enter_state(State.IDLE)
+			return
+	var dist : float = position.distance_to(_training_dummy.global_position)
+	if dist <= _get_melee_range():
+		_sprite.flip_h = _training_dummy.global_position.x < position.x
+		if _is_striking:
+			return
+		_attack_timer -= delta
+		if _attack_timer > 0.0:
+			return
+		_is_striking  = true
+		_attack_timer = _get_attack_rate()
+		var dir  : Vector2 = _training_dummy.global_position - position
+		var anim : String  = _pick_attack_anim(dir)
+		var frames   : int   = _sprite.sprite_frames.get_frame_count(anim)
+		var fps      : float = _sprite.sprite_frames.get_animation_speed(anim)
+		var anim_dur : float = frames / fps
+		_sprite.speed_scale = maxf(1.0, anim_dur / _get_attack_rate())
+		_sprite.play(anim)
+		await _sprite.animation_finished
+		_sprite.speed_scale = 1.0
+		if is_instance_valid(_training_dummy) and _training_dummy.get("is_active"):
+			var dmg : int = _get_attack_damage()
+			_training_dummy.take_damage(dmg, self)
+			grant_xp(int(dmg * 0.5))
+		_sprite.play("idle")
+		_is_striking = false
+	else:
+		if _sprite.animation != "run":
+			_sprite.play("run")
+		_nav_agent.target_position = _training_dummy.global_position
+		_do_nav_move(delta, _get_move_speed())

@@ -145,11 +145,15 @@ func _on_rmb_up(screen_pos: Vector2) -> void:
 		# Plain click — original behaviour
 		if selected_units.size() > 0:
 			var world_pos : Vector2 = _screen_to_world(screen_pos)
-			var resource  : Node    = _resource_at(world_pos)
-			if resource != null:
-				_issue_gather_order(resource, screen_pos)
+			var dummy     : Node    = _training_target_at(world_pos)
+			if dummy != null:
+				_issue_train_order(dummy, screen_pos)
 			else:
-				_issue_move_order(screen_pos)
+				var resource  : Node    = _resource_at(world_pos)
+				if resource != null:
+					_issue_gather_order(resource, screen_pos)
+				else:
+					_issue_move_order(screen_pos)
 
 func _on_lmb_up(screen_pos: Vector2, additive: bool) -> void:
 	if not _pressing:
@@ -170,6 +174,22 @@ func _is_in_battle(unit: Node) -> bool:
 		return false
 	var target = unit.get("_target")
 	return target != null and is_instance_valid(target)
+
+func _issue_train_order(dummy: Node, screen_pos: Vector2) -> void:
+	for unit in selected_units:
+		if is_instance_valid(unit) and unit.has_method("start_training") and not _is_in_battle(unit):
+			unit.start_training(dummy)
+	_get_overlay().show_ping(screen_pos)
+
+func _training_target_at(world_pos: Vector2) -> Node:
+	for target in get_tree().get_nodes_in_group("training_targets"):
+		if not is_instance_valid(target):
+			continue
+		if not target.get("is_active"):
+			continue
+		if world_pos.distance_to(target.global_position) <= 48.0:
+			return target
+	return null
 
 func _issue_gather_order(resource_node: Node, screen_pos: Vector2) -> void:
 	for unit in selected_units:
@@ -215,11 +235,15 @@ func set_spacing(spacing: int) -> void:
 # -- Cursor -------------------------------------------------------------------
 
 func _update_cursor(screen_pos: Vector2) -> void:
-	if selected_units.size() == 0:
+	if selected_units.is_empty():
 		_reset_cursor()
 		return
 	var world_pos := _screen_to_world(screen_pos)
-	if contains_pawns() and _is_over_resource(world_pos):
+	if _is_over_training_target(world_pos):
+		if not _gather_cursor_active:
+			Input.set_custom_mouse_cursor(CURSOR_GATHER, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
+			_gather_cursor_active = true
+	elif contains_pawns() and _is_over_resource(world_pos):
 		if not _gather_cursor_active:
 			Input.set_custom_mouse_cursor(CURSOR_GATHER, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
 			_gather_cursor_active = true
@@ -230,6 +254,9 @@ func _reset_cursor() -> void:
 	if _gather_cursor_active:
 		Input.set_custom_mouse_cursor(CURSOR_DEFAULT, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
 		_gather_cursor_active = false
+
+func _is_over_training_target(world_pos: Vector2) -> bool:
+	return _training_target_at(world_pos) != null
 
 func _is_over_resource(world_pos: Vector2) -> bool:
 	return _resource_at(world_pos) != null

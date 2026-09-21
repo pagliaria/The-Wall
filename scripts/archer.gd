@@ -17,10 +17,11 @@ const LEVEL_STATS := {
 	"attack_rate": -0.15,
 }
 
-enum State { IDLE, MOVE, MOVE_TO, BATTLE, SHOOTING }
+enum State { IDLE, MOVE, MOVE_TO, BATTLE, SHOOTING, TRAINING }
 
 var _state        : State = State.IDLE
-var _target       : Node  = null
+var _target         : Node  = null
+var _training_dummy : Node  = null
 var _attack_timer : float = 0.0
 var _shooting     : bool  = false
 
@@ -73,6 +74,8 @@ func _process_state(delta: float) -> void:
 			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
+		State.TRAINING:
+			_do_training(delta)
 		State.BATTLE:
 			_do_battle(delta)
 		State.SHOOTING:
@@ -130,6 +133,9 @@ func _enter_state(new_state: State) -> void:
 		State.SHOOTING:
 			_attack_timer = _get_attack_rate()
 			_sprite.play("idle")
+		State.TRAINING:
+			_attack_timer = _get_attack_rate()
+			_shooting     = false
 
 # =========================================================================== #
 #  Battle
@@ -212,4 +218,61 @@ func _get_move_speed() -> float:
 
 func _on_selected()   -> void: CombatAudio.play("female_ready")
 func _on_move_to()    -> void: CombatAudio.play("female_go"); _enter_state(State.MOVE_TO)
-func _on_end_battle() -> void: _target = null; _shooting = false; _enter_state(State.IDLE)
+func _on_end_battle() -> void: _target = null; _shooting = false; _training_dummy = null; _enter_state(State.IDLE)
+func _enter_training_idle() -> void: _enter_state(State.IDLE)
+
+func _on_start_training(dummy: Node) -> void:
+	_training_dummy = dummy
+	_enter_state(State.TRAINING)
+
+func _do_training(delta: float) -> void:
+	# Archer shoots at dummy from range
+	if not is_instance_valid(_training_dummy) or not _training_dummy.get("is_active"):
+		var next : Node = _find_training_target()
+		if next != null:
+			_training_dummy = next
+		else:
+			_enter_state(State.IDLE)
+			return
+	var dist : float = position.distance_to(_training_dummy.global_position)
+	_sprite.flip_h   = _training_dummy.global_position.x < position.x
+	if dist < SHOOT_RANGE_MIN:
+		# Too close — back up
+		var flee_dir : Vector2 = (position - _training_dummy.global_position).normalized()
+		_nav_agent.target_position = position + flee_dir * _get_attack_range()
+		_do_nav_move(delta, _get_move_speed())
+		return
+	if dist > _get_attack_range():
+		# Too far — move closer
+		if _sprite.animation != "run":
+			_sprite.play("run")
+		_nav_agent.target_position = _training_dummy.global_position
+		_do_nav_move(delta, _get_move_speed())
+		return
+	# In range — shoot
+	if _shooting:
+		return
+	_attack_timer -= delta
+	if _attack_timer > 0.0:
+		return
+	_shooting = true
+	var frames   : int   = _sprite.sprite_frames.get_frame_count("shoot")
+	var fps      : float = _sprite.sprite_frames.get_animation_speed("shoot")
+	var anim_dur : float = frames / fps
+	_sprite.speed_scale = maxf(1.0, anim_dur / _get_attack_rate())
+	_sprite.play("shoot")
+	var half_dur : float = (anim_dur / _sprite.speed_scale) * 0.5
+	await get_tree().create_timer(half_dur).timeout
+	_sprite.speed_scale = 1.0
+	if is_instance_valid(_training_dummy) and _training_dummy.get("is_active"):
+		var dmg   : int  = _get_attack_damage()
+		var arrow        := ARROW_SCENE.instantiate()
+		get_parent().add_child(arrow)
+		arrow.global_position = global_position
+		arrow.init(_training_dummy, 0, null)  # damage=0, we deal it directly below
+		_training_dummy.take_damage(dmg, self)
+		grant_xp(int(dmg * 0.5))
+	_shooting     = false
+	_attack_timer = _get_attack_rate()
+	_sprite.speed_scale = 1.0
+	_sprite.play("idle")

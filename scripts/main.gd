@@ -3,6 +3,18 @@ extends Node2D
 const FIRE_EFFECT_SCRIPT : GDScript = preload("res://scripts/fire_effect.gd")
 const GAME_OVER_SCENE   : PackedScene = preload("res://scenes/game_over.tscn")
 const CHEST_SCENE       : PackedScene = preload("res://scenes/chest.tscn")
+const TRAINING_TARGET_BASIC_SCENE  : PackedScene = preload("res://scenes/training_target_dummy.tscn")
+
+# Training target configuration
+const TRAINING_TARGET_BASIC_HP := 300
+const TRAINING_TARGET_COMBAT_HP := 800
+
+var _training_targets : Array = []
+var _spawned_basic_count : int = 0
+var _spawned_combat_count : int = 0
+
+const MAX_TRAINING_BASIC := 4
+const MAX_TRAINING_COMBAT := 2
 
 # Town zone bounds — full map width including wall and battlefield
 const TOWN_LEFT   : float = 400.0
@@ -12,6 +24,12 @@ const TOWN_BOTTOM : float = 1500.0
 
 const WORLD_WIDTH  = 3072
 const WORLD_HEIGHT = 1728
+
+const TILE_SIZE := 64
+const MAP_COLS := 48
+const MAP_ROWS := 27
+const WATER_ROWS := 3
+const COL_TOWN_START := 20
 
 const TOWN_ZONE_LEFT    = WORLD_WIDTH * 0.625
 const ENEMY_SPAWN_LEFT  = 0
@@ -128,6 +146,7 @@ func _on_wave_countdown_changed(seconds: float) -> void:
 			MusicManager.play_horn()
 
 func _on_wave_started(wave_number: int) -> void:
+	_cleanup_training_targets()
 	hud.set_wave_active(wave_number)
 	hud.hide_rush_button()
 	unit_selection.deselect_battling_units()
@@ -146,6 +165,8 @@ func _on_wave_ended(player_won: bool) -> void:
 	BloodFx.clear_splats()
 	if player_won:
 		MusicManager.play_chill()
+		_cleanup_training_targets()
+		_setup_training_targets()
 		if not building_placer.is_placing():
 			unit_selection.disabled = false
 		battle_seperator.disabled = false
@@ -154,6 +175,15 @@ func _on_wave_ended(player_won: bool) -> void:
 	else:
 		MusicManager.stop()
 		_trigger_defeat()
+
+func _cleanup_training_targets() -> void:
+	"""Clear all training targets between waves."""
+	for target in _training_targets.duplicate(true):
+		if is_instance_valid(target):
+			target.queue_free()
+	_training_targets.clear()
+	_spawned_basic_count = 0
+	_spawned_combat_count = 0
 
 # Fire effect type constants matching fire_effect.gd EffectType enum
 const FX_FIRE      : int = 0
@@ -353,6 +383,65 @@ func _on_resources_changed(_gold: int, _wood: int, _meat: int) -> void:
 func _on_resource_depleted() -> void:
 	_rebake_nav()
 
+# =========================================================================== #
+#  Training Targets (Inter-wave activities)
+# =========================================================================== #
+
+func _setup_training_targets() -> void:
+	_add_child_training_target("basic", _training_target_config())
+	_add_child_training_target("basic", _training_target_config())
+	_add_child_training_target("basic", _training_target_config())
+	_add_child_training_target("basic", _training_target_config())
+
+func _add_child_training_target(type: String, config_overrides: Dictionary) -> Node2D:
+	var scene : Node2D = TRAINING_TARGET_BASIC_SCENE.instantiate()
+	if scene == null:
+		printerr("Training target basic scene failed to load!")
+		return null
+	
+	# Setup the training target at random town position
+	scene.setup(type, get_random_town_position_for_dummy(), config_overrides)
+	add_child(scene)
+	_training_targets.append(scene)
+	if type == "basic":
+		_spawned_basic_count += 1  
+	else:
+		_spawned_combat_count += 1
+	
+	return scene
+
+func get_random_town_position_for_dummy() -> Vector2:
+	# Spawn near town center but not overlapping buildings
+	var cols := int(5 + randi() % 8)  # Offset from town start
+	var rows := int(5 + randi() % 8)  # Rows up
+	var position := Vector2(
+		float((COL_TOWN_START + cols) * TILE_SIZE),
+		float((WATER_ROWS + rows) * TILE_SIZE)
+	)
+	return position
+
+func _training_target_config(mode: String = "basic") -> Dictionary:
+	match mode:
+		"combat":
+			return { "max_hp": TRAINING_TARGET_COMBAT_HP }
+		_:
+			return { "max_hp": TRAINING_TARGET_BASIC_HP }
+
+func _is_valid_position(p_position: Vector2) -> bool:
+	if p_position.x < float(COL_TOWN_START * TILE_SIZE):
+		return false
+	if p_position.x >= float(MAP_COLS * TILE_SIZE):
+		return false
+	if p_position.y < float(WATER_ROWS * TILE_SIZE):
+		return false
+	if p_position.y >= float(MAP_ROWS * TILE_SIZE):
+		return false
+	return true
+
+# =========================================================================== #
+#  Wave Manager Integration
+# =========================================================================== #
+
 func _on_debug_spawn_chest_requested() -> void:
 	var chest : Node2D = CHEST_SCENE.instantiate()
 	chest.call("setup", 0)
@@ -461,3 +550,44 @@ func _toggle_fullscreen() -> void:
 
 func _on_wave_timer_timeout() -> void:
 	_wave_manager._prepare_next_wave()
+
+# =========================================================================== #
+#  Training Target Utility Methods
+# =========================================================================== #
+
+func spawn_training_target(mode: String = "basic", p_position: Vector2 = Vector2.ZERO) -> bool:
+	# Spawn training target at p_position or random town spot. Zero = auto-pick.
+	if _wave_manager != null and not _wave_manager.is_in_prep():
+		printerr("Training targets only spawn between waves!")
+		return false
+
+	var spawn_pos : Vector2
+	if p_position == Vector2.ZERO or not _is_valid_position(p_position):
+		if mode == "basic":
+			spawn_pos = get_random_town_position_for_dummy()
+		else:
+			spawn_pos = Vector2(
+				float((COL_TOWN_START + 8) * TILE_SIZE),
+				float((WATER_ROWS + 4) * TILE_SIZE)
+			)
+	else:
+		spawn_pos = p_position
+
+	var scene : Node2D = TRAINING_TARGET_BASIC_SCENE.instantiate()
+	if scene == null:
+		printerr("Training target basic scene failed to load!")
+		return false
+
+	scene.setup(mode, spawn_pos, _training_target_config(mode))
+	add_child(scene)
+	_training_targets.append(scene)
+
+	if mode == "basic":
+		_spawned_basic_count += 1
+	else:
+		_spawned_combat_count += 1
+
+	return true
+
+func get_training_target_count() -> int:
+	return _training_targets.size()

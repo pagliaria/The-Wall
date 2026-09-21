@@ -273,9 +273,96 @@ func _on_move_to() -> void:
 
 func end_battle() -> void:
 	_on_end_battle()
+	# After battle, seek nearest training dummy if one exists
+	var dummy : Node = _find_training_target()
+	if dummy != null:
+		start_training(dummy)
 
 func _on_end_battle() -> void:
 	pass
+
+func _find_training_target() -> Node:
+	var best     : Node  = null
+	var best_dist: float = INF
+	for t in get_tree().get_nodes_in_group("training_targets"):
+		if not is_instance_valid(t):
+			continue
+		var active = t.get("is_active")
+		if active == null or not active:
+			continue
+		var d : float = position.distance_to(t.global_position)
+		if d < best_dist:
+			best_dist = d
+			best      = t
+	return best
+
+func start_training(dummy: Node) -> void:
+	_on_start_training(dummy)
+
+func _on_start_training(_dummy: Node) -> void:
+	pass
+
+# Shared melee training loop — warrior and lancer call this from _do_training
+func _do_training_melee(delta: float, dummy: Node, attack_rate: float, melee_range: float, get_dmg: Callable, get_spd: Callable) -> Node:
+	# Returns updated dummy (may have changed) or null if should idle
+	if not is_instance_valid(dummy) or not dummy.get("is_active"):
+		var next : Node = _find_training_target()
+		if next != null:
+			return next
+		_enter_training_idle()
+		return null
+	var dist : float = position.distance_to(dummy.global_position)
+	if dist <= melee_range:
+		_sprite.flip_h = dummy.global_position.x < position.x
+		var striking : bool = get("_is_striking")
+		if striking:
+			return dummy
+		var timer : float = get("_attack_timer") - delta
+		set("_attack_timer", timer)
+		if timer > 0.0:
+			return dummy
+		set("_is_striking", true)
+		set("_attack_timer", attack_rate)
+		var sf     : SpriteFrames = _sprite.sprite_frames
+		var has_a1 : bool = sf.has_animation("attack1")
+		var has_a2 : bool = sf.has_animation("attack2")
+		var anim   : String
+		if has_a1 and has_a2:
+			anim = "attack1" if _rng.randf() > 0.5 else "attack2"
+		elif has_a1:
+			anim = "attack1"
+		elif has_a2:
+			anim = "attack2"
+		else:
+			if is_instance_valid(dummy) and dummy.get("is_active"):
+				var dmg : int = get_dmg.call()
+				dummy.take_damage(dmg, self)
+				grant_xp(int(dmg * 0.5))
+			set("_is_striking", false)
+			return dummy
+		var frames   : int   = sf.get_frame_count(anim)
+		var fps      : float = sf.get_animation_speed(anim)
+		var anim_dur : float = frames / fps
+		_sprite.speed_scale = maxf(1.0, anim_dur / attack_rate)
+		_sprite.play(anim)
+		await _sprite.animation_finished
+		_sprite.speed_scale = 1.0
+		if is_instance_valid(dummy) and dummy.get("is_active"):
+			var dmg : int = get_dmg.call()
+			dummy.take_damage(dmg, self)
+			grant_xp(int(dmg * 0.5))
+		if sf.has_animation("idle"):
+			_sprite.play("idle")
+		set("_is_striking", false)
+	else:
+		if _sprite.animation != "run":
+			_sprite.play("run")
+		_nav_agent.target_position = dummy.global_position
+		_do_nav_move(delta, get_spd.call())
+	return dummy if is_instance_valid(dummy) else null
+
+func _enter_training_idle() -> void:
+	pass  # overridden per unit to call _enter_state(State.IDLE)
 
 func apply_building_bonuses(bonuses: Dictionary) -> void:
 	_building_bonuses["attack_damage"]           = int(bonuses.get("attack_damage", 0))

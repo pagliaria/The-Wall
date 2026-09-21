@@ -1,28 +1,24 @@
-[gd_scene load_steps=4 format=3 uid="uid://dhytkwdtcg5go"]
+[gd_scene load_steps=3 format=3 uid="uid://dhytkwdtcg5go"]
 
 [ext_resource type="Script" uid="uid://b4cophlj402g5" path="res://scripts/item.gd" id="1_bx46p"]
-[ext_resource type="Texture2D" uid="uid://753vbly8b2vx" path="res://assets/items/Freebies_Full_Icons.png" id="2_h0yph"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_e0dfn"]
-atlas = ExtResource("2_h0yph")
-region = Rect2(584, 5, 14, 22)
+[ext_resource type="Texture2D" uid="uid://cjxeg5kgikgd2" path="res://assets/items/item_drops.png" id="2_h0yph"]
 
 [node name="Item" type="Node2D"]
 z_index = 10
 script = ExtResource("1_bx46p")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(2, 2)
-texture = SubResource("AtlasTexture_e0dfn")
+texture = ExtResource("2_h0yph")
 
 [node name="Label" type="Label" parent="."]
-offset_left = -24.0
-offset_top = -28.0
-offset_right = -24.0
-offset_bottom = -28.0
+offset_left = -48.0
+offset_top = -68.0
+offset_right = 48.0
+offset_bottom = -52.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 12
 text = "Item"
+horizontal_alignment = 1

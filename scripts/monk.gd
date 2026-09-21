@@ -18,13 +18,14 @@ const LEVEL_STATS := {
 	"cast_range": 12.0,
 }
 
-enum State { IDLE, MOVE, MOVE_TO, BATTLE, CASTING }
+enum State { IDLE, MOVE, MOVE_TO, BATTLE, CASTING, TRAINING }
 
 var _state : State = State.IDLE
 
 var _enemies            : Array = []
 var _attack_target      : Node  = null
 var _heal_target        : Node  = null
+var _training_dummy     : Node  = null
 var _cast_timer         : float = 0.0
 var _casting            : bool  = false
 var _cast_is_heal       : bool  = true
@@ -89,6 +90,8 @@ func _process_state(delta: float) -> void:
 			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
+		State.TRAINING:
+			_do_training(delta)
 		State.BATTLE:
 			_do_battle(delta)
 		State.CASTING:
@@ -145,6 +148,10 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("idle")
 		State.CASTING:
 			_cast_timer = _get_attack_rate()
+			_sprite.play("idle")
+		State.TRAINING:
+			_cast_timer = _get_attack_rate()
+			_casting    = false
 			_sprite.play("idle")
 
 # =========================================================================== #
@@ -280,8 +287,50 @@ func _on_cast_animation_finished() -> void:
 func _on_selected()   -> void: CombatAudio.play("monk_ready")
 func _on_move_to()    -> void: CombatAudio.play("monk_go"); _enter_state(State.MOVE_TO)
 func _on_end_battle() -> void:
-	_enemies.clear(); _attack_target = null; _heal_target = null
+	_enemies.clear(); _attack_target = null; _heal_target = null; _training_dummy = null
 	_casting = false; _enter_state(State.IDLE)
+func _enter_training_idle() -> void: _enter_state(State.IDLE)
+
+func _on_start_training(dummy: Node) -> void:
+	_training_dummy = dummy
+	_enter_state(State.TRAINING)
+
+func _do_training(delta: float) -> void:
+	if not is_instance_valid(_training_dummy) or not _training_dummy.get("is_active"):
+		var next : Node = _find_training_target()
+		if next != null:
+			_training_dummy = next
+		else:
+			_enter_state(State.IDLE)
+			return
+	var dist : float = position.distance_to(_training_dummy.global_position)
+	_sprite.flip_h = _training_dummy.global_position.x < position.x
+	if dist < CAST_RANGE_MIN:
+		var flee_dir : Vector2 = (position - _training_dummy.global_position).normalized()
+		_nav_agent.target_position = position + flee_dir * _get_cast_range()
+		_do_nav_move(delta, _get_move_speed())
+		return
+	if dist > _get_cast_range():
+		if _sprite.animation != "run":
+			_sprite.play("run")
+		_nav_agent.target_position = _training_dummy.global_position
+		_do_nav_move(delta, _get_move_speed())
+		return
+	if _casting:
+		return
+	_cast_timer -= delta
+	if _cast_timer > 0.0:
+		return
+	_casting = true
+	_sprite.play("heal")
+	await _sprite.animation_finished
+	if is_instance_valid(_training_dummy) and _training_dummy.get("is_active"):
+		var dmg : int = _get_attack_damage()
+		_training_dummy.take_damage(dmg, self)
+		grant_xp(int(dmg * 0.5))
+	_casting    = false
+	_cast_timer = _get_attack_rate()
+	_sprite.play("idle")
 
 func _get_move_speed()   -> float: return MOVE_SPEED * get_building_move_speed_multiplier() * get_item_move_speed_multiplier()
 func _get_attack_rate()  -> float: return CAST_RATE * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier()

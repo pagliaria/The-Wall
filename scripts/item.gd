@@ -11,18 +11,25 @@ extends Node2D
 enum ItemType { SWORD, SHIELD, BOOTS, QUIVER, TOME, AMULET }
 enum Rarity   { COMMON, RARE, EPIC }
 
-# Icons per item type — [common, rare, epic] cell coordinates (col, row) on 32px grid
-const ITEM_ICONS : Dictionary = {
-	ItemType.SWORD:  [Vector2i(0,  0), Vector2i(17, 1), Vector2i(15, 2)],
-	ItemType.SHIELD: [Vector2i(10, 0), Vector2i(14, 1), Vector2i(15, 1)],
-	ItemType.BOOTS:  [Vector2i(2,  1), Vector2i(0,  1), Vector2i(0,  2)],
-	ItemType.QUIVER: [Vector2i(3,  0), Vector2i(5,  1), Vector2i(5,  2)],
-	ItemType.TOME:   [Vector2i(19, 0), Vector2i(19, 1), Vector2i(20, 2)],
-	ItemType.AMULET: [Vector2i(2,  2), Vector2i(2,  3), Vector2i(17, 2)],
+# item_drops.png layout: 6 rows (item type), 3 cols (rarity: common, rare, epic left to right)
+# Row order below MUST match art sheet top to bottom. Flip values here if art order differs.
+const ITEM_ROW : Dictionary = {
+	ItemType.SWORD:  0,
+	ItemType.SHIELD: 1,
+	ItemType.BOOTS:  2,
+	ItemType.QUIVER: 3,
+	ItemType.TOME:   4,
+	ItemType.AMULET: 5,
 }
 
-const ICON_SIZE   : int = 32
-const ICON_STRIDE : int = 32  # no padding — tight grid
+const ICON_GRID_COLS : int = 3
+const ICON_GRID_ROWS : int = 6
+
+# Final on-screen icon size in px, whatever the source sheet's raw cell resolution is
+const ICON_DISPLAY_SIZE : float = 96.0
+
+# Click / hover hit radius, tied to icon size so it never falls out of sync
+const ICON_HIT_RADIUS : float = ICON_DISPLAY_SIZE / 2.0
 
 # Base stat values per item type
 const BASE_STATS : Dictionary = {
@@ -104,8 +111,19 @@ func _ready() -> void:
 	_apply_rarity_visuals()
 	_label.text    = _get_display_name()
 	_label.visible = false
+	_label.add_theme_color_override("font_color", RARITY_COLORS.get(rarity, Color.WHITE))
+	_position_label()
 	_build_tooltip()
 	set_process(false)
+
+func _position_label() -> void:
+	# Center label over icon width, sit just above icon top edge, whatever ICON_DISPLAY_SIZE is
+	var half_size : float = ICON_DISPLAY_SIZE / 2.0
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label.offset_left   = -half_size
+	_label.offset_right  =  half_size
+	_label.offset_bottom = -half_size - 4.0
+	_label.offset_top    = _label.offset_bottom - 10.0
 
 func _build_tooltip() -> void:
 	# Build as a CanvasLayer child so it renders above everything in screen space
@@ -173,16 +191,21 @@ func _format_stat_val(key: String, val) -> String:
 	return "+%s" % str(val)
 
 func _apply_icon() -> void:
-	var tex      : Texture2D  = preload("res://assets/items/Freebies_Full_Icons.png")
-	var icons    : Array      = ITEM_ICONS.get(item_type, [Vector2i(0,0), Vector2i(0,0), Vector2i(0,0)])
-	var cell     : Vector2i   = icons[clamp(int(rarity), 0, icons.size() - 1)]
-	var atlas    := AtlasTexture.new()
-	atlas.atlas  = tex
-	atlas.region = Rect2(cell.x * ICON_STRIDE, cell.y * ICON_STRIDE, ICON_SIZE, ICON_SIZE)
+	var tex        : Texture2D = preload("res://assets/items/item_drops.png")
+	var cell_w     : float     = float(tex.get_width())  / float(ICON_GRID_COLS)
+	var cell_h     : float     = float(tex.get_height()) / float(ICON_GRID_ROWS)
+	var row        : int       = ITEM_ROW.get(item_type, 0)
+	var col        : int       = clamp(int(rarity), 0, ICON_GRID_COLS - 1)
+	var atlas      := AtlasTexture.new()
+	atlas.atlas    = tex
+	atlas.region   = Rect2(col * cell_w, row * cell_h, cell_w, cell_h)
 	_sprite.texture = atlas
+	var uniform_scale : float = ICON_DISPLAY_SIZE / cell_w
+	_sprite.scale     = Vector2(uniform_scale, uniform_scale)
 
 func _apply_rarity_visuals() -> void:
-	_sprite.modulate = RARITY_COLORS.get(rarity, Color.WHITE)
+	# Art sheet already shows rarity per column, no tint needed on top.
+	_sprite.modulate = Color.WHITE
 
 func _get_display_name() -> String:
 	var rarity_names := {Rarity.COMMON: "Common", Rarity.RARE: "Rare", Rarity.EPIC: "Epic"}
@@ -220,7 +243,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var world_mouse : Vector2 = get_viewport().get_canvas_transform().affine_inverse() * event.position
 		var local       : Vector2 = to_local(world_mouse)
-		var over        : bool    = local.length() < 28.0
+		var over        : bool    = local.length() < ICON_HIT_RADIUS
 		if over != _hovered:
 			_hovered = over
 			if _tooltip != null:
@@ -238,7 +261,7 @@ func _input(event: InputEvent) -> void:
 		if event.pressed:
 			var world_mouse : Vector2 = get_viewport().get_canvas_transform().affine_inverse() * event.position
 			var local       : Vector2 = to_local(world_mouse)
-			if local.length() < 28.0:
+			if local.length() < ICON_HIT_RADIUS:
 				_begin_drag(event.position)
 				get_viewport().set_input_as_handled()
 		else:

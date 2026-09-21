@@ -15,12 +15,13 @@ const LEVEL_STATS := {
 	"damage": 2,
 }
 
-enum State { IDLE, MOVE, MOVE_TO, BATTLE, ATTACKING }
+enum State { IDLE, MOVE, MOVE_TO, BATTLE, ATTACKING, TRAINING }
 
 var _state        : State = State.IDLE
-var _target       : Node  = null
-var _attack_timer : float = 0.0
-var _is_striking  : bool  = false
+var _target         : Node  = null
+var _training_dummy : Node  = null
+var _attack_timer   : float = 0.0
+var _is_striking    : bool  = false
 
 # Runtime stat bonuses accumulated from levelling
 var _level_damage_bonus : int   = 0
@@ -68,6 +69,8 @@ func _process_state(delta: float) -> void:
 			_do_nav_move(delta, _get_move_speed())
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
+		State.TRAINING:
+			_do_training(delta)
 		State.BATTLE:
 			_do_battle(delta)
 		State.ATTACKING:
@@ -132,6 +135,8 @@ func _enter_state(new_state: State) -> void:
 			_sprite.play("run")
 		State.BATTLE:
 			pass  # animation set dynamically in _do_battle
+		State.TRAINING:
+			_attack_timer = _get_attack_rate()
 		State.ATTACKING:
 			_attack_timer = _get_attack_rate()
 
@@ -216,4 +221,16 @@ func _get_attack_rate()  -> float: return ATTACK_RATE * get_building_attack_spee
 
 func _on_selected()    -> void: CombatAudio.play("male_ready")
 func _on_move_to()     -> void: CombatAudio.play("male_go"); _enter_state(State.MOVE_TO)
-func _on_end_battle()  -> void: _target = null; _enter_state(State.IDLE)
+func _on_end_battle()  -> void: _target = null; _training_dummy = null; _enter_state(State.IDLE)
+func _enter_training_idle() -> void: _enter_state(State.IDLE)
+
+func _on_start_training(dummy: Node) -> void:
+	_training_dummy = dummy
+	_enter_state(State.TRAINING)
+
+func _do_training(delta: float) -> void:
+	var result : Node = await _do_training_melee(delta, _training_dummy, _get_attack_rate(), _get_melee_range(), _get_attack_damage, _get_move_speed)
+	if is_instance_valid(result):
+		_training_dummy = result
+	else:
+		_training_dummy = null
