@@ -17,7 +17,7 @@ anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 14.0
 offset_top = -282.0
-offset_right = 414.0
+offset_right = 480.0
 offset_bottom = -14.0
 grow_vertical = 0
 texture = ExtResource("2_wp77b")
@@ -43,12 +43,24 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="Portrait" type="TextureRect" parent="Panel/SingleView"]
-custom_minimum_size = Vector2(128, 128)
+[node name="PortraitColumn" type="VBoxContainer" parent="Panel/SingleView"]
 layout_mode = 2
 size_flags_vertical = 4
+theme_override_constants/separation = 6
+
+[node name="Portrait" type="TextureRect" parent="Panel/SingleView/PortraitColumn"]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
+
+[node name="StatusLabel" type="Label" parent="Panel/SingleView/PortraitColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.65, 1)
+theme_override_fonts/font = ExtResource("7_cardoreg")
+theme_override_font_sizes/font_size = 13
+text = "Idle"
+horizontal_alignment = 1
 
 [node name="Info" type="VBoxContainer" parent="Panel/SingleView"]
 layout_mode = 2
@@ -72,67 +84,6 @@ theme_override_colors/font_color = Color(0.7, 0.75, 0.65, 1)
 theme_override_fonts/font = ExtResource("7_cardoreg")
 theme_override_font_sizes/font_size = 20
 text = "V"
-
-[node name="StatusLabel" type="Label" parent="Panel/SingleView/Info"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.75, 0.65, 1)
-theme_override_fonts/font = ExtResource("7_cardoreg")
-theme_override_font_sizes/font_size = 13
-text = "Idle"
-
-[node name="StatsGrid" type="GridContainer" parent="Panel/SingleView/Info"]
-layout_mode = 2
-theme_override_constants/h_separation = 12
-theme_override_constants/v_separation = 4
-columns = 2
-
-[node name="AttackRangeTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
-theme_override_font_sizes/font_size = 12
-text = "Attack Range"
-
-[node name="AttackRangeValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
-theme_override_font_sizes/font_size = 12
-text = "-"
-
-[node name="AttackDamageTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
-theme_override_font_sizes/font_size = 12
-text = "Attack Damage"
-
-[node name="AttackDamageValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
-theme_override_font_sizes/font_size = 12
-text = "-"
-
-[node name="AttackSpeedTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
-theme_override_font_sizes/font_size = 12
-text = "Attack Speed"
-
-[node name="AttackSpeedValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
-theme_override_font_sizes/font_size = 12
-text = "-"
-
-[node name="MoveSpeedTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
-theme_override_font_sizes/font_size = 12
-text = "Move Speed"
-
-[node name="MoveSpeedValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
-theme_override_font_sizes/font_size = 12
-text = "-"
 
 [node name="HpBarContainer" type="Control" parent="Panel/SingleView/Info"]
 custom_minimum_size = Vector2(0, 40)
@@ -210,6 +161,60 @@ theme_override_font_sizes/font_size = 10
 text = "45 / 100 XP"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="StatsGrid" type="GridContainer" parent="Panel/SingleView/Info"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 6
+columns = 2
+
+[node name="AttackRangeTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "Attack Range"
+
+[node name="AttackRangeValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
+theme_override_font_sizes/font_size = 16
+text = "-"
+
+[node name="AttackDamageTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "Attack Damage"
+
+[node name="AttackDamageValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
+theme_override_font_sizes/font_size = 16
+text = "-"
+
+[node name="AttackSpeedTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "Attack Speed"
+
+[node name="AttackSpeedValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
+theme_override_font_sizes/font_size = 16
+text = "-"
+
+[node name="MoveSpeedTitle" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "Move Speed"
+
+[node name="MoveSpeedValue" type="Label" parent="Panel/SingleView/Info/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.82, 0.72, 1)
+theme_override_font_sizes/font_size = 16
+text = "-"
 
 [node name="ItemSlots" type="VBoxContainer" parent="Panel/SingleView"]
 custom_minimum_size = Vector2(64, 0)
