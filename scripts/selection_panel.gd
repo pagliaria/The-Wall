@@ -26,6 +26,9 @@ const DEFAULT_AVATAR := "res://assets/UI Elements/UI Elements/Human Avatars/Avat
 @onready var _attack_speed_title  : Label  = $Panel/SingleView/Info/StatsGrid/AttackSpeedTitle
 @onready var _hp_fill      : TextureRect   = $Panel/SingleView/Info/HpBarContainer/Fill
 @onready var _hp_label     : Label         = $Panel/SingleView/Info/HpBarContainer/HpLabel
+@onready var _xp_bar       : Control       = $Panel/SingleView/Info/XpBarContainer
+@onready var _xp_fill      : TextureRect   = $Panel/SingleView/Info/XpBarContainer/Fill
+@onready var _xp_label     : Label         = $Panel/SingleView/Info/XpBarContainer/XpLabel
 @onready var _item_slot_1  : Button        = $Panel/SingleView/ItemSlots/Slot1
 @onready var _item_slot_2  : Button        = $Panel/SingleView/ItemSlots/Slot2
 @onready var _item_slot_3  : Button        = $Panel/SingleView/ItemSlots/Slot3
@@ -126,6 +129,7 @@ func _show_single(unit: Node) -> void:
 	_portrait.texture  = _resolve_portrait(unit, type_key)
 	_apply_name_and_level(unit, _display_name(unit, type_key))
 	_apply_hp(unit)
+	_apply_xp(unit)
 	_status_label.text = _get_status(unit)
 	_apply_stats(unit, type_key)
 
@@ -206,6 +210,28 @@ func _apply_hp(unit: Node) -> void:
 	var ratio := clampf(float(unit.hp) / float(unit.max_hp), 0.0, 1.0)
 	_hp_fill.scale.x = ratio
 	_hp_label.text   = "%d / %d" % [unit.hp, unit.max_hp]
+
+func _apply_xp(unit: Node) -> void:
+	# Only units that actually level (have real level-up stats defined) get a bar —
+	# e.g. Pawn never gains XP, so showing an always-empty bar for it would be noise.
+	if not is_instance_valid(unit) or not unit.has_method("_get_level_up_stats") or not unit.has_method("xp_to_next_level"):
+		_xp_bar.visible = false
+		return
+	var stats : Dictionary = unit._get_level_up_stats()
+	if stats.is_empty() or unit.get("level") == null or unit.get("xp") == null:
+		_xp_bar.visible = false
+		return
+	_xp_bar.visible = true
+	var next_xp : int = unit.xp_to_next_level()
+	if next_xp <= 0:
+		# Max level reached — nothing left to grind toward
+		_xp_fill.scale.x = 1.0
+		_xp_label.text   = "MAX LEVEL"
+	else:
+		var cur_xp : int   = int(unit.xp)
+		var ratio  : float = clampf(float(cur_xp) / float(next_xp), 0.0, 1.0)
+		_xp_fill.scale.x = ratio
+		_xp_label.text   = "%d / %d XP" % [cur_xp, next_xp]
 
 func _get_status(unit: Node) -> String:
 	if not is_instance_valid(unit):
@@ -402,6 +428,7 @@ func _process(_delta: float) -> void:
 	if not _single_view.visible or not is_instance_valid(_tracked_unit):
 		return
 	_apply_hp(_tracked_unit)
+	_apply_xp(_tracked_unit)
 	var type_key := _unit_type(_tracked_unit)
 	_portrait.texture = _resolve_portrait(_tracked_unit, type_key)
 	_apply_name_and_level(_tracked_unit, _display_name(_tracked_unit, type_key))
