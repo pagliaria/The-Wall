@@ -42,6 +42,11 @@ const ANIM_NAMES : Dictionary = {
 }
 
 const ITEM_SCENE : PackedScene = preload("res://scenes/item.tscn")
+const ItemScript : GDScript    = preload("res://scripts/item.gd")
+
+# Chest visual footprint (sprite is 48x32 at 2x scale) — used by enemy_base.gd
+# to keep newly spawned chests from landing on top of existing ones.
+const CHEST_MIN_SPACING : float = 110.0
 
 # =========================================================================== #
 #  State
@@ -63,6 +68,7 @@ func setup(type: ChestType) -> void:
 
 func _ready() -> void:
 	_rng.randomize()
+	add_to_group("chests")
 	_sprite.play(ANIM_NAMES[chest_type][0])
 	_area.input_event.connect(_on_click)
 
@@ -168,6 +174,9 @@ func _on_open_anim_finished() -> void:
 func _spawn_items() -> void:
 	var count  : int   = ITEM_COUNTS[chest_type]
 	var radius : float = 60.0
+	# Minimum center-to-center gap between two dropped items so their icons
+	# never overlap on the ground, tied to the actual on-screen icon size.
+	var min_spacing : float = ItemScript.ICON_DISPLAY_SIZE + 16.0
 	# Compute visible world bounds from camera so items don't land offscreen
 	var cam       : Camera2D = get_tree().current_scene.get_node_or_null("Camera2D")
 	var pad       : float    = 80.0  # inset from screen edge
@@ -179,19 +188,52 @@ func _spawn_items() -> void:
 		var half     : Vector2 = (vp_size / zoom) * 0.5
 		world_min = cam.global_position - half + Vector2(pad, pad)
 		world_max = cam.global_position + half - Vector2(pad, pad)
+	var claimed : Array = _get_ground_item_positions()
 	for i in count:
 		var angle    : float   = (float(i) / count) * TAU + _rng.randf() * 0.5
 		var raw_pos  : Vector2 = position + Vector2(cos(angle), sin(angle)) * radius
-		var land_pos : Vector2 = Vector2(
-			clampf(raw_pos.x, world_min.x, world_max.x),
-			clampf(raw_pos.y, world_min.y, world_max.y)
-		)
+		var land_pos : Vector2 = _find_clear_spot(raw_pos, claimed, min_spacing, world_min, world_max)
+		claimed.append(land_pos)
 		var chosen_type   : int = _rng.randi_range(0, 5)
 		var chosen_rarity : int = _roll_rarity()
 		var item : Node2D = ITEM_SCENE.instantiate()
 		item.call("setup", chosen_type, chosen_rarity)
 		get_parent().add_child(item)
 		item.call("pop_from", position, land_pos)
+
+func _get_ground_item_positions() -> Array:
+	# Every item already resting on the ground, anywhere — not just from this chest
+	var positions : Array = []
+	for existing in get_tree().get_nodes_in_group("ground_items"):
+		if is_instance_valid(existing):
+			positions.append(existing.position)
+	return positions
+
+func _find_clear_spot(start_pos: Vector2, occupied: Array, min_spacing: float, world_min: Vector2, world_max: Vector2) -> Vector2:
+	# Start at the ideal spot, then spiral outward in random directions until
+	# we land somewhere clear of every other item, or give up after enough tries.
+	const MAX_ATTEMPTS : int = 24
+	var candidate : Vector2 = Vector2(
+		clampf(start_pos.x, world_min.x, world_max.x),
+		clampf(start_pos.y, world_min.y, world_max.y)
+	)
+	for attempt in MAX_ATTEMPTS:
+		if _is_spot_clear(candidate, occupied, min_spacing):
+			return candidate
+		var extra_radius : float = min_spacing * 0.65 * float(attempt + 1)
+		var jitter_angle  : float = _rng.randf() * TAU
+		var probe : Vector2 = start_pos + Vector2(cos(jitter_angle), sin(jitter_angle)) * extra_radius
+		candidate = Vector2(
+			clampf(probe.x, world_min.x, world_max.x),
+			clampf(probe.y, world_min.y, world_max.y)
+		)
+	return candidate  # best effort — still clamped on-screen even if a touch tight
+
+func _is_spot_clear(pos: Vector2, occupied: Array, min_spacing: float) -> bool:
+	for p in occupied:
+		if pos.distance_to(p) < min_spacing:
+			return false
+	return true
 
 func _roll_rarity() -> int:
 	var pool   : Array = ITEM_POOL[chest_type]

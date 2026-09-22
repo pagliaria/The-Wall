@@ -18,6 +18,8 @@ const XP_PER_DAMAGE : int = 1
 const XP_KILL_BONUS : int = 25
 
 const CHEST_SCENE        : PackedScene = preload("res://scenes/chest.tscn")
+const ChestScript        : GDScript    = preload("res://scripts/chest.gd")
+const TerrainScript      : GDScript    = preload("res://scripts/terrain.gd")
 const DROP_CHANCE_COMMON : float       = 0.20
 const DROP_CHANCE_RARE   : float       = 0.08
 const DROP_CHANCE_EPIC   : float       = 0.03
@@ -387,12 +389,50 @@ func _try_drop_chest(drop_pos: Vector2) -> void:
 	if chest_type == -1:
 		return
 	print("Spawn Chest! ", chest_type)
+	var chest_pos  : Vector2 = _find_clear_chest_spot(drop_pos, rng)
 	var chest : Node2D = CHEST_SCENE.instantiate()
-	chest.position = drop_pos
+	chest.position = chest_pos
 	chest.z_index   = 2
 	chest.call("setup", chest_type)
 	get_tree().root.add_child(chest)
 	UiAudio.play("chest_drop")
+
+func _find_clear_chest_spot(start_pos: Vector2, rng: RandomNumberGenerator) -> Vector2:
+	# Nudge the chest away from any chest already sitting nearby, spiraling
+	# outward until clear so two drops never stack on top of each other.
+	# Stays clamped to the actual map bounds so it can never spiral off the edge.
+	var min_spacing : float = ChestScript.CHEST_MIN_SPACING
+	var map_pad      : float = 32.0
+	var map_min      : Vector2 = Vector2(map_pad, map_pad)
+	var map_max      : Vector2 = Vector2(
+		TerrainScript.MAP_COLS * TerrainScript.TILE_SIZE - map_pad,
+		TerrainScript.MAP_ROWS * TerrainScript.TILE_SIZE - map_pad
+	)
+	var occupied    : Array = []
+	for existing in get_tree().get_nodes_in_group("chests"):
+		if is_instance_valid(existing):
+			occupied.append(existing.position)
+	const MAX_ATTEMPTS : int = 16
+	var candidate : Vector2 = Vector2(
+		clampf(start_pos.x, map_min.x, map_max.x),
+		clampf(start_pos.y, map_min.y, map_max.y)
+	)
+	for attempt in MAX_ATTEMPTS:
+		var clear : bool = true
+		for p in occupied:
+			if candidate.distance_to(p) < min_spacing:
+				clear = false
+				break
+		if clear:
+			return candidate
+		var extra_radius : float = min_spacing * 0.65 * float(attempt + 1)
+		var jitter_angle  : float = rng.randf() * TAU
+		var probe : Vector2 = start_pos + Vector2(cos(jitter_angle), sin(jitter_angle)) * extra_radius
+		candidate = Vector2(
+			clampf(probe.x, map_min.x, map_max.x),
+			clampf(probe.y, map_min.y, map_max.y)
+		)
+	return candidate  # best effort — still clamped to the map even if a touch tight
 
 # =========================================================================== #
 #  Virtual overrides
