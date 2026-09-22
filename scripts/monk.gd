@@ -36,8 +36,7 @@ var _level_heal_bonus       : int   = 0
 var _level_cast_range_bonus : float = 0.0
 
 func _on_unit_ready() -> void:
-	max_hp = _get_base_max_hp() + get_building_hp_bonus()
-	hp     = max_hp
+	_recalc_max_hp()
 	_sprite.animation_finished.connect(_on_cast_animation_finished)
 	_enter_state(State.IDLE)
 

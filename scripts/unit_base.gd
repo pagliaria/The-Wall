@@ -83,9 +83,8 @@ func _apply_level_stats() -> void:
 	if stats.is_empty():
 		return
 	var hp_gain : int = int(stats.get("hp", 0))
-	max_hp += hp_gain
-	hp      = mini(hp + hp_gain, max_hp)
-	_update_hp_bar()
+	_level_hp_bonus += hp_gain
+	_recalc_max_hp()
 	_on_level_up_stats(stats)
 
 func _on_level_up_stats(_stats: Dictionary) -> void:
@@ -100,6 +99,9 @@ func _play_level_up_effect() -> void:
 
 var max_hp : int = 10
 var hp     : int = 10
+# Total HP gained from leveling up so far — tracked separately so it survives
+# a later building-bonus recalculation instead of getting overwritten by it.
+var _level_hp_bonus : int = 0
 const MAX_ITEMS     : int  = 3
 var _item_bonuses   : Dictionary = {}
 var _equipped_items : Array      = []  # Array of {type, rarity, stats, name}
@@ -138,9 +140,7 @@ func apply_item(item: Node) -> void:
 		_item_bonuses["move_speed_multiplier"] += mv_bonus
 	var hp_gain : int = int(s.get("hp_bonus", 0))
 	if hp_gain > 0:
-		max_hp += hp_gain
-		hp      = mini(hp + hp_gain, max_hp)
-		_update_hp_bar()
+		_recalc_max_hp()
 	# Track equipped item
 	_equipped_items.append({
 		"type":   int(item.get("item_type")),
@@ -174,15 +174,26 @@ func remove_item(index: int) -> void:
 	# Reverse HP if applicable
 	var hp_loss : int = int(s.get("hp_bonus", 0))
 	if hp_loss > 0:
-		max_hp  = max(1, max_hp - hp_loss)
-		hp      = mini(hp, max_hp)
-		_update_hp_bar()
+		_recalc_max_hp()
 	_equipped_items.remove_at(index)
 
 func get_item_attack_damage_bonus()     -> int:   return int(_item_bonuses.get("attack_damage", 0))
 func get_item_attack_speed_multiplier() -> float: return float(_item_bonuses.get("attack_speed_multiplier", 1.0))
 func get_item_move_speed_multiplier()   -> float: return float(_item_bonuses.get("move_speed_multiplier", 1.0))
 func get_item_range_bonus()             -> float: return float(_item_bonuses.get("range_bonus", 0.0))
+
+# Single source of truth for max_hp: base + every level-up + every equipped
+# item's hp_bonus + the current building hp_bonus, all added together.
+# Call this any time one of those inputs changes instead of touching max_hp
+# directly, so no source can ever clobber another's contribution.
+func _recalc_max_hp() -> void:
+	var old_max_hp : int = max_hp
+	max_hp = maxi(1, _get_base_max_hp() + _level_hp_bonus + int(_item_bonuses.get("hp_bonus", 0)) + get_building_hp_bonus())
+	if old_max_hp > 0:
+		hp = mini(hp + (max_hp - old_max_hp), max_hp)
+	else:
+		hp = max_hp
+	_update_hp_bar()
 
 var _building_bonuses := {
 	"attack_damage": 0,
@@ -372,11 +383,7 @@ func apply_building_bonuses(bonuses: Dictionary) -> void:
 	_building_bonuses["range_bonus"]             = float(bonuses.get("range_bonus", 0.0))
 	_building_bonuses["gather_speed_multiplier"] = float(bonuses.get("gather_speed_multiplier", 1.0))
 	_building_bonuses["turn_in_bonus"]           = int(bonuses.get("turn_in_bonus", 0))
-	var old_max_hp := max_hp
-	max_hp          = _get_base_max_hp() + get_building_hp_bonus()
-	if hp > 0:
-		hp = mini(hp + (max_hp - old_max_hp), max_hp) if old_max_hp > 0 else max_hp
-	_update_hp_bar()
+	_recalc_max_hp()
 
 func get_building_attack_damage_bonus()     -> int:   return int(_building_bonuses.get("attack_damage", 0))
 func get_building_attack_speed_multiplier() -> float: return float(_building_bonuses.get("attack_speed_multiplier", 1.0))

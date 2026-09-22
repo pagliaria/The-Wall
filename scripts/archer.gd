@@ -29,8 +29,7 @@ var _level_damage_bonus     : int   = 0
 var _level_attack_rate_bonus: float = 0.0
 
 func _on_unit_ready() -> void:
-	max_hp = _get_base_max_hp() + get_building_hp_bonus()
-	hp     = max_hp
+	_recalc_max_hp()
 	_enter_state(State.IDLE)
 
 func _get_base_max_hp() -> int:

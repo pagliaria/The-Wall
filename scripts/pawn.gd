@@ -69,8 +69,7 @@ var home_radius : float = 28.0
 # =========================================================================== #
 
 func _on_unit_ready() -> void:
-	max_hp = _get_base_max_hp() + get_building_hp_bonus()
-	hp     = max_hp
+	_recalc_max_hp()
 	_sprite.frame_changed.connect(_on_frame_changed)
 	_enter_state(State.MOVE)
 
