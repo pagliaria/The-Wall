@@ -417,14 +417,51 @@ func _add_child_training_target(type: String, config_overrides: Dictionary) -> N
 	return scene
 
 func get_random_town_position_for_dummy() -> Vector2:
-	# Spawn near town center but not overlapping buildings
+	# Spawn near town center but not overlapping buildings, resource nodes, or
+	# their placement-blocker zones.
 	var cols := int(5 + randi() % 8)  # Offset from town start
 	var rows := int(5 + randi() % 8)  # Rows up
-	var position := Vector2(
+	var preferred := Vector2(
 		float((COL_TOWN_START + cols) * TILE_SIZE),
 		float((WATER_ROWS + rows) * TILE_SIZE)
 	)
-	return position
+	return _find_clear_dummy_spot(preferred)
+
+# Dummy footprint clearance — covers the dummy's own collision box (36x66) plus
+# a bit of breathing room so it doesn't visually clip into whatever it's next to.
+const DUMMY_CLEARANCE_RADIUS : float = 48.0
+
+func _is_dummy_position_clear(pos: Vector2) -> bool:
+	# Same technique building_placer.gd uses to validate building placement:
+	# a physics shape query against real colliders, so it automatically respects
+	# every building's actual footprint and every resource's PlacementBlocker
+	# area, rather than us having to hand-track their sizes separately.
+	var space_state := get_world_2d().direct_space_state
+	var query := PhysicsShapeQueryParameters2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = DUMMY_CLEARANCE_RADIUS
+	query.shape             = circle
+	query.transform         = Transform2D(0.0, pos)
+	query.collide_with_areas  = true
+	query.collide_with_bodies = true
+	return space_state.intersect_shape(query, 1 | 16).is_empty()
+
+func _find_clear_dummy_spot(preferred: Vector2) -> Vector2:
+	# Nudge away from anything occupying the spot by spiraling outward — same
+	# idea used for chest and item-drop placement elsewhere in this file.
+	const MAX_ATTEMPTS : int = 30
+	var candidate : Vector2 = preferred
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	for attempt in MAX_ATTEMPTS:
+		if _is_valid_position(candidate) and _is_dummy_position_clear(candidate):
+			return candidate
+		var extra_radius : float = DUMMY_CLEARANCE_RADIUS * 0.8 * float(attempt + 1)
+		var jitter_angle  : float = rng.randf() * TAU
+		candidate = preferred + Vector2(cos(jitter_angle), sin(jitter_angle)) * extra_radius
+		candidate.x = clampf(candidate.x, float(COL_TOWN_START * TILE_SIZE), float((MAP_COLS - 1) * TILE_SIZE))
+		candidate.y = clampf(candidate.y, float(WATER_ROWS * TILE_SIZE), float((MAP_ROWS - 1) * TILE_SIZE))
+	return candidate  # best effort — still on-map even if a touch tight
 
 func _training_target_config(mode: String = "basic") -> Dictionary:
 	match mode:
@@ -570,12 +607,12 @@ func spawn_training_target(mode: String = "basic", p_position: Vector2 = Vector2
 		if mode == "basic":
 			spawn_pos = get_random_town_position_for_dummy()
 		else:
-			spawn_pos = Vector2(
+			spawn_pos = _find_clear_dummy_spot(Vector2(
 				float((COL_TOWN_START + 8) * TILE_SIZE),
 				float((WATER_ROWS + 4) * TILE_SIZE)
-			)
+			))
 	else:
-		spawn_pos = p_position
+		spawn_pos = _find_clear_dummy_spot(p_position)
 
 	var scene : Node2D = TRAINING_TARGET_BASIC_SCENE.instantiate()
 	if scene == null:
