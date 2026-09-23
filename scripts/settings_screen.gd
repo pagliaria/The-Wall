@@ -82,6 +82,8 @@ const VERSUS_DEV_NODES : Array[String] = [
 @onready var _btn_resume          : Button = $Panel/MarginContainer/VBox/Buttons/BtnResume
 @onready var _btn_apply           : Button = $Panel/MarginContainer/VBox/Buttons/BtnApply
 @onready var _btn_defaults        : Button = $Panel/MarginContainer/VBox/Buttons/BtnDefaults
+@onready var _btn_quit            : Button = $Panel/MarginContainer/VBox/Buttons/BtnQuit
+@onready var _quit_confirm        : ConfirmationDialog = $QuitConfirm
 
 # =========================================================================== #
 #  Lifecycle
@@ -132,6 +134,8 @@ func _connect_signals() -> void:
 	_btn_resume.pressed.connect(_on_resume)
 	_btn_apply.pressed.connect(_on_apply)
 	_btn_defaults.pressed.connect(_on_defaults)
+	_btn_quit.pressed.connect(_on_quit_pressed)
+	_quit_confirm.confirmed.connect(_on_quit_confirmed)
 
 	_slider_master.value_changed.connect(_on_master_changed)
 	_slider_music.value_changed.connect(_on_music_changed)
@@ -206,6 +210,16 @@ func _on_apply() -> void:
 	_save_config()
 	_apply_versus_settings()
 	UiAudio.play()
+
+func _on_quit_pressed() -> void:
+	UiAudio.play()
+	_quit_confirm.popup_centered()
+
+func _on_quit_confirmed() -> void:
+	# Settings pauses the game with time_scale 0. Restore before quitting so
+	# nothing waiting on timers hangs during shutdown.
+	Engine.time_scale = 1.0
+	get_tree().quit()
 
 func _on_defaults() -> void:
 	_vol_master     = 1.0
@@ -308,11 +322,15 @@ func _load_config() -> void:
 	BloodFx.level = _blood_level as BloodFx.BloodLevel
 
 func _apply_display() -> void:
-	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-	DisplayServer.window_set_mode(mode)
-	DisplayServer.window_set_vsync_mode(
-		DisplayServer.VSYNC_ENABLED if _vsync else DisplayServer.VSYNC_DISABLED
-	)
+	# Settings screen loads in BOTH title and main scenes. Only touch the window
+	# when it differs from the saved choice: redundant window_set_mode calls
+	# during a scene change can leave an exported build with a stale viewport.
+	var want_mode : DisplayServer.WindowMode = DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+	if DisplayServer.window_get_mode() != want_mode:
+		DisplayServer.window_set_mode(want_mode)
+	var want_vsync : DisplayServer.VSyncMode = DisplayServer.VSYNC_ENABLED if _vsync else DisplayServer.VSYNC_DISABLED
+	if DisplayServer.window_get_vsync_mode() != want_vsync:
+		DisplayServer.window_set_vsync_mode(want_vsync)
 	await get_tree().process_frame
 	emit_signal("display_changed")
 

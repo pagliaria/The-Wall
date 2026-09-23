@@ -605,3 +605,22 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_btn_danger")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_danger")
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_danger")
 text = "Reset Defaults"
+
+[node name="BtnQuit" type="Button" parent="Panel/MarginContainer/VBox/Buttons"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_danger")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_danger")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_danger")
+text = "Quit Game"
+
+[node name="QuitConfirm" type="ConfirmationDialog" parent="."]
+title = "Quit Game"
+size = Vector2i(400, 130)
+ok_button_text = "Quit"
+dialog_text = "Quit to desktop? Unsaved progress will be lost."
+cancel_button_text = "Cancel"
