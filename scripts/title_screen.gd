@@ -23,6 +23,10 @@ func _ready() -> void:
 	var resume_btn : Button = _settings_screen.get_node_or_null("Panel/MarginContainer/VBox/Buttons/BtnResume")
 	if resume_btn != null:
 		resume_btn.text = "Close"
+	# Title screen has its own Exit button, so the in-game Quit is redundant here.
+	var quit_btn : Button = _settings_screen.get_node_or_null("Panel/MarginContainer/VBox/Buttons/BtnQuit")
+	if quit_btn != null:
+		quit_btn.visible = false
 	_settings_screen.closed.connect(func() -> void: _settings_screen.visible = false)
 	_how_to_play.closed.connect(func() -> void: _how_to_play.visible = false)
 	_mode_select.mode_chosen.connect(_on_mode_chosen)

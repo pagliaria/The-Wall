@@ -71,6 +71,9 @@ var _selected_building : Node       = null
 
 func _ready() -> void:
 	_fit_camera_to_screen()
+	# Exported fullscreen can finish resizing after _ready. Refit whenever the
+	# viewport size actually changes instead of trusting the size at load.
+	get_viewport().size_changed.connect(_fit_camera_to_screen)
 	resource_layer.buildings_layer = buildings_layer
 	resource_layer.spawn()
 	resource_layer.resource_depleted.connect(_on_resource_depleted)
@@ -507,7 +510,10 @@ func _on_debug_max_resources_requested() -> void:
 # =========================================================================== #
 
 func _fit_camera_to_screen() -> void:
-	var screen := Vector2(DisplayServer.window_get_size())
+	# Viewport size, not window size: they differ with stretch modes, DPI scaling
+	# and mid-transition fullscreen, and every mouse/camera value here is
+	# viewport-space.
+	var screen : Vector2 = get_viewport_rect().size
 	var zoom_x := screen.x / float(WORLD_WIDTH)
 	var zoom_y := screen.y / float(WORLD_HEIGHT)
 	zoom_min = maxf(zoom_x, zoom_y)
@@ -529,7 +535,7 @@ func _handle_edge_pan(delta: float) -> void:
 	if _panning:
 		return
 	var mouse  := get_viewport().get_mouse_position()
-	var screen := Vector2(DisplayServer.window_get_size())
+	var screen : Vector2 = get_viewport_rect().size
 	var move   := Vector2.ZERO
 	var speed  := EDGE_SPEED / camera.zoom.x * delta
 	if mouse.x < EDGE_MARGIN:               move.x = -speed
