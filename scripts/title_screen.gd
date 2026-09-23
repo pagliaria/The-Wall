@@ -9,6 +9,7 @@ extends Node
 @onready var _exit_btn        : NinePatchRect = $BG/ButtonRow/ExitBtn
 @onready var _settings_screen : Node          = $SettingsScreen
 @onready var _how_to_play     : Node          = $HowToPlay
+@onready var _mode_select     : Node          = $ModeSelect
 
 func _ready() -> void:
 	_start_btn.gui_input.connect(_on_btn_input.bind("start"))
@@ -22,6 +23,7 @@ func _ready() -> void:
 		resume_btn.text = "Close"
 	_settings_screen.closed.connect(func() -> void: _settings_screen.visible = false)
 	_how_to_play.closed.connect(func() -> void: _how_to_play.visible = false)
+	_mode_select.mode_chosen.connect(_on_mode_chosen)
 	_update_continue_visibility()
 
 func _update_continue_visibility() -> void:
@@ -42,9 +44,15 @@ func _on_btn_input(event: InputEvent, btn_id: String) -> void:
 			"exit":       get_tree().quit()
 
 func _on_start() -> void:
+	_mode_select.open()
+
+func _on_mode_chosen(chosen_mode: int) -> void:
+	GameMode.set_mode(chosen_mode)
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _on_continue() -> void:
+	# Saves are solo only for now.
+	GameMode.set_mode(GameMode.Mode.SOLO)
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _on_options() -> void:

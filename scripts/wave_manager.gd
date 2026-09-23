@@ -181,22 +181,11 @@ func _start_wave() -> void:
 	_spawn_remaining_prep_enemies()
 	_player_units = _get_battlefield_player_units()
 
-	# Units are now committed — gate's closed. Snapshot the defense for VS mode
-	# mirroring before anything moves or dies during the fight that follows.
-	var defense_snapshot : Dictionary = capture_defense_snapshot()
-	_save_snapshot_to_disk(defense_snapshot)
-
-	# ============================================================= #
-	# TEMP TEST HOOK — DO NOT SHIP. Remove once step 3 (real match
-	# loading) exists. Spawns the defense we JUST captured back in as
-	# a mirrored hostile wave, purely to visually confirm the capture
-	# -> reconstruct -> spawn pipeline works end to end. This means
-	# solo waves will fight a mirrored copy of your OWN nomans defense
-	# on top of the normal composition while this hook is active —
-	# that's expected for testing, not real gameplay behavior.
-	# ============================================================= #
-	if not defense_snapshot.get("units", []).is_empty() or not defense_snapshot.get("hired_units", []).is_empty():
-		spawn_mirrored_defense(defense_snapshot)
+	# Units are now committed — gate's closed. Solo: PvE composition already
+	# spawned during prep, nothing more to do. Versus: capture own defense and
+	# fight the opponent's mirrored defense instead.
+	if GameMode.is_versus():
+		_start_versus_battle()
 
 	call_deferred("_begin_battle")
 
@@ -290,6 +279,21 @@ func _save_snapshot_to_disk(snapshot: Dictionary) -> void:
 	f.close()
 	print("Defense snapshot saved: ", path)
 
+# Versus wave start. Snapshots this player's defense BEFORE anything moves or
+# dies (this is what gets uploaded for other players to fight), then spawns the
+# opponent's snapshot as the hostile wave.
+func _start_versus_battle() -> void:
+	var own_snapshot : Dictionary = capture_defense_snapshot()
+	_save_snapshot_to_disk(own_snapshot)
+	var opponent_snapshot : Dictionary = _get_opponent_snapshot(own_snapshot)
+	spawn_mirrored_defense(opponent_snapshot)
+
+# Source of the opponent's defense for this wave.
+# TODO step 3: fetch a real opponent snapshot (matchmaking / download). Until
+# then, loopback: fight a mirror of your own defense so the pipeline is testable.
+func _get_opponent_snapshot(own_snapshot: Dictionary) -> Dictionary:
+	return own_snapshot
+
 func _begin_battle() -> void:
 	_player_units = _get_battlefield_player_units()
 	_enemies = _get_battlefield_enemies()
@@ -365,7 +369,8 @@ func _prepare_next_wave() -> void:
 	_countdown = WAVE_INTERVAL
 	_phase = Phase.PREP
 	_spawn_queue.clear()
-	var composition : Array = WAVE_COMPOSITIONS[_wave_number]
+	# Versus: opponent's mirrored defense IS the wave, so no PvE composition.
+	var composition : Array = [] if GameMode.is_versus() else WAVE_COMPOSITIONS[_wave_number]
 	for entry in composition:
 		var scene := _get_scene(entry["path"])
 		if scene == null:

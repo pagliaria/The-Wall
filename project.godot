@@ -29,6 +29,7 @@ CombatAudio="*res://scripts/combat_audio.gd"
 CombatNumbers="*res://scripts/combat_numbers.gd"
 FormationManager="*res://scripts/formation_manager.gd"
 BloodFx="*res://scripts/blood_fx.gd"
+GameMode="*res://scripts/game_mode.gd"
 
 [display]
 
