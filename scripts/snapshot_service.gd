@@ -19,8 +19,13 @@ const CONFIG_PATH : String = "user://versus.cfg"
 const TABLE_PATH  : String = "defense_snapshots"
 const RPC_PATH    : String = "rpc/get_opponent_snapshot"
 
-var server_url       : String = ""
-var server_key       : String = ""
+# Shipped defaults. Publishable key only, never a secret/service_role key.
+# Players never type these; user://versus.cfg may override them (dev only).
+const DEFAULT_SERVER_URL : String = "https://mtnpxzjytoriczckmbel.supabase.co"
+const DEFAULT_SERVER_KEY : String = "sb_publishable_fpc3njN8VnstjHl3LBmQSA_HIT7nt0N"
+
+var server_url       : String = DEFAULT_SERVER_URL
+var server_key       : String = DEFAULT_SERVER_KEY
 var allow_self_match : bool   = false  # testing: let fetch return your own snapshots
 
 var _fetch_wave  : int = 0
@@ -52,15 +57,22 @@ func get_config_error() -> String:
 	return ""
 
 func set_config(url: String, key: String, self_match: bool) -> void:
-	server_url       = url.strip_edges()
-	server_key       = key.strip_edges()
+	# Blank field = go back to shipped default, never store an empty server.
+	var new_url : String = url.strip_edges()
+	var new_key : String = key.strip_edges()
+	server_url       = new_url if new_url != "" else DEFAULT_SERVER_URL
+	server_key       = new_key if new_key != "" else DEFAULT_SERVER_KEY
 	allow_self_match = self_match
 	_save_config()
 
 func _save_config() -> void:
 	var cfg : ConfigFile = ConfigFile.new()
-	cfg.set_value("server", "url", server_url)
-	cfg.set_value("server", "key", server_key)
+	# Only persist url/key when they differ from shipped defaults, so a future
+	# default change (key rotation) is never pinned by an old saved copy.
+	if server_url != DEFAULT_SERVER_URL:
+		cfg.set_value("server", "url", server_url)
+	if server_key != DEFAULT_SERVER_KEY:
+		cfg.set_value("server", "key", server_key)
 	cfg.set_value("server", "allow_self_match", allow_self_match)
 	var err : Error = cfg.save(CONFIG_PATH)
 	if err != OK:
@@ -70,8 +82,13 @@ func _load_config() -> void:
 	var cfg : ConfigFile = ConfigFile.new()
 	if cfg.load(CONFIG_PATH) != OK:
 		return
-	server_url       = str(cfg.get_value("server", "url", ""))
-	server_key       = str(cfg.get_value("server", "key", ""))
+	# Blank saved values (older builds wrote them) must not wipe the defaults.
+	var saved_url : String = str(cfg.get_value("server", "url", "")).strip_edges()
+	var saved_key : String = str(cfg.get_value("server", "key", "")).strip_edges()
+	if saved_url != "":
+		server_url = saved_url
+	if saved_key != "":
+		server_key = saved_key
 	allow_self_match = bool(cfg.get_value("server", "allow_self_match", false))
 
 # =========================================================================== #

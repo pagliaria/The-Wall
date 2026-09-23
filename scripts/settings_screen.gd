@@ -68,6 +68,15 @@ var _debug_tools      : bool  = false
 @onready var _check_self_match    : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/CheckSelfMatch
 @onready var _btn_test_connection : Button      = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/BtnTestConnection
 @onready var _label_conn_status   : Label       = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/LabelConnectionStatus
+@onready var _versus_grid         : GridContainer = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid
+
+# Server config is shipped in snapshot_service.gd. These rows are dev tools,
+# shown only when Debug tools is on. Player Name stays visible for everyone.
+const VERSUS_DEV_NODES : Array[String] = [
+	"LabelServerUrl", "EditServerUrl", "LabelServerKey", "EditServerKey",
+	"LabelSelfMatch", "CheckSelfMatch", "LabelTestConnection", "BtnTestConnection",
+	"LabelStatusTitle", "LabelConnectionStatus",
+]
 
 # Buttons
 @onready var _btn_resume          : Button = $Panel/MarginContainer/VBox/Buttons/BtnResume
@@ -177,6 +186,7 @@ func _on_blood_level_changed(idx: int) -> void:
 func _on_debug_tools_toggled(pressed: bool) -> void:
 	_debug_tools = pressed
 	_btn_spawn_chest.disabled = not _debug_tools
+	_update_versus_dev_visibility()
 
 func _on_spawn_chest_pressed() -> void:
 	if not _debug_tools:
@@ -243,6 +253,13 @@ func _populate_controls() -> void:
 	_edit_server_url.text         = SnapshotService.server_url
 	_edit_server_key.text         = SnapshotService.server_key
 	_check_self_match.button_pressed = SnapshotService.allow_self_match
+	_update_versus_dev_visibility()
+
+func _update_versus_dev_visibility() -> void:
+	for node_name : String in VERSUS_DEV_NODES:
+		var node : Control = _versus_grid.get_node_or_null(node_name) as Control
+		if node != null:
+			node.visible = _debug_tools
 
 func _apply_audio() -> void:
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(_vol_master))

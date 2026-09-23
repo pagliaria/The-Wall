@@ -69,6 +69,8 @@ create trigger prune_old_snapshots_trg
 -- from p_exclude. Snapshots within +-40% of p_power sort first; if p_power is
 -- 0 or nothing is in range, any snapshot for that wave is fair game.
 -- Returns null when the wave has no snapshots yet (game falls back to PvE).
+-- player_id is stripped from the returned data: the prune trigger keys on it,
+-- so leaking it would let anyone overwrite that player's snapshot.
 create or replace function public.get_opponent_snapshot(
   p_wave    int,
   p_power   int,
@@ -80,7 +82,7 @@ security definer
 set search_path = public
 volatile
 as $$
-  select s.data
+  select s.data - 'player_id'
   from public.defense_snapshots s
   where s.wave = p_wave
     and s.player_id is distinct from p_exclude
