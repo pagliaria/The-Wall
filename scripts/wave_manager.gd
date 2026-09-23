@@ -181,12 +181,114 @@ func _start_wave() -> void:
 	_spawn_remaining_prep_enemies()
 	_player_units = _get_battlefield_player_units()
 
+	# Units are now committed — gate's closed. Snapshot the defense for VS mode
+	# mirroring before anything moves or dies during the fight that follows.
+	var defense_snapshot : Dictionary = capture_defense_snapshot()
+	_save_snapshot_to_disk(defense_snapshot)
+
+	# ============================================================= #
+	# TEMP TEST HOOK — DO NOT SHIP. Remove once step 3 (real match
+	# loading) exists. Spawns the defense we JUST captured back in as
+	# a mirrored hostile wave, purely to visually confirm the capture
+	# -> reconstruct -> spawn pipeline works end to end. This means
+	# solo waves will fight a mirrored copy of your OWN nomans defense
+	# on top of the normal composition while this hook is active —
+	# that's expected for testing, not real gameplay behavior.
+	# ============================================================= #
+	if not defense_snapshot.get("units", []).is_empty() or not defense_snapshot.get("hired_units", []).is_empty():
+		spawn_mirrored_defense(defense_snapshot)
+
 	call_deferred("_begin_battle")
 
 	emit_signal("wave_started", _wave_number)
 	emit_signal("enemy_count_changed", _enemies.size())
 	_battle_check = BATTLE_CHECK_RATE
 	_retarget_timer = RETARGET_RATE
+
+# =========================================================================== #
+#  VS mode — defense snapshot capture
+# =========================================================================== #
+
+const SNAPSHOT_DIR := "user://defense_snapshots"
+
+# Captures every player unit currently committed to this wave (already inside
+# the nomans zone when the gate closed) as plain data: type, level, exact
+# position, equipped items, and current building-bonus totals. No buildings,
+# no locations of buildings — only what an opposing player's wilds-side
+# enemies need to reconstruct an equivalent unit and place it precisely.
+func capture_defense_snapshot() -> Dictionary:
+	var units_data : Array = []
+	for u in _player_units:
+		if not is_instance_valid(u):
+			continue
+		units_data.append({
+			"unit_type":        _get_unit_type_key(u),
+			"level":            int(u.level) if u.get("level") != null else 1,
+			"position":         [u.global_position.x, u.global_position.y],
+			"equipped_items":   _serialize_items(u),
+			"building_bonuses": _serialize_building_bonuses(u),
+		})
+	return {
+		"schema_version": 1,
+		"day":            _wave_number,
+		"captured_at":    Time.get_datetime_string_from_system(),
+		"units":          units_data,
+		"hired_units":    _serialize_hired_units(),
+	}
+
+# Hired units (house.gd) have no level/items/building bonuses to capture —
+# they're plain enemy_*.tscn scenes with allegiance flipped, so every hire of
+# a given hire_id is stat-identical by definition. Just id + position needed;
+# reconstruction just instantiates the matching scene as a normal hostile enemy.
+func _serialize_hired_units() -> Array:
+	var out : Array = []
+	for h in _hired_units:
+		if not is_instance_valid(h):
+			continue
+		if not _is_in_player_battlefield(h.global_position):
+			continue
+		out.append({
+			"hire_id":  str(h.get_meta("hire_id", "")),
+			"position": [h.global_position.x, h.global_position.y],
+		})
+	return out
+
+func _get_unit_type_key(unit: Node) -> String:
+	# Script filename doubles as the scene name (warrior.gd / warrior.tscn),
+	# which is exactly what the reconstruction step needs to respawn the type.
+	var script : Script = unit.get_script()
+	if script:
+		return script.resource_path.get_file().get_basename()
+	return "unit"
+
+func _serialize_items(unit: Node) -> Array:
+	var out      : Array = []
+	var equipped = unit.get("_equipped_items")
+	if equipped == null:
+		return out
+	for entry in equipped:
+		out.append({
+			"item_type": int(entry.get("type",   0)),
+			"rarity":    int(entry.get("rarity", 0)),
+		})
+	return out
+
+func _serialize_building_bonuses(unit: Node) -> Dictionary:
+	var bonuses = unit.get("_building_bonuses")
+	if bonuses == null or not (bonuses is Dictionary):
+		return {}
+	return (bonuses as Dictionary).duplicate()
+
+func _save_snapshot_to_disk(snapshot: Dictionary) -> void:
+	DirAccess.make_dir_recursive_absolute(SNAPSHOT_DIR)
+	var path : String = "%s/wave_%d.json" % [SNAPSHOT_DIR, int(snapshot.get("day", 0))]
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		push_warning("Could not write defense snapshot to " + path)
+		return
+	f.store_string(JSON.stringify(snapshot, "\t"))
+	f.close()
+	print("Defense snapshot saved: ", path)
 
 func _begin_battle() -> void:
 	_player_units = _get_battlefield_player_units()
@@ -203,7 +305,7 @@ func _begin_battle() -> void:
 
 	var all_friendlies : Array = _player_units + _hired_units
 	for e in _enemies:
-		if is_instance_valid(e):
+		if is_instance_valid(e) and e.has_method("start_battle"):
 			e.start_battle(all_friendlies)
 
 	for u in _player_units:
@@ -436,6 +538,111 @@ func register_enemy(enemy: CharacterBody2D) -> void:
 	enemy.set("summoned", true)
 	units_layer.add_child(enemy)
 	enemy.died.connect(_on_enemy_died.bind(enemy))
-	enemy.start_battle(_player_units)
+	# Guarded: a mirrored non-combat unit (e.g. a Pawn caught standing in
+	# nomans when the gate closed) has no start_battle at all — it'll just sit
+	# in _enemies as an inert, killable liability instead of crashing.
+	if enemy.has_method("start_battle"):
+		enemy.start_battle(_player_units)
 	_enemies.append(enemy)
 	emit_signal("enemy_count_changed", _enemies.size())
+
+# =========================================================================== #
+#  VS mode — reconstruction / mirrored spawn
+# =========================================================================== #
+
+const ITEM_SCRIPT  : GDScript = preload("res://scripts/item.gd")
+const HouseScript   : GDScript = preload("res://scripts/house.gd")
+
+# Mirrors a nomans-zone position (x in [640,1280]) across the shared battle
+# separator line into the wilds zone (x in [0,640]). A unit standing right at
+# the separator (most forward/aggressive defense) maps to the separator on
+# the wilds side too, so it's still the first thing the attacker runs into; a
+# unit tucked back near the wall maps to the far edge of the wilds, as far
+# from the fight as possible. Y is unchanged — both zones share the same
+# vertical extent.
+func _mirror_position(nomans_pos: Array) -> Vector2:
+	var nomans_x : float = float(nomans_pos[0]) if nomans_pos.size() > 0 else BATTLEFIELD_MID
+	var nomans_y : float = float(nomans_pos[1]) if nomans_pos.size() > 1 else 0.0
+	var wilds_x  : float = 2.0 * BATTLEFIELD_MID - nomans_x
+	return Vector2(wilds_x, nomans_y)
+
+# Takes a snapshot dict in the shape capture_defense_snapshot() produces (from
+# this game or, eventually, downloaded from another player) and spawns its
+# units as hostile enemies in the wilds zone, mirrored across the separator.
+# Must be called while a battle is active (_phase == BATTLE) since it relies
+# on register_enemy() for _enemies tracking and start_battle wiring — the
+# natural call site is inside _start_wave(), once _phase has been set.
+func spawn_mirrored_defense(snapshot: Dictionary) -> void:
+	for entry in snapshot.get("units", []):
+		var unit : CharacterBody2D = _build_mirrored_unit(entry)
+		if unit != null:
+			register_enemy(unit)
+	for entry in snapshot.get("hired_units", []):
+		var unit : CharacterBody2D = _build_mirrored_hired_unit(entry)
+		if unit != null:
+			register_enemy(unit)
+			# register_enemy() flags every summon as "summoned" to stop mid-battle
+			# reinforcements from dropping loot. A mirrored defender isn't a
+			# throwaway summon though — it should drop chests like any real
+			# enemy would, so clear the flag right back off.
+			unit.set("summoned", false)
+
+# Convenience for testing against a file saved by _save_snapshot_to_disk().
+func spawn_mirrored_defense_from_file(path: String) -> bool:
+	if not FileAccess.file_exists(path):
+		push_warning("Snapshot file not found: " + path)
+		return false
+	var f := FileAccess.open(path, FileAccess.READ)
+	var text : String = f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("Snapshot file is not valid JSON: " + path)
+		return false
+	spawn_mirrored_defense(parsed)
+	return true
+
+func _build_mirrored_unit(entry: Dictionary) -> CharacterBody2D:
+	var unit_type  : String = str(entry.get("unit_type", ""))
+	var scene_path : String = "res://scenes/%s.tscn" % unit_type
+	if not ResourceLoader.exists(scene_path):
+		push_warning("Mirrored defense: unknown unit_type '%s'" % unit_type)
+		return null
+	var unit : CharacterBody2D = load(scene_path).instantiate()
+	unit.faction  = "enemy"
+	unit.position = _mirror_position(entry.get("position", []))
+	units_layer.add_child(unit)
+
+	if unit.has_method("set_level_directly"):
+		unit.set_level_directly(int(entry.get("level", 1)))
+
+	if unit.has_method("apply_item"):
+		for item_entry in entry.get("equipped_items", []):
+			var temp_item := Node2D.new()
+			temp_item.set_script(ITEM_SCRIPT)
+			temp_item.call("setup", int(item_entry.get("item_type", 0)), int(item_entry.get("rarity", 0)))
+			unit.apply_item(temp_item)
+			temp_item.free()
+
+	if unit.has_method("apply_building_bonuses"):
+		unit.apply_building_bonuses(entry.get("building_bonuses", {}))
+
+	return unit
+
+func _build_mirrored_hired_unit(entry: Dictionary) -> CharacterBody2D:
+	var hire_id    : String = str(entry.get("hire_id", ""))
+	var scene_path : String = ""
+	for roster_entry in HouseScript.HIRE_ROSTER:
+		if str(roster_entry.get("id", "")) == hire_id:
+			scene_path = str(roster_entry.get("scene", ""))
+			break
+	if scene_path == "" or not ResourceLoader.exists(scene_path):
+		push_warning("Mirrored defense: unknown hire_id '%s'" % hire_id)
+		return null
+	var unit : CharacterBody2D = load(scene_path).instantiate()
+	# Deliberately skip set_hired() — default faction is already "enemy", exactly
+	# the hostile posture we want. No stats to reconstruct: every hire of a given
+	# id is stat-identical by definition (flat @export defaults, see house.gd).
+	unit.position = _mirror_position(entry.get("position", []))
+	units_layer.add_child(unit)
+	return unit

@@ -351,6 +351,17 @@ func _update_hp_bar() -> void:
 	_hp_bar.visible  = ratio < 1.0
 	_hp_fill.scale.x = HP_FILL_FULL_SCALE_X * ratio
 
+# Nothing in solo mode ever heals a real enemy, so this never existed before —
+# added purely so a mirrored Monk (unit_base-derived) can heal a mirrored
+# hired-unit teammate (enemy_base-derived) standing on the same side without
+# crashing. Mirrors unit_base.gd's receive_heal.
+func receive_heal(amount: int, healer: Node = null) -> void:
+	hp = mini(hp + amount, max_hp)
+	_update_hp_bar()
+	CombatNumbers.show_number(global_position, amount, true)
+	if healer != null and is_instance_valid(healer) and healer.has_method("grant_xp"):
+		healer.grant_xp(int(amount * 2.0))
+
 func _on_enter_dead_state() -> void:
 	var drop_pos : Vector2 = position
 	if _sprite.sprite_frames.has_animation("death"):

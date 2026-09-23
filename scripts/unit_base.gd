@@ -78,6 +78,19 @@ func _do_level_up() -> void:
 	CombatNumbers.show_number(global_position, level, false, true)
 	emit_signal("leveled_up", level)
 
+# Fast-forwards a freshly spawned unit straight to target_level, applying every
+# level's stat gains via the normal path (_apply_level_stats) but skipping the
+# per-level fanfare (VFX/floating number/badge refresh) that _do_level_up()
+# plays — firing that N times in a row on spawn would look and sound wrong.
+# Used for mirroring another player's leveled units in as enemies.
+func set_level_directly(target_level: int) -> void:
+	target_level = clampi(target_level, 1, MAX_LEVEL)
+	while level < target_level:
+		level += 1
+		_apply_level_stats()
+	if is_instance_valid(_badge):
+		_badge.refresh(level)
+
 func _apply_level_stats() -> void:
 	var stats := _get_level_up_stats()
 	if stats.is_empty():
@@ -231,7 +244,11 @@ func _ready() -> void:
 	_spawn_pos = position
 	_badge     = LEVEL_BADGE_SCENE.instantiate()
 	add_child(_badge)
-	add_to_group("player_units")
+	# Only real player-owned units join this group — a unit_base subclass spawned
+	# as a mirrored hostile "enemy" (faction == "enemy") must never show up here,
+	# or item drag-and-drop would let the attacking player equip loot onto it.
+	if faction == "player":
+		add_to_group("player_units")
 	_init_item_bonuses()
 	_hp_fill.texture = HP_FILL_BLUE
 	call_deferred("_on_unit_ready")
@@ -393,7 +410,43 @@ func get_building_range_bonus()             -> float: return float(_building_bon
 func get_building_gather_speed_multiplier() -> float: return float(_building_bonuses.get("gather_speed_multiplier", 1.0))
 func get_building_turn_in_bonus()           -> int:   return int(_building_bonuses.get("turn_in_bonus", 0))
 
-func take_damage(amount: int) -> void:
+# Fallback target list used when a subclass's own combat loop needs to
+# self-refresh targets outside the normal start_battle/update_battle_target
+# flow (e.g. after its current target dies mid-frame). Faction-aware so a
+# mirrored hostile copy of a normally-friendly unit type (faction == "enemy")
+# correctly falls back to the real player's units instead of accidentally
+# pulling the NPC wave's own enemy roster.
+# Alias so a mirrored hostile copy of a unit_base subclass (faction ==
+# "enemy", sitting in wave_manager's _enemies list) responds correctly to the
+# same update_target(...) call real enemy_base.gd enemies get every retarget
+# tick. Subclasses only implement update_battle_target (the player-unit-side
+# name) — this just forwards to whichever one the concrete unit defines.
+func update_target(targets: Array) -> void:
+	if has_method("update_battle_target"):
+		call("update_battle_target", targets)
+
+func _get_default_battle_targets() -> Array:
+	if wave_manager == null:
+		return []
+	if faction == "player":
+		# Real player unit — unchanged from original behavior, fight the NPC wave
+		return wave_manager.get_enemies() if wave_manager.has_method("get_enemies") else []
+	# faction == "enemy" (covers a mirrored hostile copy of what's normally a
+	# player-side unit type) — fight the real attacking player's side instead
+	var targets : Array = []
+	if wave_manager.has_method("get_player_units"):
+		targets.append_array(wave_manager.get_player_units())
+	if wave_manager.has_method("get_hired_units"):
+		targets.append_array(wave_manager.get_hired_units())
+	return targets
+
+# attacker is accepted for call-signature compatibility with enemy_base.gd's
+# take_damage(amount, attacker) — a real player unit's attack code always
+# passes itself as attacker, and now that a mirrored hostile unit_base-derived
+# enemy can legitimately be on the receiving end of that same call, this needs
+# to accept it too or the call fails outright. Deliberately unused otherwise:
+# no XP-on-damage or friendly-fire logic here, just enough to not crash.
+func take_damage(amount: int, _attacker: Node = null) -> void:
 	CombatAudio.play("hurt")
 	flash_red()
 	hp -= amount

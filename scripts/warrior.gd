@@ -195,8 +195,7 @@ func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
 		# Don't re-enter BATTLE — just pick new target in place
-		if wave_manager != null and wave_manager.has_method("get_enemies"):
-			_pick_target(wave_manager.get_enemies())
+		_pick_target(_get_default_battle_targets())
 		if not is_instance_valid(_target):
 			_enter_state(State.IDLE)
 			return
