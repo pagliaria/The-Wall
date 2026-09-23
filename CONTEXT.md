@@ -42,5 +42,21 @@ Godot 4.4 town-defense prototype. The player builds on the right side of the map
 - Settings persist to `user://settings.cfg`.
 - Gameplay settings include starting resources, wave interval, and combat numbers.
 
+## Versus Mode (async ghost PvP)
+- No live netcode. Each player fights a mirrored copy of another player's saved defense.
+- `GameMode` autoload: `Mode.SOLO` / `Mode.VERSUS`, plus persistent `player_id` / `player_name` (`user://profile.cfg`).
+- `mode_select.tscn` (opened from title Start) picks the mode.
+- `wave_manager.gd`, versus wave start: `capture_defense_snapshot()` -> save JSON to `user://defense_snapshots/wave_N.json` -> `_get_opponent_snapshot()` -> `spawn_mirrored_defense()`.
+- Snapshot schema v2: `player_id`, `player_name`, `game_version`, `day`, `captured_at`, `power`, `units[]`, `hired_units[]`.
+- `sanitize_snapshot()` rebuilds every snapshot from scratch (own + incoming): whitelisted unit types (`MIRRORABLE_UNIT_TYPES`), level/position/bonus clamps (`BONUS_LIMITS` mirrors `placed_building.gd` upgrade maxima), valid item enums, unit count caps. `power` always recomputed locally.
+- Hired units ride in the snapshot as `hired_units[]` = `{hire_id, position}` (id from `house.gd` `HIRE_ROSTER`; no stats needed, every hire of an id is identical). Only hired units standing in no man's land (x 640-1280) at gate close are captured, same rule as player units. Self-summoned hires (hired Witch Doctor skeletons) have no `hire_id` meta, so `_get_hire_id()` matches by scene path. Mirrored copies are plain `enemy_*.tscn` (faction enemy, `hired = false`).
+- Empty own snapshot is not saved. Empty/invalid opponent snapshot falls back to that wave's PvE composition (`_spawn_pve_fallback()`).
+- `spawn_mirrored_defense()` returns spawned count. `register_enemy()` only parents nodes that have no parent yet.
+- Backend: Supabase free tier (PostgREST). `supabase/schema.sql` (run once in SQL Editor) creates `defense_snapshots` (anon insert-only via RLS, size/range checks, trigger keeps one row per player+wave) and RPC `get_opponent_snapshot(p_wave, p_power, p_exclude)` (one random snapshot, prefers +-40% power). Free projects pause after 7 days idle; first request after pause is slow.
+- `SnapshotService` autoload SCENE (`scenes/snapshot_service.tscn`, script `snapshot_service.gd`): 3 HTTPRequest child nodes (Upload/Fetch/Test) with signals wired in the scene. Config in `user://versus.cfg` (URL, publishable key, `allow_self_match`). Key goes on `apikey` header ONLY (no Authorization Bearer). Signals: `opponent_fetched`, `snapshot_uploaded`, `request_failed`, `connection_tested`.
+- Flow: `_prepare_next_wave()` -> `_begin_opponent_fetch()` (async, wave = `_wave_number + 1`, power = `estimate_defense_power()`) -> `_on_opponent_fetched` stores sanitized snapshot in `_pending_opponent_snapshot` -> wave start: `_start_versus_battle()` uploads own snapshot, spawns pending opponent. Nothing arrived / empty = PvE wave fallback. No loopback anymore.
+- Settings screen has a Versus tab (player name, server URL, key, self-match testing toggle, Test button). Values live in `GameMode` / `SnapshotService`, not `settings.cfg`.
+- TODO: `versus_status.tscn` HUD panel (opponent name / fetch status), result reporting, version filter on matchmaking.
+
 ## Notes
 - The project is in git, but git commands are blocked here by a Windows `safe.directory` warning for `C:/Dev/The Wall`.

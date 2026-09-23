@@ -61,6 +61,14 @@ var _debug_tools      : bool  = false
 @onready var _btn_spawn_chest     : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnSpawnChest
 @onready var _btn_max_resources   : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnMaxResources
 
+# Versus tab (values live in GameMode / SnapshotService, not settings.cfg)
+@onready var _edit_player_name    : LineEdit    = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/EditPlayerName
+@onready var _edit_server_url     : LineEdit    = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/EditServerUrl
+@onready var _edit_server_key     : LineEdit    = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/EditServerKey
+@onready var _check_self_match    : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/CheckSelfMatch
+@onready var _btn_test_connection : Button      = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/BtnTestConnection
+@onready var _label_conn_status   : Label       = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/LabelConnectionStatus
+
 # Buttons
 @onready var _btn_resume          : Button = $Panel/MarginContainer/VBox/Buttons/BtnResume
 @onready var _btn_apply           : Button = $Panel/MarginContainer/VBox/Buttons/BtnApply
@@ -127,6 +135,8 @@ func _connect_signals() -> void:
 	_check_debug_tools.toggled.connect(_on_debug_tools_toggled)
 	_btn_spawn_chest.pressed.connect(_on_spawn_chest_pressed)
 	_btn_max_resources.pressed.connect(_on_max_resources_pressed)
+	_btn_test_connection.pressed.connect(_on_test_connection_pressed)
+	SnapshotService.connection_tested.connect(_on_connection_tested)
 
 func _on_master_changed(value: float) -> void:
 	_vol_master = value
@@ -184,6 +194,7 @@ func _on_apply() -> void:
 	_start_wood     = int(_spin_start_wood.value)
 	_start_meat     = int(_spin_start_meat.value)
 	_save_config()
+	_apply_versus_settings()
 	UiAudio.play()
 
 func _on_defaults() -> void:
@@ -228,6 +239,10 @@ func _populate_controls() -> void:
 	_check_debug_tools.button_pressed = _debug_tools
 	_btn_spawn_chest.disabled = not _debug_tools
 	_btn_max_resources.disabled = not _debug_tools
+	_edit_player_name.text        = GameMode.player_name
+	_edit_server_url.text         = SnapshotService.server_url
+	_edit_server_key.text         = SnapshotService.server_key
+	_check_self_match.button_pressed = SnapshotService.allow_self_match
 
 func _apply_audio() -> void:
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(_vol_master))
@@ -293,3 +308,25 @@ func get_wave_interval() -> float:
 
 func get_start_resources() -> Dictionary:
 	return { "gold": _start_gold, "wood": _start_wood, "meat": _start_meat }
+
+# =========================================================================== #
+#  Versus tab
+# =========================================================================== #
+
+func _apply_versus_settings() -> void:
+	GameMode.set_player_name(_edit_player_name.text)
+	SnapshotService.set_config(
+		_edit_server_url.text,
+		_edit_server_key.text,
+		_check_self_match.button_pressed
+	)
+
+func _on_test_connection_pressed() -> void:
+	_apply_versus_settings()
+	_label_conn_status.text       = "Testing..."
+	_btn_test_connection.disabled = true
+	SnapshotService.test_connection()
+
+func _on_connection_tested(ok: bool, message: String) -> void:
+	_btn_test_connection.disabled = false
+	_label_conn_status.text = ("OK: " if ok else "Failed: ") + message

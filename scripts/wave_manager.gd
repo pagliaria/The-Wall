@@ -152,6 +152,9 @@ var _scene_cache := {}
 func _ready() -> void:
 	_rng.randomize()
 	#_prepare_next_wave()
+	if GameMode.is_versus():
+		SnapshotService.opponent_fetched.connect(_on_opponent_fetched)
+		SnapshotService.request_failed.connect(_on_snapshot_request_failed)
 
 func _process(delta: float) -> void:
 	match _phase:
@@ -200,6 +203,44 @@ func _start_wave() -> void:
 
 const SNAPSHOT_DIR := "user://defense_snapshots"
 
+# ── Snapshot schema + validation limits ─────────────────────────────────────
+# Bump SNAPSHOT_SCHEMA_VERSION whenever the snapshot shape changes.
+# BONUS_LIMITS mirror the max upgrade totals in placed_building.gd
+# (3 levels each). If upgrade maxima change there, update here or valid
+# snapshots get clamped.
+const SNAPSHOT_SCHEMA_VERSION : int   = 2
+const MAX_SNAPSHOT_UNITS      : int   = 60
+const MAX_SNAPSHOT_HIRED      : int   = 40
+const MAX_PLAYER_ID_LENGTH    : int   = 64
+const SNAPSHOT_MIN_Y          : float = 0.0
+const SNAPSHOT_MAX_Y          : float = 1728.0
+
+const UnitBaseScript : GDScript = preload("res://scripts/unit_base.gd")
+
+# Only these unit types may be rebuilt from a snapshot. Anything else in the
+# data (including enemy_* or a path-ish string) is dropped.
+const MIRRORABLE_UNIT_TYPES : Array[String] = ["pawn", "warrior", "archer", "monk", "lancer"]
+
+const INT_BONUS_KEYS : Array[String] = ["attack_damage", "hp_bonus", "turn_in_bonus"]
+const BONUS_LIMITS : Dictionary = {
+	"attack_damage":           [0.0, 3.0],
+	"attack_speed_multiplier": [0.65, 1.0],
+	"move_speed_multiplier":   [1.0, 1.35],
+	"hp_bonus":                [0.0, 12.0],
+	"range_bonus":             [0.0, 120.0],
+	"gather_speed_multiplier": [0.6, 1.0],
+	"turn_in_bonus":           [0.0, 3.0],
+}
+
+# Power rating for matchmaking. Recomputed locally from cleaned data, never
+# trusted from incoming snapshots. Tune freely.
+const POWER_UNIT_BASE        : int         = 10
+const POWER_PER_LEVEL        : int         = 5
+const POWER_PER_ITEM_RARITY  : Array[int]  = [2, 4, 8]
+const POWER_PER_BONUS_DAMAGE : int         = 2
+const POWER_PER_BONUS_HP     : float       = 0.5
+const POWER_HIRE_MULTIPLIER  : int         = 2
+
 # Captures every player unit currently committed to this wave (already inside
 # the nomans zone when the gate closed) as plain data: type, level, exact
 # position, equipped items, and current building-bonus totals. No buildings,
@@ -217,13 +258,19 @@ func capture_defense_snapshot() -> Dictionary:
 			"equipped_items":   _serialize_items(u),
 			"building_bonuses": _serialize_building_bonuses(u),
 		})
-	return {
-		"schema_version": 1,
+	var raw_snapshot : Dictionary = {
+		"schema_version": SNAPSHOT_SCHEMA_VERSION,
+		"player_id":      GameMode.player_id,
+		"player_name":    GameMode.player_name,
+		"game_version":   str(ProjectSettings.get_setting("application/config/version", "0.0.0")),
 		"day":            _wave_number,
 		"captured_at":    Time.get_datetime_string_from_system(),
 		"units":          units_data,
 		"hired_units":    _serialize_hired_units(),
 	}
+	# Run our own output through the same sanitizer receivers will use, so
+	# what we save/upload is exactly what will be accepted. Adds `power`.
+	return sanitize_snapshot(raw_snapshot)
 
 # Hired units (house.gd) have no level/items/building bonuses to capture —
 # they're plain enemy_*.tscn scenes with allegiance flipped, so every hire of
@@ -237,10 +284,23 @@ func _serialize_hired_units() -> Array:
 		if not _is_in_player_battlefield(h.global_position):
 			continue
 		out.append({
-			"hire_id":  str(h.get_meta("hire_id", "")),
+			"hire_id":  _get_hire_id(h),
 			"position": [h.global_position.x, h.global_position.y],
 		})
 	return out
+
+# Hired units bought at a house carry a "hire_id" meta. Units a hired unit
+# summoned itself (a hired Witch Doctor's skeletons) don't, so fall back to
+# matching the scene file against the roster. Returns "" if nothing matches
+# (sanitize_snapshot drops those).
+func _get_hire_id(unit: Node) -> String:
+	var meta_id : String = str(unit.get_meta("hire_id", ""))
+	if meta_id != "":
+		return meta_id
+	for roster_entry : Dictionary in HouseScript.HIRE_ROSTER:
+		if str(roster_entry.get("scene", "")) == unit.scene_file_path:
+			return str(roster_entry.get("id", ""))
+	return ""
 
 func _get_unit_type_key(unit: Node) -> String:
 	# Script filename doubles as the scene name (warrior.gd / warrior.tscn),
@@ -284,15 +344,65 @@ func _save_snapshot_to_disk(snapshot: Dictionary) -> void:
 # opponent's snapshot as the hostile wave.
 func _start_versus_battle() -> void:
 	var own_snapshot : Dictionary = capture_defense_snapshot()
-	_save_snapshot_to_disk(own_snapshot)
+	# Empty defense is never saved (and must never be uploaded in step 5+):
+	# an opponent fighting a mirror of nothing gets a free win.
+	if is_snapshot_empty(own_snapshot):
+		push_warning("Versus: defense snapshot empty, not saved.")
+	else:
+		_save_snapshot_to_disk(own_snapshot)
+		SnapshotService.upload_snapshot(own_snapshot)
 	var opponent_snapshot : Dictionary = _get_opponent_snapshot(own_snapshot)
-	spawn_mirrored_defense(opponent_snapshot)
+	var spawned : int = spawn_mirrored_defense(opponent_snapshot)
+	if spawned == 0:
+		push_warning("Versus: opponent snapshot had no valid units, using PvE wave %d." % _wave_number)
+		_spawn_pve_fallback()
 
-# Source of the opponent's defense for this wave.
-# TODO step 3: fetch a real opponent snapshot (matchmaking / download). Until
-# then, loopback: fight a mirror of your own defense so the pipeline is testable.
-func _get_opponent_snapshot(own_snapshot: Dictionary) -> Dictionary:
-	return own_snapshot
+# Source of the opponent's defense for this wave: whatever _begin_opponent_fetch
+# managed to download during prep. Empty if nothing arrived (offline, server
+# paused, no opponents for this wave yet) — the caller then falls back to the
+# PvE wave, so a bad connection never stalls or free-wins a wave.
+func _get_opponent_snapshot(_own_snapshot: Dictionary) -> Dictionary:
+	var snapshot : Dictionary = _pending_opponent_snapshot
+	_pending_opponent_snapshot = {}
+	return snapshot
+
+# =========================================================================== #
+#  VS mode — opponent prefetch (async, never blocks the wave)
+# =========================================================================== #
+
+# Sanitized opponent snapshot downloaded during prep, waiting for wave start.
+var _pending_opponent_snapshot : Dictionary = {}
+
+# Called at the start of every versus prep phase. The wave being prepared is
+# _wave_number + 1 (_wave_number only increments in _start_wave).
+func _begin_opponent_fetch() -> void:
+	_pending_opponent_snapshot = {}
+	SnapshotService.fetch_opponent(_wave_number + 1, estimate_defense_power(), GameMode.player_id)
+
+# Power rating of whatever defense is standing in no man's land right now.
+# Used only to pick a similarly strong opponent, so a rough number is fine.
+func estimate_defense_power() -> int:
+	if units_layer == null:
+		return 0
+	var saved_units : Array = _player_units
+	_player_units = _get_battlefield_player_units()
+	var power : int = int(capture_defense_snapshot().get("power", 0))
+	_player_units = saved_units
+	return power
+
+func _on_opponent_fetched(wave: int, snapshot: Dictionary) -> void:
+	# Drop stale answers: only the wave we are currently preparing counts.
+	if _phase != Phase.PREP or wave != _wave_number + 1:
+		return
+	var clean : Dictionary = sanitize_snapshot(snapshot)
+	if is_snapshot_empty(clean):
+		push_warning("Versus: no usable opponent snapshot for wave %d, will use PvE." % wave)
+		return
+	_pending_opponent_snapshot = clean
+	print("Versus: opponent ready for wave %d: %s (power %d)" % [wave, clean["player_name"], clean["power"]])
+
+func _on_snapshot_request_failed(kind: String, reason: String) -> void:
+	push_warning("Versus: snapshot %s failed: %s" % [kind, reason])
 
 func _begin_battle() -> void:
 	_player_units = _get_battlefield_player_units()
@@ -382,6 +492,8 @@ func _prepare_next_wave() -> void:
 	else:
 		_spawn_step = (WAVE_INTERVAL - SPAWN_END_TIME) / float(_spawn_queue.size())
 	_spawn_timer = 0.0
+	if GameMode.is_versus():
+		_begin_opponent_fetch()
 
 func _process_prep_spawns(delta: float) -> void:
 	if _spawn_queue.is_empty():
@@ -541,7 +653,10 @@ func register_enemy(enemy: CharacterBody2D) -> void:
 	if _phase != Phase.BATTLE:
 		return
 	enemy.set("summoned", true)
-	units_layer.add_child(enemy)
+	# Mirrored defenders are already parented (they need to be in the tree
+	# before level/items/bonuses apply). Mid-battle summons are not.
+	if enemy.get_parent() == null:
+		units_layer.add_child(enemy)
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	# Guarded: a mirrored non-combat unit (e.g. a Pawn caught standing in
 	# nomans when the gate closed) has no start_battle at all — it'll just sit
@@ -577,20 +692,225 @@ func _mirror_position(nomans_pos: Array) -> Vector2:
 # Must be called while a battle is active (_phase == BATTLE) since it relies
 # on register_enemy() for _enemies tracking and start_battle wiring — the
 # natural call site is inside _start_wave(), once _phase has been set.
-func spawn_mirrored_defense(snapshot: Dictionary) -> void:
-	for entry in snapshot.get("units", []):
+# Returns how many units were actually spawned. 0 means the snapshot was
+# empty or fully invalid, caller should fall back (see _spawn_pve_fallback).
+func spawn_mirrored_defense(raw_snapshot: Dictionary) -> int:
+	var snapshot : Dictionary = sanitize_snapshot(raw_snapshot)
+	var spawned  : int        = 0
+	for entry : Dictionary in snapshot["units"]:
 		var unit : CharacterBody2D = _build_mirrored_unit(entry)
 		if unit != null:
 			register_enemy(unit)
-	for entry in snapshot.get("hired_units", []):
+			spawned += 1
+	for entry : Dictionary in snapshot["hired_units"]:
 		var unit : CharacterBody2D = _build_mirrored_hired_unit(entry)
 		if unit != null:
 			register_enemy(unit)
+			spawned += 1
 			# register_enemy() flags every summon as "summoned" to stop mid-battle
 			# reinforcements from dropping loot. A mirrored defender isn't a
 			# throwaway summon though — it should drop chests like any real
 			# enemy would, so clear the flag right back off.
 			unit.set("summoned", false)
+	return spawned
+
+# Versus fallback when opponent snapshot is empty/invalid: fight this wave's
+# normal PvE composition instead, so nobody gets a free win.
+func _spawn_pve_fallback() -> void:
+	var index : int = _wave_number - 1
+	if index < 0 or index >= WAVE_COMPOSITIONS.size():
+		return
+	var composition : Array = WAVE_COMPOSITIONS[index]
+	for entry : Dictionary in composition:
+		var scene : PackedScene = _get_scene(str(entry["path"]))
+		if scene == null:
+			continue
+		for _i : int in int(entry["count"]):
+			_spawn_queue.append(scene)
+	_spawn_remaining_prep_enemies()
+
+# =========================================================================== #
+#  VS mode — snapshot validation
+# =========================================================================== #
+# Snapshots will come from other players' machines, so nothing in one is
+# trusted. sanitize_snapshot() rebuilds a clean copy from scratch: whitelisted
+# unit types, clamped levels/positions/bonuses, valid item enums, capped
+# counts. Bad entries are dropped, never "repaired". Also safe on {}.
+
+func sanitize_snapshot(raw: Dictionary) -> Dictionary:
+	if _as_int(raw.get("schema_version", 1), 1) > SNAPSHOT_SCHEMA_VERSION:
+		push_warning("Snapshot: schema newer than this build, ignoring.")
+		return sanitize_snapshot({})
+
+	var units_out : Array = []
+	for entry : Variant in _as_array(raw.get("units", [])):
+		if units_out.size() >= MAX_SNAPSHOT_UNITS:
+			break
+		if not (entry is Dictionary):
+			continue
+		var clean_unit : Dictionary = _sanitize_unit_entry(entry)
+		if not clean_unit.is_empty():
+			units_out.append(clean_unit)
+
+	var hired_out : Array = []
+	for entry : Variant in _as_array(raw.get("hired_units", [])):
+		if hired_out.size() >= MAX_SNAPSHOT_HIRED:
+			break
+		if not (entry is Dictionary):
+			continue
+		var clean_hire : Dictionary = _sanitize_hired_entry(entry)
+		if not clean_hire.is_empty():
+			hired_out.append(clean_hire)
+
+	return {
+		"schema_version": SNAPSHOT_SCHEMA_VERSION,
+		"player_id":      _sanitize_player_id(raw.get("player_id", "")),
+		"player_name":    _sanitize_player_name(raw.get("player_name", "")),
+		"game_version":   str(raw.get("game_version", "")).substr(0, 16),
+		"day":            clampi(_as_int(raw.get("day", 0), 0), 0, TOTAL_WAVES),
+		"captured_at":    str(raw.get("captured_at", "")).substr(0, 32),
+		"power":          _compute_power(units_out, hired_out),
+		"units":          units_out,
+		"hired_units":    hired_out,
+	}
+
+# True when there is nothing to fight. Step 5 upload must check this too.
+func is_snapshot_empty(snapshot: Dictionary) -> bool:
+	return _as_array(snapshot.get("units", [])).is_empty() \
+		and _as_array(snapshot.get("hired_units", [])).is_empty()
+
+func _sanitize_unit_entry(entry: Dictionary) -> Dictionary:
+	var unit_type : String = str(entry.get("unit_type", ""))
+	if not MIRRORABLE_UNIT_TYPES.has(unit_type):
+		push_warning("Snapshot: dropped unit with disallowed type '%s'" % unit_type)
+		return {}
+	var pos : Array = _sanitize_position(entry.get("position", null))
+	if pos.is_empty():
+		return {}
+
+	var items      : Array      = []
+	var seen_types : Array[int] = []
+	for item_entry : Variant in _as_array(entry.get("equipped_items", [])):
+		if items.size() >= UnitBaseScript.MAX_ITEMS:
+			break
+		if not (item_entry is Dictionary):
+			continue
+		var item_type : int = _as_int(item_entry.get("item_type", -1), -1)
+		var rarity    : int = _as_int(item_entry.get("rarity", -1), -1)
+		if item_type < 0 or item_type >= ITEM_SCRIPT.ItemType.size():
+			continue
+		if rarity < 0 or rarity >= ITEM_SCRIPT.Rarity.size():
+			continue
+		if seen_types.has(item_type):
+			continue
+		seen_types.append(item_type)
+		items.append({"item_type": item_type, "rarity": rarity})
+
+	return {
+		"unit_type":        unit_type,
+		"level":            clampi(_as_int(entry.get("level", 1), 1), 1, UnitBaseScript.MAX_LEVEL),
+		"position":         pos,
+		"equipped_items":   items,
+		"building_bonuses": _sanitize_bonuses(entry.get("building_bonuses", null)),
+	}
+
+func _sanitize_hired_entry(entry: Dictionary) -> Dictionary:
+	var hire_id : String = str(entry.get("hire_id", ""))
+	if _get_roster_entry(hire_id).is_empty():
+		push_warning("Snapshot: dropped hire with unknown id '%s'" % hire_id)
+		return {}
+	var pos : Array = _sanitize_position(entry.get("position", null))
+	if pos.is_empty():
+		return {}
+	return {"hire_id": hire_id, "position": pos}
+
+func _sanitize_bonuses(raw: Variant) -> Dictionary:
+	var out : Dictionary = {}
+	if not (raw is Dictionary):
+		return out
+	var src : Dictionary = raw
+	for key : String in BONUS_LIMITS:
+		if not src.has(key):
+			continue
+		var limits : Array = BONUS_LIMITS[key]
+		var value  : float = _as_finite_float(src[key], NAN)
+		if is_nan(value):
+			continue
+		value = clampf(value, float(limits[0]), float(limits[1]))
+		if INT_BONUS_KEYS.has(key):
+			out[key] = roundi(value)
+		else:
+			out[key] = value
+	return out
+
+# Returns [x, y] clamped into the player-side battlefield, or [] if unusable.
+func _sanitize_position(raw: Variant) -> Array:
+	if not (raw is Array) or (raw as Array).size() < 2:
+		return []
+	var arr : Array = raw
+	var x   : float = _as_finite_float(arr[0], NAN)
+	var y   : float = _as_finite_float(arr[1], NAN)
+	if is_nan(x) or is_nan(y):
+		return []
+	return [
+		snappedf(clampf(x, BATTLEFIELD_MID, BATTLEFIELD_RIGHT - 1.0), 0.1),
+		snappedf(clampf(y, SNAPSHOT_MIN_Y, SNAPSHOT_MAX_Y), 0.1),
+	]
+
+func _sanitize_player_id(value: Variant) -> String:
+	if typeof(value) != TYPE_STRING:
+		return ""
+	var pid : String = str(value)
+	if pid.length() < 1 or pid.length() > MAX_PLAYER_ID_LENGTH:
+		return ""
+	var rx : RegEx = RegEx.new()
+	rx.compile("^[A-Za-z0-9_-]+$")
+	return pid if rx.search(pid) != null else ""
+
+func _sanitize_player_name(value: Variant) -> String:
+	if typeof(value) != TYPE_STRING:
+		return ""
+	var cleaned : String = str(value).replace("\n", " ").replace("\r", " ").strip_edges()
+	return cleaned.substr(0, GameMode.MAX_PLAYER_NAME_LENGTH)
+
+func _compute_power(units: Array, hired: Array) -> int:
+	var total : int = 0
+	for u : Dictionary in units:
+		total += POWER_UNIT_BASE + POWER_PER_LEVEL * (int(u["level"]) - 1)
+		for item : Dictionary in u["equipped_items"]:
+			var r : int = mini(int(item["rarity"]), POWER_PER_ITEM_RARITY.size() - 1)
+			total += POWER_PER_ITEM_RARITY[r]
+		var bonuses : Dictionary = u["building_bonuses"]
+		total += int(bonuses.get("attack_damage", 0)) * POWER_PER_BONUS_DAMAGE
+		total += int(float(bonuses.get("hp_bonus", 0)) * POWER_PER_BONUS_HP)
+	for h : Dictionary in hired:
+		var cost : Dictionary = _get_roster_entry(str(h["hire_id"])).get("cost", {})
+		total += (int(cost.get("gold", 0)) + int(cost.get("meat", 0))) * POWER_HIRE_MULTIPLIER
+	return total
+
+func _get_roster_entry(hire_id: String) -> Dictionary:
+	for roster_entry : Dictionary in HouseScript.HIRE_ROSTER:
+		if str(roster_entry.get("id", "")) == hire_id:
+			return roster_entry
+	return {}
+
+func _as_array(value: Variant) -> Array:
+	if value is Array:
+		return value
+	return []
+
+# JSON-safe number reads: null / strings / NaN / inf all fall back.
+func _as_finite_float(value: Variant, fallback: float) -> float:
+	var t : int = typeof(value)
+	if t != TYPE_INT and t != TYPE_FLOAT:
+		return fallback
+	var f : float = float(value)
+	if not is_finite(f):
+		return fallback
+	return f
+
+func _as_int(value: Variant, fallback: int) -> int:
+	return int(_as_finite_float(value, float(fallback)))
 
 # Convenience for testing against a file saved by _save_snapshot_to_disk().
 func spawn_mirrored_defense_from_file(path: String) -> bool:

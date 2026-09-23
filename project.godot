@@ -30,6 +30,7 @@ CombatNumbers="*res://scripts/combat_numbers.gd"
 FormationManager="*res://scripts/formation_manager.gd"
 BloodFx="*res://scripts/blood_fx.gd"
 GameMode="*res://scripts/game_mode.gd"
+SnapshotService="*res://scenes/snapshot_service.tscn"
 
 [display]
 

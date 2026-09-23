@@ -455,6 +455,111 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Set"
 
+[node name="Versus" type="VBoxContainer" parent="Panel/MarginContainer/VBox/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 4
+
+[node name="MarginVersus" type="MarginContainer" parent="Panel/MarginContainer/VBox/TabContainer/Versus"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Grid" type="GridContainer" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus"]
+layout_mode = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 14
+columns = 2
+
+[node name="LabelPlayerName" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Player Name"
+
+[node name="EditPlayerName" type="LineEdit" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+placeholder_text = "Shown to opponents"
+max_length = 24
+
+[node name="LabelServerUrl" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Server URL"
+
+[node name="EditServerUrl" type="LineEdit" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+placeholder_text = "https://your-project.supabase.co"
+
+[node name="LabelServerKey" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Publishable Key"
+
+[node name="EditServerKey" type="LineEdit" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+placeholder_text = "sb_publishable_..."
+secret = true
+
+[node name="LabelSelfMatch" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Fight My Own Snapshots (testing)"
+
+[node name="CheckSelfMatch" type="CheckButton" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="LabelTestConnection" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Server Connection"
+
+[node name="BtnTestConnection" type="Button" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 14
+text = "Test"
+
+[node name="LabelStatusTitle" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Status"
+
+[node name="LabelConnectionStatus" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Not tested"
+autowrap_mode = 3
+
 [node name="HSep2" type="HSeparator" parent="Panel/MarginContainer/VBox"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
