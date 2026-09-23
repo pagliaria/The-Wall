@@ -63,6 +63,7 @@ var _castle_placed := false
 @onready var settings_screen  : CanvasLayer        = $SettingsScreen
 @onready var selection_panel  : CanvasLayer        = $HUD/SelectionPanel
 @onready var building_upgrade_panel : CanvasLayer  = $HUD/BuildingUpgradePanel
+@onready var versus_status    : PanelContainer     = $HUD/VersusStatus
 
 var _castle_prompt    : CanvasLayer = null
 var _wave_manager     : Node        = null
@@ -123,6 +124,10 @@ func _setup_wave_manager() -> void:
 	_wave_manager.wave_countdown_changed.connect(_on_wave_countdown_changed)
 	_wave_manager.wave_started.connect(_on_wave_started)
 	_wave_manager.wave_ended.connect(_on_wave_ended)
+
+	# Versus HUD panel only listens in versus mode. Solo: panel stays hidden.
+	if GameMode.is_versus():
+		_wave_manager.versus_status_changed.connect(versus_status.set_state)
 
 func _on_rush_pressed() -> void:
 	if _wave_manager == null or not _wave_manager.is_in_prep():

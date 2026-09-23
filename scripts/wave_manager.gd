@@ -4,6 +4,9 @@ signal wave_countdown_changed(seconds_left: float)
 signal wave_started(wave_number: int)
 signal wave_ended(player_won: bool)
 signal enemy_count_changed(count: int)
+# Versus HUD feed. state is a GameMode.VersusState value. Consumed by
+# versus_status.gd (wired in main.gd, versus mode only).
+signal versus_status_changed(state: int, opponent_name: String, opponent_power: int, detail: String)
 
 const WAVE_INTERVAL     = 90.0
 const SPAWN_END_TIME    = 30.0
@@ -356,6 +359,12 @@ func _start_versus_battle() -> void:
 	if spawned == 0:
 		push_warning("Versus: opponent snapshot had no valid units, using PvE wave %d." % _wave_number)
 		_spawn_pve_fallback()
+		versus_status_changed.emit(GameMode.VersusState.BATTLE_PVE, "", 0, "Wave %d" % _wave_number)
+	else:
+		var opponent_name : String = str(opponent_snapshot.get("player_name", ""))
+		if opponent_name == "":
+			opponent_name = "Unknown"
+		versus_status_changed.emit(GameMode.VersusState.BATTLE_OPPONENT, opponent_name, int(opponent_snapshot.get("power", 0)), "")
 
 # Source of the opponent's defense for this wave: whatever _begin_opponent_fetch
 # managed to download during prep. Empty if nothing arrived (offline, server
@@ -377,6 +386,9 @@ var _pending_opponent_snapshot : Dictionary = {}
 # _wave_number + 1 (_wave_number only increments in _start_wave).
 func _begin_opponent_fetch() -> void:
 	_pending_opponent_snapshot = {}
+	# Emit SEARCHING first: a config error makes fetch_opponent emit request_failed
+	# synchronously, and that ERROR state must land after this one, not before.
+	versus_status_changed.emit(GameMode.VersusState.SEARCHING, "", 0, "")
 	SnapshotService.fetch_opponent(_wave_number + 1, estimate_defense_power(), GameMode.player_id)
 
 # Power rating of whatever defense is standing in no man's land right now.
@@ -397,12 +409,18 @@ func _on_opponent_fetched(wave: int, snapshot: Dictionary) -> void:
 	var clean : Dictionary = sanitize_snapshot(snapshot)
 	if is_snapshot_empty(clean):
 		push_warning("Versus: no usable opponent snapshot for wave %d, will use PvE." % wave)
+		versus_status_changed.emit(GameMode.VersusState.NO_OPPONENT, "", 0, "")
 		return
 	_pending_opponent_snapshot = clean
+	versus_status_changed.emit(GameMode.VersusState.READY, str(clean["player_name"]), int(clean["power"]), "")
 	print("Versus: opponent ready for wave %d: %s (power %d)" % [wave, clean["player_name"], clean["power"]])
 
 func _on_snapshot_request_failed(kind: String, reason: String) -> void:
 	push_warning("Versus: snapshot %s failed: %s" % [kind, reason])
+	# Upload failures are shown by versus_status.gd itself. Only a fetch failure
+	# during prep changes matchmaking state (late answers are ignored).
+	if kind == "fetch" and _phase == Phase.PREP:
+		versus_status_changed.emit(GameMode.VersusState.ERROR, "", 0, reason)
 
 func _begin_battle() -> void:
 	_player_units = _get_battlefield_player_units()
@@ -604,6 +622,8 @@ func _check_battle_over() -> void:
 
 func _end_wave(player_won: bool) -> void:
 	_phase = Phase.NONE
+	if GameMode.is_versus():
+		versus_status_changed.emit(GameMode.VersusState.NONE, "", 0, "")
 
 	if is_instance_valid(drawbridge):
 		drawbridge.force_lower()

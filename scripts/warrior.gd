@@ -227,7 +227,14 @@ func _on_start_training(dummy: Node) -> void:
 	_enter_state(State.TRAINING)
 
 func _do_training(delta: float) -> void:
-	var result : Node = await _do_training_melee(delta, _training_dummy, _get_attack_rate(), _get_melee_range(), _get_attack_damage, _get_move_speed)
+	# Freed dummy must never reach typed Node param. Check before every call.
+	if not is_instance_valid(_training_dummy):
+		_training_dummy = _find_training_target()
+		if _training_dummy == null:
+			_enter_state(State.IDLE)
+			return
+	# Variant: dummy may free during await, typed Node would trip same error
+	var result : Variant = await _do_training_melee(delta, _training_dummy, _get_attack_rate(), _get_melee_range(), _get_attack_damage, _get_move_speed)
 	if is_instance_valid(result):
 		_training_dummy = result
 	else:

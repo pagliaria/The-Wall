@@ -5,6 +5,10 @@ extends Node
 
 enum Mode { SOLO, VERSUS }
 
+# Matchmaking / battle state shown by the versus_status HUD panel.
+# Emitted by WaveManager (versus_status_changed), consumed by versus_status.gd.
+enum VersusState { NONE, SEARCHING, READY, NO_OPPONENT, ERROR, BATTLE_OPPONENT, BATTLE_PVE }
+
 const PROFILE_PATH          : String = "user://profile.cfg"
 const MAX_PLAYER_NAME_LENGTH : int   = 24
 
