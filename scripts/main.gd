@@ -2,7 +2,7 @@ extends Node2D
 
 const FIRE_EFFECT_SCRIPT : GDScript = preload("res://scripts/fire_effect.gd")
 const GAME_OVER_SCENE   : PackedScene = preload("res://scenes/game_over.tscn")
-const CHEST_SCENE       : PackedScene = preload("res://scenes/chest.tscn")
+const CHEST_SCENE       : PackedScene = preload("res://scenes/Chest.tscn")
 const TRAINING_TARGET_BASIC_SCENE  : PackedScene = preload("res://scenes/training_target_dummy.tscn")
 
 # Training target configuration
@@ -93,6 +93,7 @@ func _ready() -> void:
 	settings_screen.display_changed.connect(_fit_camera_to_screen)
 	settings_screen.debug_spawn_chest_requested.connect(_on_debug_spawn_chest_requested)
 	settings_screen.debug_max_resources_requested.connect(_on_debug_max_resources_requested)
+	settings_screen.debug_mirror_defense_changed.connect(_on_debug_mirror_defense_changed)
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
@@ -123,6 +124,8 @@ func _setup_wave_manager() -> void:
 
 	_wave_manager.units_layer = units_layer
 	_wave_manager.drawbridge  = drawbridge
+	# Saved debug setting applies from the very first wave.
+	_wave_manager.debug_mirror_defense = settings_screen.is_debug_mirror_defense_enabled()
 
 	_wave_manager.wave_countdown_changed.connect(_on_wave_countdown_changed)
 	_wave_manager.wave_started.connect(_on_wave_started)
@@ -498,6 +501,10 @@ func _on_debug_spawn_chest_requested() -> void:
 	chest.call("setup", 0)
 	chest.position = camera.global_position
 	add_child(chest)
+
+func _on_debug_mirror_defense_changed(enabled: bool) -> void:
+	if _wave_manager != null:
+		_wave_manager.debug_mirror_defense = enabled
 
 func _on_debug_max_resources_requested() -> void:
 	ResourceManager.gold = 1000

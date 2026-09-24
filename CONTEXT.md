@@ -34,6 +34,7 @@ Godot 4.4 town-defense prototype. The player builds on the right side of the map
 ## Waves / Combat
 - Wave start raises the drawbridge, opens the separator, clears selection, and rebakes nav.
 - Wave end lowers the bridge and restores control.
+- Battle roster: `_player_units` and `_battle_hired_units` are committed in `_begin_battle` using the player-battlefield x-range (640 to 1280). Units behind the wall (town) never join, count for win/loss, or get targeted. `_hired_units` is every hire the player owns. `get_hired_units()` returns the battle subset during a battle, all hires otherwise.
 - `enemy_base.gd` contains the shared enemy state machine and targeting.
 - Active enemy content includes slime, badger, boar, witch doctor, skeleton, and cat boss variants.
 
@@ -41,6 +42,7 @@ Godot 4.4 town-defense prototype. The player builds on the right side of the map
 - Audio is split across `UiAudio`, `MusicManager`, and `CombatAudio`.
 - Settings persist to `user://settings.cfg`.
 - Gameplay settings include starting resources, wave interval, and combat numbers.
+- Debug tab (needs "Enable Debug Tools"): spawn chest, max resources, and "Mirror My Defense As Enemy" (`CheckDebugMirror`). Mirror sets `WaveManager.debug_mirror_defense`; each wave the player's units in no man's land are captured and respawned as hostile mirrored enemies via the versus rebuild path (`spawn_mirrored_defense`). Nothing saved/uploaded. Empty defense falls back to PvE wave. Persists as `debug/mirror_defense` in `settings.cfg`.
 
 ## Versus Mode (async ghost PvP)
 - No live netcode. Each player fights a mirrored copy of another player's saved defense.

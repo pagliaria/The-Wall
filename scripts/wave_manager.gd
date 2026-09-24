@@ -143,11 +143,19 @@ var _spawn_step     : float = 0.0
 var _enemies      : Array = []
 var _player_units : Array = []
 var _hired_units  : Array = []
+# Subset of _hired_units committed to the current battle: only hires standing
+# in the player battlefield when the gate closed. Town hires never join.
+var _battle_hired_units : Array = []
 var _spawn_queue  : Array = []
 var _battle_start_positions : Dictionary = {}
 
 var units_layer : Node2D = null
 var drawbridge  : Node   = null
+
+# Debug: when true, every wave's enemies are a mirror of the player's own
+# defense instead of the PvE composition. Set by main.gd from the settings
+# screen (Debug tab). Can flip mid-prep; _start_wave reconciles.
+var debug_mirror_defense : bool = false
 
 var _rng         := RandomNumberGenerator.new()
 var _scene_cache := {}
@@ -184,13 +192,16 @@ func _start_wave() -> void:
 	if is_instance_valid(drawbridge):
 		drawbridge.force_raise()
 
+	_reconcile_debug_mirror_prep()
 	_spawn_remaining_prep_enemies()
 	_player_units = _get_battlefield_player_units()
 
 	# Units are now committed — gate's closed. Solo: PvE composition already
 	# spawned during prep, nothing more to do. Versus: capture own defense and
 	# fight the opponent's mirrored defense instead.
-	if GameMode.is_versus():
+	if debug_mirror_defense:
+		_start_debug_mirror_battle()
+	elif GameMode.is_versus():
 		_start_versus_battle()
 
 	call_deferred("_begin_battle")
@@ -422,20 +433,60 @@ func _on_snapshot_request_failed(kind: String, reason: String) -> void:
 	if kind == "fetch" and _phase == Phase.PREP:
 		versus_status_changed.emit(GameMode.VersusState.ERROR, "", 0, reason)
 
+# =========================================================================== #
+#  Debug — mirror own defense
+# =========================================================================== #
+
+# The PvE-vs-mirror choice is made when prep starts, but the flag can be
+# toggled in settings during prep. Fix up whatever prep already did so the
+# wave matches the flag at the moment the gate closes.
+func _reconcile_debug_mirror_prep() -> void:
+	if debug_mirror_defense:
+		# Turned on mid-prep: drop PvE enemies that already spawned + queued.
+		_spawn_queue.clear()
+		for e : Variant in _enemies:
+			if is_instance_valid(e):
+				e.queue_free()
+		_enemies.clear()
+		enemy_count_changed.emit(0)
+	elif not GameMode.is_versus() and _spawn_queue.is_empty() and _enemies.is_empty():
+		# Turned off mid-prep: prep skipped the PvE composition, so build it now.
+		_spawn_pve_fallback()
+
+# Debug wave start. Captures the defense standing in nomans right now and
+# spawns it as hostile enemies mirrored across the separator. Same rebuild path
+# versus uses (level, items, building bonuses), but nothing is saved to disk or
+# uploaded. Empty defense falls back to the PvE wave so it is never a free win.
+func _start_debug_mirror_battle() -> void:
+	var own_snapshot : Dictionary = capture_defense_snapshot()
+	var spawned      : int        = 0
+	if not is_snapshot_empty(own_snapshot):
+		spawned = spawn_mirrored_defense(own_snapshot)
+	if spawned == 0:
+		push_warning("Debug mirror: no defense in nomans zone, using PvE wave %d." % _wave_number)
+		_spawn_pve_fallback()
+	else:
+		print("Debug mirror: spawned %d mirrored units for wave %d" % [spawned, _wave_number])
+	# Versus HUD may be sitting on SEARCHING/READY from prep. Clear it.
+	if GameMode.is_versus():
+		versus_status_changed.emit(GameMode.VersusState.NONE, "", 0, "")
+
 func _begin_battle() -> void:
 	_player_units = _get_battlefield_player_units()
 	_enemies = _get_battlefield_enemies()
+	_hired_units = _hired_units.filter(func(u): return is_instance_valid(u))
+	_battle_hired_units = _get_battlefield_hired_units()
 
 	# Snapshot each battle unit's position so we can teleport survivors home.
 	_battle_start_positions.clear()
 	for u in _player_units:
 		if is_instance_valid(u):
 			_battle_start_positions[u] = u.global_position
-	for h in _hired_units:
+	for h in _battle_hired_units:
 		if is_instance_valid(h):
 			_battle_start_positions[h] = h.global_position
 
-	var all_friendlies : Array = _player_units + _hired_units
+	var all_friendlies : Array = _player_units + _battle_hired_units
 	for e in _enemies:
 		if is_instance_valid(e) and e.has_method("start_battle"):
 			e.start_battle(all_friendlies)
@@ -443,8 +494,7 @@ func _begin_battle() -> void:
 	for u in _player_units:
 		if is_instance_valid(u) and u.has_method("start_battle"):
 			u.start_battle(_enemies)
-	_hired_units = _hired_units.filter(func(u): return is_instance_valid(u))
-	for h in _hired_units:
+	for h in _battle_hired_units:
 		if h.has_method("start_battle"):
 			h.start_battle(_enemies)
 
@@ -459,12 +509,19 @@ func get_player_units() -> Array:
 	return _player_units
 
 func get_hired_units() -> Array:
+	# During a battle only committed hires count as targets/allies. Outside a
+	# battle callers get every hire the player owns.
+	if _phase == Phase.BATTLE:
+		return _battle_hired_units
 	return _hired_units
 
 func register_hired_unit(unit: Node) -> void:
 	_hired_units.append(unit)
+	# A unit hired mid-wave spawns in town behind the raised bridge, so it sits
+	# this battle out. Only join if it is already standing in the battlefield.
 	# Defer start_battle so @onready vars are initialized first
-	if _phase == Phase.BATTLE and not _enemies.is_empty():
+	if _phase == Phase.BATTLE and not _enemies.is_empty() and _is_in_player_battlefield(unit.global_position):
+		_battle_hired_units.append(unit)
 		var enemies_copy : Array = _enemies.duplicate()
 		unit.call_deferred("start_battle", enemies_copy)
 
@@ -498,7 +555,7 @@ func _prepare_next_wave() -> void:
 	_phase = Phase.PREP
 	_spawn_queue.clear()
 	# Versus: opponent's mirrored defense IS the wave, so no PvE composition.
-	var composition : Array = [] if GameMode.is_versus() else WAVE_COMPOSITIONS[_wave_number]
+	var composition : Array = [] if (GameMode.is_versus() or debug_mirror_defense) else WAVE_COMPOSITIONS[_wave_number]
 	for entry in composition:
 		var scene := _get_scene(entry["path"])
 		if scene == null:
@@ -584,6 +641,13 @@ func _get_battlefield_player_units() -> Array:
 			result.append(u)
 	return result
 
+func _get_battlefield_hired_units() -> Array:
+	var result : Array = []
+	for h in _hired_units:
+		if is_instance_valid(h) and h.hp > 0 and _is_in_player_battlefield(h.global_position):
+			result.append(h)
+	return result
+
 func _get_battlefield_enemies() -> Array:
 	var result : Array = []
 	for e in _enemies:
@@ -601,13 +665,14 @@ func _do_retarget() -> void:
 	_enemies      = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
 	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	_hired_units  = _hired_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
-	var all_friendlies : Array = _player_units + _hired_units
+	_battle_hired_units = _battle_hired_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
+	var all_friendlies : Array = _player_units + _battle_hired_units
 	for e in _enemies:
 		e.update_target(all_friendlies)
 	for u in _player_units:
 		if u.has_method("update_battle_target"):
 			u.update_battle_target(_enemies)
-	for h in _hired_units:
+	for h in _battle_hired_units:
 		if h.has_method("update_hired_target"):
 			h.update_hired_target(_enemies)
 
@@ -615,9 +680,10 @@ func _check_battle_over() -> void:
 	_enemies      = _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
 	_player_units = _player_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	_hired_units  = _hired_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
+	_battle_hired_units = _battle_hired_units.filter(func(u): return is_instance_valid(u) and u.hp > 0)
 	if _enemies.is_empty():
 		_end_wave(true)
-	elif _player_units.is_empty() and _hired_units.is_empty():
+	elif _player_units.is_empty() and _battle_hired_units.is_empty():
 		_end_wave(false)
 
 func _end_wave(player_won: bool) -> void:
@@ -640,7 +706,7 @@ func _end_wave(player_won: bool) -> void:
 	for u in _player_units:
 		if is_instance_valid(u) and u.has_method("end_battle"):
 			u.end_battle()
-	for h in _hired_units:
+	for h in _battle_hired_units:
 		if is_instance_valid(h):
 			h.set("_target", null)
 			h.set("_battle_ready", false)
@@ -653,6 +719,7 @@ func _end_wave(player_won: bool) -> void:
 			e.queue_free()
 	_enemies.clear()
 	_player_units.clear()
+	_battle_hired_units.clear()
 
 	if player_won and _wave_number >= TOTAL_WAVES:
 		# Final boss defeated — game complete

@@ -6,6 +6,8 @@ signal resume_requested
 signal display_changed
 signal debug_spawn_chest_requested
 signal debug_max_resources_requested
+# Effective value: true only when Debug tools AND Mirror Defense are both on.
+signal debug_mirror_defense_changed(enabled: bool)
 
 const CONFIG_PATH : String = "user://settings.cfg"
 
@@ -28,6 +30,7 @@ var _start_meat       : int   = 10
 var _combat_numbers   : bool  = true
 var _blood_level      : int   = 2  # BloodLevel.NORMAL
 var _debug_tools      : bool  = false
+var _debug_mirror_defense : bool = false
 
 # =========================================================================== #
 #  Node refs
@@ -60,6 +63,7 @@ var _debug_tools      : bool  = false
 @onready var _check_debug_tools   : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/CheckDebugTools
 @onready var _btn_spawn_chest     : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnSpawnChest
 @onready var _btn_max_resources   : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnMaxResources
+@onready var _check_debug_mirror  : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/CheckDebugMirror
 
 # Versus tab (values live in GameMode / SnapshotService, not settings.cfg)
 @onready var _edit_player_name    : LineEdit    = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/EditPlayerName
@@ -146,6 +150,7 @@ func _connect_signals() -> void:
 	_check_combat_numbers.toggled.connect(_on_combat_numbers_toggled)
 	_option_blood.item_selected.connect(_on_blood_level_changed)
 	_check_debug_tools.toggled.connect(_on_debug_tools_toggled)
+	_check_debug_mirror.toggled.connect(_on_debug_mirror_toggled)
 	_btn_spawn_chest.pressed.connect(_on_spawn_chest_pressed)
 	_btn_max_resources.pressed.connect(_on_max_resources_pressed)
 	_btn_test_connection.pressed.connect(_on_test_connection_pressed)
@@ -190,7 +195,17 @@ func _on_blood_level_changed(idx: int) -> void:
 func _on_debug_tools_toggled(pressed: bool) -> void:
 	_debug_tools = pressed
 	_btn_spawn_chest.disabled = not _debug_tools
+	_btn_max_resources.disabled = not _debug_tools
+	_check_debug_mirror.disabled = not _debug_tools
 	_update_versus_dev_visibility()
+	_emit_debug_mirror_defense()
+
+func _on_debug_mirror_toggled(pressed: bool) -> void:
+	_debug_mirror_defense = pressed
+	_emit_debug_mirror_defense()
+
+func _emit_debug_mirror_defense() -> void:
+	debug_mirror_defense_changed.emit(is_debug_mirror_defense_enabled())
 
 func _on_spawn_chest_pressed() -> void:
 	if not _debug_tools:
@@ -234,9 +249,11 @@ func _on_defaults() -> void:
 	_combat_numbers = true
 	_blood_level    = 2
 	_debug_tools    = false
+	_debug_mirror_defense = false
 	_apply_audio()
 	_populate_controls()
 	_save_config()
+	_emit_debug_mirror_defense()
 	CombatNumbers.enabled = true
 	BloodFx.level = BloodFx.BloodLevel.NORMAL
 	UiAudio.play()
@@ -263,6 +280,8 @@ func _populate_controls() -> void:
 	_check_debug_tools.button_pressed = _debug_tools
 	_btn_spawn_chest.disabled = not _debug_tools
 	_btn_max_resources.disabled = not _debug_tools
+	_check_debug_mirror.button_pressed = _debug_mirror_defense
+	_check_debug_mirror.disabled = not _debug_tools
 	_edit_player_name.text        = GameMode.player_name
 	_edit_server_url.text         = SnapshotService.server_url
 	_edit_server_key.text         = SnapshotService.server_key
@@ -298,6 +317,7 @@ func _save_config() -> void:
 	cfg.set_value("gameplay", "combat_numbers",  _combat_numbers)
 	cfg.set_value("gameplay", "blood_level",     _blood_level)
 	cfg.set_value("debug",    "tools",           _debug_tools)
+	cfg.set_value("debug",    "mirror_defense",  _debug_mirror_defense)
 	cfg.save(CONFIG_PATH)
 
 func _load_config() -> void:
@@ -316,6 +336,7 @@ func _load_config() -> void:
 	_combat_numbers = cfg.get_value("gameplay", "combat_numbers", true)
 	_blood_level    = cfg.get_value("gameplay", "blood_level",    2)
 	_debug_tools    = cfg.get_value("debug",    "tools",          false)
+	_debug_mirror_defense = cfg.get_value("debug", "mirror_defense", false)
 	_apply_audio()
 	_apply_display()
 	CombatNumbers.enabled = _combat_numbers
@@ -343,6 +364,11 @@ func get_wave_interval() -> float:
 
 func get_start_resources() -> Dictionary:
 	return { "gold": _start_gold, "wood": _start_wood, "meat": _start_meat }
+
+# Mirror only counts while Debug tools is on, so switching Debug tools off
+# can never leave a hidden mirror flag active.
+func is_debug_mirror_defense_enabled() -> bool:
+	return _debug_tools and _debug_mirror_defense
 
 # =========================================================================== #
 #  Versus tab

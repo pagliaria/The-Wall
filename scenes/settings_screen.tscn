@@ -455,6 +455,18 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Set"
 
+[node name="LabelDebugMirror" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Mirror My Defense As Enemy"
+
+[node name="CheckDebugMirror" type="CheckButton" parent="Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid"]
+layout_mode = 2
+tooltip_text = "Every wave, enemies are a mirror of your units in no man's land (same type, level, items, bonuses). Nothing is saved or uploaded. Empty defense falls back to the PvE wave."
+theme_override_font_sizes/font_size = 14
+
 [node name="Versus" type="VBoxContainer" parent="Panel/MarginContainer/VBox/TabContainer"]
 visible = false
 layout_mode = 2
