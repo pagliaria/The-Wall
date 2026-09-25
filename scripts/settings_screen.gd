@@ -8,8 +8,11 @@ signal debug_spawn_chest_requested
 signal debug_max_resources_requested
 # Effective value: true only when Debug tools AND Mirror Defense are both on.
 signal debug_mirror_defense_changed(enabled: bool)
+# Fired on Apply and Reset Defaults. 0 = sudden death off.
+signal sudden_death_delay_changed(seconds: float)
 
 const CONFIG_PATH : String = "user://settings.cfg"
+const DEFAULT_SUDDEN_DEATH_DELAY : float = 90.0
 
 var _prev_time_scale : float = 1.0
 
@@ -29,6 +32,7 @@ var _start_wood       : int   = 50
 var _start_meat       : int   = 10
 var _combat_numbers   : bool  = true
 var _blood_level      : int   = 2  # BloodLevel.NORMAL
+var _sudden_death_delay : float = DEFAULT_SUDDEN_DEATH_DELAY
 var _debug_tools      : bool  = false
 var _debug_mirror_defense : bool = false
 
@@ -58,6 +62,7 @@ var _debug_mirror_defense : bool = false
 @onready var _spin_start_meat     : SpinBox     = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinStartMeat
 @onready var _check_combat_numbers: CheckButton = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/CheckCombatNumbers
 @onready var _option_blood        : OptionButton = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/OptionBlood
+@onready var _spin_sudden_death   : SpinBox     = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinSuddenDeath
 
 # Debug tab
 @onready var _check_debug_tools   : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/CheckDebugTools
@@ -222,8 +227,10 @@ func _on_apply() -> void:
 	_start_gold     = int(_spin_start_gold.value)
 	_start_wood     = int(_spin_start_wood.value)
 	_start_meat     = int(_spin_start_meat.value)
+	_sudden_death_delay = _spin_sudden_death.value
 	_save_config()
 	_apply_versus_settings()
+	sudden_death_delay_changed.emit(_sudden_death_delay)
 	UiAudio.play()
 
 func _on_quit_pressed() -> void:
@@ -248,12 +255,14 @@ func _on_defaults() -> void:
 	_start_meat     = 10
 	_combat_numbers = true
 	_blood_level    = 2
+	_sudden_death_delay = DEFAULT_SUDDEN_DEATH_DELAY
 	_debug_tools    = false
 	_debug_mirror_defense = false
 	_apply_audio()
 	_populate_controls()
 	_save_config()
 	_emit_debug_mirror_defense()
+	sudden_death_delay_changed.emit(_sudden_death_delay)
 	CombatNumbers.enabled = true
 	BloodFx.level = BloodFx.BloodLevel.NORMAL
 	UiAudio.play()
@@ -277,6 +286,7 @@ func _populate_controls() -> void:
 	_spin_start_meat.value           = _start_meat
 	_check_combat_numbers.button_pressed = _combat_numbers
 	_option_blood.select(_blood_level)
+	_spin_sudden_death.value         = _sudden_death_delay
 	_check_debug_tools.button_pressed = _debug_tools
 	_btn_spawn_chest.disabled = not _debug_tools
 	_btn_max_resources.disabled = not _debug_tools
@@ -316,6 +326,7 @@ func _save_config() -> void:
 	cfg.set_value("gameplay", "start_meat",      _start_meat)
 	cfg.set_value("gameplay", "combat_numbers",  _combat_numbers)
 	cfg.set_value("gameplay", "blood_level",     _blood_level)
+	cfg.set_value("gameplay", "sudden_death_delay", _sudden_death_delay)
 	cfg.set_value("debug",    "tools",           _debug_tools)
 	cfg.set_value("debug",    "mirror_defense",  _debug_mirror_defense)
 	cfg.save(CONFIG_PATH)
@@ -335,6 +346,7 @@ func _load_config() -> void:
 	_start_meat     = cfg.get_value("gameplay", "start_meat",     10)
 	_combat_numbers = cfg.get_value("gameplay", "combat_numbers", true)
 	_blood_level    = cfg.get_value("gameplay", "blood_level",    2)
+	_sudden_death_delay = cfg.get_value("gameplay", "sudden_death_delay", DEFAULT_SUDDEN_DEATH_DELAY)
 	_debug_tools    = cfg.get_value("debug",    "tools",          false)
 	_debug_mirror_defense = cfg.get_value("debug", "mirror_defense", false)
 	_apply_audio()
@@ -361,6 +373,9 @@ func _apply_display() -> void:
 
 func get_wave_interval() -> float:
 	return _wave_interval
+
+func get_sudden_death_delay() -> float:
+	return _sudden_death_delay
 
 func get_start_resources() -> Dictionary:
 	return { "gold": _start_gold, "wood": _start_wood, "meat": _start_meat }

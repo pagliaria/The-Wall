@@ -34,6 +34,7 @@ Godot 4.4 town-defense prototype. The player builds on the right side of the map
 ## Waves / Combat
 - Wave start raises the drawbridge, opens the separator, clears selection, and rebakes nav.
 - Wave end lowers the bridge and restores control.
+- Sudden death: `WaveManager.sudden_death_delay` seconds into a battle (0 = off), every combatant (player, battle hired, enemies, bosses included) takes escalating %-max-HP damage each second. Tuning consts `SUDDEN_DEATH_*` in `wave_manager.gd`. HUD: `sudden_death_banner.tscn` (top-center, pulse animation) fed by `sudden_death_changed`; warns during last 15s. Setting: Gameplay tab "Sudden Death After (seconds)", applies live on Apply, persists as `gameplay/sudden_death_delay`, default 90.
 - Battle roster: `_player_units` and `_battle_hired_units` are committed in `_begin_battle` using the player-battlefield x-range (640 to 1280). Units behind the wall (town) never join, count for win/loss, or get targeted. `_hired_units` is every hire the player owns. `get_hired_units()` returns the battle subset during a battle, all hires otherwise.
 - `enemy_base.gd` contains the shared enemy state machine and targeting.
 - Active enemy content includes slime, badger, boar, witch doctor, skeleton, and cat boss variants.

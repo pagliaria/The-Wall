@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=40 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -26,6 +26,7 @@
 [ext_resource type="Texture2D" uid="uid://v8obx710aekl" path="res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png" id="35_rush_reg"]
 [ext_resource type="Script" uid="uid://c1pdp6ex06qlv" path="res://scripts/sell_zone.gd" id="38_sellzone"]
 [ext_resource type="PackedScene" path="res://scenes/versus_status.tscn" id="39_versus_status"]
+[ext_resource type="PackedScene" path="res://scenes/sudden_death_banner.tscn" id="40_sudden_death"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -611,6 +612,8 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
 theme_override_font_sizes/font_size = 11
 horizontal_alignment = 1
+
+[node name="SuddenDeathBanner" parent="HUD" instance=ExtResource("40_sudden_death")]
 
 [node name="BuildingsLayer" type="Node2D" parent="."]
 z_index = 3

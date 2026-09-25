@@ -4,6 +4,10 @@ signal wave_countdown_changed(seconds_left: float)
 signal wave_started(wave_number: int)
 signal wave_ended(player_won: bool)
 signal enemy_count_changed(count: int)
+# Sudden-death HUD feed. active = damage is running. active false with
+# seconds_left >= 0 = warning countdown. seconds_left < 0 = hide banner.
+# Consumed by sudden_death_banner.gd (wired in main.gd).
+signal sudden_death_changed(active: bool, seconds_left: float)
 # Versus HUD feed. state is a GameMode.VersusState value. Consumed by
 # versus_status.gd (wired in main.gd, versus mode only).
 signal versus_status_changed(state: int, opponent_name: String, opponent_power: int, detail: String)
@@ -157,6 +161,24 @@ var drawbridge  : Node   = null
 # screen (Debug tab). Can flip mid-prep; _start_wave reconciles.
 var debug_mirror_defense : bool = false
 
+# Sudden death: once a battle runs this many seconds, every combatant on both
+# sides takes escalating %-of-max-HP damage each tick, so a stalemate always
+# ends. Bosses too. 0 = off. Set by main.gd from the settings screen.
+# Damage per tick = max_hp * (BASE_PCT + RAMP_PCT * (tick - 1)), min 1.
+# With the defaults a full-HP unit dies about 19 ticks (seconds) after start.
+const SUDDEN_DEATH_WARN_TIME : float = 15.0
+const SUDDEN_DEATH_TICK_RATE : float = 1.0
+const SUDDEN_DEATH_BASE_PCT  : float = 0.01
+const SUDDEN_DEATH_RAMP_PCT  : float = 0.005
+
+var sudden_death_delay : float = 90.0
+
+var _battle_elapsed          : float = 0.0
+var _sudden_death_active     : bool  = false
+var _sudden_death_ticks      : int   = 0
+var _sudden_death_tick_timer : float = 0.0
+var _last_warn_second        : int   = -1
+
 var _rng         := RandomNumberGenerator.new()
 var _scene_cache := {}
 
@@ -176,6 +198,7 @@ func _process(delta: float) -> void:
 			if _countdown <= 0.0:
 				_start_wave()
 		Phase.BATTLE:
+			_process_sudden_death(delta)
 			_retarget_timer -= delta
 			if _retarget_timer <= 0.0:
 				_retarget_timer = RETARGET_RATE
@@ -188,6 +211,7 @@ func _process(delta: float) -> void:
 func _start_wave() -> void:
 	_wave_number += 1
 	_phase = Phase.BATTLE
+	_reset_sudden_death()
 
 	if is_instance_valid(drawbridge):
 		drawbridge.force_raise()
@@ -641,6 +665,58 @@ func _get_battlefield_player_units() -> Array:
 			result.append(u)
 	return result
 
+func _reset_sudden_death() -> void:
+	_battle_elapsed          = 0.0
+	_sudden_death_active     = false
+	_sudden_death_ticks      = 0
+	_sudden_death_tick_timer = 0.0
+	_last_warn_second        = -1
+	sudden_death_changed.emit(false, -1.0)
+
+# Runs every frame of BATTLE. Time only advances while the game runs, so the
+# settings-screen pause (time_scale 0) freezes the clock too.
+func _process_sudden_death(delta: float) -> void:
+	if sudden_death_delay <= 0.0:
+		return
+	_battle_elapsed += delta
+	var time_left : float = sudden_death_delay - _battle_elapsed
+	if time_left > 0.0:
+		if time_left <= SUDDEN_DEATH_WARN_TIME:
+			var warn_second : int = ceili(time_left)
+			if warn_second != _last_warn_second:
+				_last_warn_second = warn_second
+				sudden_death_changed.emit(false, float(warn_second))
+		return
+	if not _sudden_death_active:
+		_sudden_death_active = true
+		sudden_death_changed.emit(true, 0.0)
+	_sudden_death_tick_timer -= delta
+	if _sudden_death_tick_timer <= 0.0:
+		_sudden_death_tick_timer = SUDDEN_DEATH_TICK_RATE
+		_sudden_death_ticks += 1
+		_apply_sudden_death_tick()
+
+func _apply_sudden_death_tick() -> void:
+	var pct : float = SUDDEN_DEATH_BASE_PCT + SUDDEN_DEATH_RAMP_PCT * float(_sudden_death_ticks - 1)
+	# Copies: a unit with no death animation can free itself and fire its died
+	# signal synchronously inside take_damage.
+	var combatants : Array = []
+	combatants.append_array(_player_units)
+	combatants.append_array(_battle_hired_units)
+	combatants.append_array(_enemies)
+	for u : Variant in combatants:
+		_deal_sudden_death_damage(u, pct)
+
+func _deal_sudden_death_damage(u: Variant, pct: float) -> void:
+	if not is_instance_valid(u):
+		return
+	var hp_now : Variant = u.get("hp")
+	var hp_max : Variant = u.get("max_hp")
+	if hp_now == null or hp_max == null or int(hp_now) <= 0:
+		return
+	var dmg : int = maxi(1, ceili(float(hp_max) * pct))
+	u.take_damage(dmg)
+
 func _get_battlefield_hired_units() -> Array:
 	var result : Array = []
 	for h in _hired_units:
@@ -688,6 +764,7 @@ func _check_battle_over() -> void:
 
 func _end_wave(player_won: bool) -> void:
 	_phase = Phase.NONE
+	_reset_sudden_death()
 	if GameMode.is_versus():
 		versus_status_changed.emit(GameMode.VersusState.NONE, "", 0, "")
 

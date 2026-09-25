@@ -64,6 +64,7 @@ var _castle_placed := false
 @onready var selection_panel  : CanvasLayer        = $HUD/SelectionPanel
 @onready var building_upgrade_panel : CanvasLayer  = $HUD/BuildingUpgradePanel
 @onready var versus_status    : PanelContainer     = $HUD/VersusStatus
+@onready var sudden_death_banner : PanelContainer  = $HUD/SuddenDeathBanner
 
 var _castle_prompt    : CanvasLayer = null
 var _wave_manager     : Node        = null
@@ -94,6 +95,7 @@ func _ready() -> void:
 	settings_screen.debug_spawn_chest_requested.connect(_on_debug_spawn_chest_requested)
 	settings_screen.debug_max_resources_requested.connect(_on_debug_max_resources_requested)
 	settings_screen.debug_mirror_defense_changed.connect(_on_debug_mirror_defense_changed)
+	settings_screen.sudden_death_delay_changed.connect(_on_sudden_death_delay_changed)
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
@@ -126,6 +128,8 @@ func _setup_wave_manager() -> void:
 	_wave_manager.drawbridge  = drawbridge
 	# Saved debug setting applies from the very first wave.
 	_wave_manager.debug_mirror_defense = settings_screen.is_debug_mirror_defense_enabled()
+	_wave_manager.sudden_death_delay   = settings_screen.get_sudden_death_delay()
+	_wave_manager.sudden_death_changed.connect(sudden_death_banner.set_state)
 
 	_wave_manager.wave_countdown_changed.connect(_on_wave_countdown_changed)
 	_wave_manager.wave_started.connect(_on_wave_started)
@@ -505,6 +509,10 @@ func _on_debug_spawn_chest_requested() -> void:
 func _on_debug_mirror_defense_changed(enabled: bool) -> void:
 	if _wave_manager != null:
 		_wave_manager.debug_mirror_defense = enabled
+
+func _on_sudden_death_delay_changed(seconds: float) -> void:
+	if _wave_manager != null:
+		_wave_manager.sudden_death_delay = seconds
 
 func _on_debug_max_resources_requested() -> void:
 	ResourceManager.gold = 1000

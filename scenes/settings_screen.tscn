@@ -399,6 +399,21 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 14
 selected = 2
 
+[node name="LabelSuddenDeath" type="Label" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15, 0.08, 0.02, 1)
+theme_override_font_sizes/font_size = 14
+text = "Sudden Death After (seconds)"
+
+[node name="SpinSuddenDeath" type="SpinBox" parent="Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+tooltip_text = "Seconds into a battle before everyone takes growing damage so fights cannot last forever. 0 = off. Takes effect on Apply."
+max_value = 600.0
+step = 5.0
+value = 90.0
+
 [node name="Debug" type="VBoxContainer" parent="Panel/MarginContainer/VBox/TabContainer"]
 visible = false
 layout_mode = 2
