@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/snapshot_service.gd" id="1_snap"]
+
+[node name="SnapshotService" type="Node"]
+script = ExtResource("1_snap")
+
+[node name="UploadRequest" type="HTTPRequest" parent="."]
+timeout = 10.0
+
+[node name="FetchRequest" type="HTTPRequest" parent="."]
+timeout = 10.0
+
+[node name="TestRequest" type="HTTPRequest" parent="."]
+timeout = 10.0
+
+[connection signal="request_completed" from="UploadRequest" to="." method="_on_upload_completed"]
+[connection signal="request_completed" from="FetchRequest" to="." method="_on_fetch_completed"]
+[connection signal="request_completed" from="TestRequest" to="." method="_on_test_completed"]

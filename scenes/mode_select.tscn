@@ -1,0 +1,176 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/mode_select.gd" id="1_mode"]
+[ext_resource type="FontFile" uid="uid://ctsrcyus6yvu" path="res://assets/fonts/Cardo-Bold.ttf" id="2_bold"]
+[ext_resource type="FontFile" uid="uid://h8mcpmdp27jb" path="res://assets/fonts/Cardo-Italic.ttf" id="3_italic"]
+[ext_resource type="Texture2D" uid="uid://v8obx710aekl" path="res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png" id="4_blue"]
+[ext_resource type="Texture2D" uid="uid://bv6qq5jguh6yv" path="res://assets/UI Elements/UI Elements/Buttons/BigRedButton_Regular.png" id="5_red"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.08, 0.05, 0.02, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.35, 0.08, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="ModeSelect" type="CanvasLayer"]
+layer = 15
+visible = false
+script = ExtResource("1_mode")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -360.0
+offset_top = -170.0
+offset_right = 360.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.82, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 32
+text = "Choose Mode"
+vertical_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="Panel/Margin/VBox/Header"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 20
+text = "✕"
+
+[node name="Divider" type="ColorRect" parent="Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.55, 0.35, 0.08, 0.8)
+
+[node name="Options" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="SoloOption" type="VBoxContainer" parent="Panel/Margin/VBox/Options"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="SoloBtn" type="NinePatchRect" parent="Panel/Margin/VBox/Options/SoloOption"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("5_red")
+region_rect = Rect2(80.4092, 78.4332, 158.053, 154.102)
+patch_margin_left = 18
+patch_margin_top = 14
+patch_margin_right = 18
+patch_margin_bottom = 14
+
+[node name="Label" type="Label" parent="Panel/Margin/VBox/Options/SoloOption/SoloBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.5, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("3_italic")
+theme_override_font_sizes/font_size = 26
+text = "Solo"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SoloDesc" type="Label" parent="Panel/Margin/VBox/Options/SoloOption"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1)
+theme_override_fonts/font = ExtResource("3_italic")
+theme_override_font_sizes/font_size = 15
+text = "Survive 15 waves of monsters."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="VersusOption" type="VBoxContainer" parent="Panel/Margin/VBox/Options"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="VersusBtn" type="NinePatchRect" parent="Panel/Margin/VBox/Options/VersusOption"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("4_blue")
+region_rect = Rect2(81.5382, 79.5621, 155.795, 152.973)
+patch_margin_left = 16
+patch_margin_top = 12
+patch_margin_right = 16
+patch_margin_bottom = 12
+
+[node name="Label" type="Label" parent="Panel/Margin/VBox/Options/VersusOption/VersusBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.95, 0.9, 0.75, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("3_italic")
+theme_override_font_sizes/font_size = 26
+text = "Multiplayer"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VersusDesc" type="Label" parent="Panel/Margin/VBox/Options/VersusOption"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.7, 1)
+theme_override_fonts/font = ExtResource("3_italic")
+theme_override_font_sizes/font_size = 15
+text = "Face a mirrored copy of another player's defense."
+horizontal_alignment = 1
+autowrap_mode = 3

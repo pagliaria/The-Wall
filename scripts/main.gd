@@ -2,7 +2,7 @@ extends Node2D
 
 const FIRE_EFFECT_SCRIPT : GDScript = preload("res://scripts/fire_effect.gd")
 const GAME_OVER_SCENE   : PackedScene = preload("res://scenes/game_over.tscn")
-const CHEST_SCENE       : PackedScene = preload("res://scenes/chest.tscn")
+const CHEST_SCENE       : PackedScene = preload("res://scenes/Chest.tscn")
 const TRAINING_TARGET_BASIC_SCENE  : PackedScene = preload("res://scenes/training_target_dummy.tscn")
 
 # Training target configuration
@@ -63,6 +63,8 @@ var _castle_placed := false
 @onready var settings_screen  : CanvasLayer        = $SettingsScreen
 @onready var selection_panel  : CanvasLayer        = $HUD/SelectionPanel
 @onready var building_upgrade_panel : CanvasLayer  = $HUD/BuildingUpgradePanel
+@onready var versus_status    : PanelContainer     = $HUD/VersusStatus
+@onready var sudden_death_banner : PanelContainer  = $HUD/SuddenDeathBanner
 
 var _castle_prompt    : CanvasLayer = null
 var _wave_manager     : Node        = null
@@ -70,6 +72,9 @@ var _selected_building : Node       = null
 
 func _ready() -> void:
 	_fit_camera_to_screen()
+	# Exported fullscreen can finish resizing after _ready. Refit whenever the
+	# viewport size actually changes instead of trusting the size at load.
+	get_viewport().size_changed.connect(_fit_camera_to_screen)
 	resource_layer.buildings_layer = buildings_layer
 	resource_layer.spawn()
 	resource_layer.resource_depleted.connect(_on_resource_depleted)
@@ -89,6 +94,8 @@ func _ready() -> void:
 	settings_screen.display_changed.connect(_fit_camera_to_screen)
 	settings_screen.debug_spawn_chest_requested.connect(_on_debug_spawn_chest_requested)
 	settings_screen.debug_max_resources_requested.connect(_on_debug_max_resources_requested)
+	settings_screen.debug_mirror_defense_changed.connect(_on_debug_mirror_defense_changed)
+	settings_screen.sudden_death_delay_changed.connect(_on_sudden_death_delay_changed)
 	building_placer.building_placed.connect(_on_building_placed)
 	building_placer.placement_cancelled.connect(_on_placement_cancelled)
 
@@ -119,10 +126,18 @@ func _setup_wave_manager() -> void:
 
 	_wave_manager.units_layer = units_layer
 	_wave_manager.drawbridge  = drawbridge
+	# Saved debug setting applies from the very first wave.
+	_wave_manager.debug_mirror_defense = settings_screen.is_debug_mirror_defense_enabled()
+	_wave_manager.sudden_death_delay   = settings_screen.get_sudden_death_delay()
+	_wave_manager.sudden_death_changed.connect(sudden_death_banner.set_state)
 
 	_wave_manager.wave_countdown_changed.connect(_on_wave_countdown_changed)
 	_wave_manager.wave_started.connect(_on_wave_started)
 	_wave_manager.wave_ended.connect(_on_wave_ended)
+
+	# Versus HUD panel only listens in versus mode. Solo: panel stays hidden.
+	if GameMode.is_versus():
+		_wave_manager.versus_status_changed.connect(versus_status.set_state)
 
 func _on_rush_pressed() -> void:
 	if _wave_manager == null or not _wave_manager.is_in_prep():
@@ -491,6 +506,14 @@ func _on_debug_spawn_chest_requested() -> void:
 	chest.position = camera.global_position
 	add_child(chest)
 
+func _on_debug_mirror_defense_changed(enabled: bool) -> void:
+	if _wave_manager != null:
+		_wave_manager.debug_mirror_defense = enabled
+
+func _on_sudden_death_delay_changed(seconds: float) -> void:
+	if _wave_manager != null:
+		_wave_manager.sudden_death_delay = seconds
+
 func _on_debug_max_resources_requested() -> void:
 	ResourceManager.gold = 1000
 	ResourceManager.wood = 1000
@@ -502,7 +525,10 @@ func _on_debug_max_resources_requested() -> void:
 # =========================================================================== #
 
 func _fit_camera_to_screen() -> void:
-	var screen := Vector2(DisplayServer.window_get_size())
+	# Viewport size, not window size: they differ with stretch modes, DPI scaling
+	# and mid-transition fullscreen, and every mouse/camera value here is
+	# viewport-space.
+	var screen : Vector2 = get_viewport_rect().size
 	var zoom_x := screen.x / float(WORLD_WIDTH)
 	var zoom_y := screen.y / float(WORLD_HEIGHT)
 	zoom_min = maxf(zoom_x, zoom_y)
@@ -524,7 +550,7 @@ func _handle_edge_pan(delta: float) -> void:
 	if _panning:
 		return
 	var mouse  := get_viewport().get_mouse_position()
-	var screen := Vector2(DisplayServer.window_get_size())
+	var screen : Vector2 = get_viewport_rect().size
 	var move   := Vector2.ZERO
 	var speed  := EDGE_SPEED / camera.zoom.x * delta
 	if mouse.x < EDGE_MARGIN:               move.x = -speed

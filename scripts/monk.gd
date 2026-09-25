@@ -173,7 +173,7 @@ func _scan_for_heal_target(range_limit: float) -> Node:
 	for child in parent.get_children():
 		if child == self or not child is CharacterBody2D:
 			continue
-		if child.get("faction") != "player":
+		if child.get("faction") != faction:
 			continue
 		if not _is_valid_heal_target(child):
 			continue

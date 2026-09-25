@@ -57,6 +57,12 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 func _on_body_entered(body: Node) -> void:
+	# The arrow is created at the shooter's position, so the enlarged collision
+	# mask can overlap its own archer immediately. It should only hit its chosen
+	# target; other units can be between the shooter and target without causing
+	# the projectile to damage the wrong side.
+	if body == _attacker or body != _target:
+		return
 	if body.has_method("take_damage"):
 		CombatAudio.play("arrow_hit")
 		body.take_damage(damage, _attacker)

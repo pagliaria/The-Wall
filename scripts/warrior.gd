@@ -195,8 +195,7 @@ func _do_battle(delta: float) -> void:
 	if not is_instance_valid(_target) or _target.hp <= 0:
 		_target = null
 		# Don't re-enter BATTLE — just pick new target in place
-		if wave_manager != null and wave_manager.has_method("get_enemies"):
-			_pick_target(wave_manager.get_enemies())
+		_pick_target(_get_default_battle_targets())
 		if not is_instance_valid(_target):
 			_enter_state(State.IDLE)
 			return
@@ -228,7 +227,14 @@ func _on_start_training(dummy: Node) -> void:
 	_enter_state(State.TRAINING)
 
 func _do_training(delta: float) -> void:
-	var result : Node = await _do_training_melee(delta, _training_dummy, _get_attack_rate(), _get_melee_range(), _get_attack_damage, _get_move_speed)
+	# Freed dummy must never reach typed Node param. Check before every call.
+	if not is_instance_valid(_training_dummy):
+		_training_dummy = _find_training_target()
+		if _training_dummy == null:
+			_enter_state(State.IDLE)
+			return
+	# Variant: dummy may free during await, typed Node would trip same error
+	var result : Variant = await _do_training_melee(delta, _training_dummy, _get_attack_rate(), _get_melee_range(), _get_attack_damage, _get_move_speed)
 	if is_instance_valid(result):
 		_training_dummy = result
 	else:

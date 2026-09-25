@@ -1,15 +1,22 @@
-[gd_scene load_steps=8 format=3 uid="uid://cj5xkjpkoyfjd"]
+[gd_scene load_steps=10 format=3 uid="uid://cj5xkjpkoyfjd"]
 
 [ext_resource type="Script" uid="uid://6ramhtnb4ww1" path="res://scripts/title_screen.gd" id="1_title"]
 [ext_resource type="Texture2D" uid="uid://du3tn6qnp4ttt" path="res://assets/images/wall_warriors_high_res_backing_fixed.png" id="2_e54dn"]
+[ext_resource type="AudioStream" uid="uid://djo7k07k7lug8" path="res://assets/audio/music/warning/Ludum Dare 30 08.ogg" id="2_mykxm"]
 [ext_resource type="Texture2D" uid="uid://v8obx710aekl" path="res://assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular_together.png" id="4_blue_reg"]
 [ext_resource type="FontFile" uid="uid://h8mcpmdp27jb" path="res://assets/fonts/Cardo-Italic.ttf" id="4_e54dn"]
 [ext_resource type="Texture2D" uid="uid://bv6qq5jguh6yv" path="res://assets/UI Elements/UI Elements/Buttons/BigRedButton_Regular.png" id="6_red_reg"]
 [ext_resource type="PackedScene" uid="uid://b1fea6knbgvwi" path="res://scenes/settings_screen.tscn" id="7_settings"]
 [ext_resource type="PackedScene" path="res://scenes/how_to_play.tscn" id="8_htp"]
+[ext_resource type="PackedScene" path="res://scenes/mode_select.tscn" id="9_mode"]
 
 [node name="TitleScreen" type="Node"]
 script = ExtResource("1_title")
+
+[node name="TitleMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2_mykxm")
+volume_db = -4.0
+bus = &"Music"
 
 [node name="BG" type="TextureRect" parent="."]
 anchors_preset = 15
@@ -191,3 +198,5 @@ vertical_alignment = 1
 visible = false
 
 [node name="HowToPlay" parent="." instance=ExtResource("8_htp")]
+
+[node name="ModeSelect" parent="." instance=ExtResource("9_mode")]

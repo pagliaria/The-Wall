@@ -6,8 +6,13 @@ signal resume_requested
 signal display_changed
 signal debug_spawn_chest_requested
 signal debug_max_resources_requested
+# Effective value: true only when Debug tools AND Mirror Defense are both on.
+signal debug_mirror_defense_changed(enabled: bool)
+# Fired on Apply and Reset Defaults. 0 = sudden death off.
+signal sudden_death_delay_changed(seconds: float)
 
 const CONFIG_PATH : String = "user://settings.cfg"
+const DEFAULT_SUDDEN_DEATH_DELAY : float = 90.0
 
 var _prev_time_scale : float = 1.0
 
@@ -27,7 +32,9 @@ var _start_wood       : int   = 50
 var _start_meat       : int   = 10
 var _combat_numbers   : bool  = true
 var _blood_level      : int   = 2  # BloodLevel.NORMAL
+var _sudden_death_delay : float = DEFAULT_SUDDEN_DEATH_DELAY
 var _debug_tools      : bool  = false
+var _debug_mirror_defense : bool = false
 
 # =========================================================================== #
 #  Node refs
@@ -55,16 +62,37 @@ var _debug_tools      : bool  = false
 @onready var _spin_start_meat     : SpinBox     = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinStartMeat
 @onready var _check_combat_numbers: CheckButton = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/CheckCombatNumbers
 @onready var _option_blood        : OptionButton = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/OptionBlood
+@onready var _spin_sudden_death   : SpinBox     = $Panel/MarginContainer/VBox/TabContainer/Gameplay/MarginGameplay/Grid/SpinSuddenDeath
 
 # Debug tab
 @onready var _check_debug_tools   : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/CheckDebugTools
 @onready var _btn_spawn_chest     : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnSpawnChest
 @onready var _btn_max_resources   : Button      = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/BtnMaxResources
+@onready var _check_debug_mirror  : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Debug/MarginDebug/Grid/CheckDebugMirror
+
+# Versus tab (values live in GameMode / SnapshotService, not settings.cfg)
+@onready var _edit_player_name    : LineEdit    = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/EditPlayerName
+@onready var _edit_server_url     : LineEdit    = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/EditServerUrl
+@onready var _edit_server_key     : LineEdit    = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/EditServerKey
+@onready var _check_self_match    : CheckButton = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/CheckSelfMatch
+@onready var _btn_test_connection : Button      = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/BtnTestConnection
+@onready var _label_conn_status   : Label       = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid/LabelConnectionStatus
+@onready var _versus_grid         : GridContainer = $Panel/MarginContainer/VBox/TabContainer/Versus/MarginVersus/Grid
+
+# Server config is shipped in snapshot_service.gd. These rows are dev tools,
+# shown only when Debug tools is on. Player Name stays visible for everyone.
+const VERSUS_DEV_NODES : Array[String] = [
+	"LabelServerUrl", "EditServerUrl", "LabelServerKey", "EditServerKey",
+	"LabelSelfMatch", "CheckSelfMatch", "LabelTestConnection", "BtnTestConnection",
+	"LabelStatusTitle", "LabelConnectionStatus",
+]
 
 # Buttons
 @onready var _btn_resume          : Button = $Panel/MarginContainer/VBox/Buttons/BtnResume
 @onready var _btn_apply           : Button = $Panel/MarginContainer/VBox/Buttons/BtnApply
 @onready var _btn_defaults        : Button = $Panel/MarginContainer/VBox/Buttons/BtnDefaults
+@onready var _btn_quit            : Button = $Panel/MarginContainer/VBox/Buttons/BtnQuit
+@onready var _quit_confirm        : ConfirmationDialog = $QuitConfirm
 
 # =========================================================================== #
 #  Lifecycle
@@ -115,6 +143,8 @@ func _connect_signals() -> void:
 	_btn_resume.pressed.connect(_on_resume)
 	_btn_apply.pressed.connect(_on_apply)
 	_btn_defaults.pressed.connect(_on_defaults)
+	_btn_quit.pressed.connect(_on_quit_pressed)
+	_quit_confirm.confirmed.connect(_on_quit_confirmed)
 
 	_slider_master.value_changed.connect(_on_master_changed)
 	_slider_music.value_changed.connect(_on_music_changed)
@@ -125,8 +155,11 @@ func _connect_signals() -> void:
 	_check_combat_numbers.toggled.connect(_on_combat_numbers_toggled)
 	_option_blood.item_selected.connect(_on_blood_level_changed)
 	_check_debug_tools.toggled.connect(_on_debug_tools_toggled)
+	_check_debug_mirror.toggled.connect(_on_debug_mirror_toggled)
 	_btn_spawn_chest.pressed.connect(_on_spawn_chest_pressed)
 	_btn_max_resources.pressed.connect(_on_max_resources_pressed)
+	_btn_test_connection.pressed.connect(_on_test_connection_pressed)
+	SnapshotService.connection_tested.connect(_on_connection_tested)
 
 func _on_master_changed(value: float) -> void:
 	_vol_master = value
@@ -167,6 +200,17 @@ func _on_blood_level_changed(idx: int) -> void:
 func _on_debug_tools_toggled(pressed: bool) -> void:
 	_debug_tools = pressed
 	_btn_spawn_chest.disabled = not _debug_tools
+	_btn_max_resources.disabled = not _debug_tools
+	_check_debug_mirror.disabled = not _debug_tools
+	_update_versus_dev_visibility()
+	_emit_debug_mirror_defense()
+
+func _on_debug_mirror_toggled(pressed: bool) -> void:
+	_debug_mirror_defense = pressed
+	_emit_debug_mirror_defense()
+
+func _emit_debug_mirror_defense() -> void:
+	debug_mirror_defense_changed.emit(is_debug_mirror_defense_enabled())
 
 func _on_spawn_chest_pressed() -> void:
 	if not _debug_tools:
@@ -183,8 +227,21 @@ func _on_apply() -> void:
 	_start_gold     = int(_spin_start_gold.value)
 	_start_wood     = int(_spin_start_wood.value)
 	_start_meat     = int(_spin_start_meat.value)
+	_sudden_death_delay = _spin_sudden_death.value
 	_save_config()
+	_apply_versus_settings()
+	sudden_death_delay_changed.emit(_sudden_death_delay)
 	UiAudio.play()
+
+func _on_quit_pressed() -> void:
+	UiAudio.play()
+	_quit_confirm.popup_centered()
+
+func _on_quit_confirmed() -> void:
+	# Settings pauses the game with time_scale 0. Restore before quitting so
+	# nothing waiting on timers hangs during shutdown.
+	Engine.time_scale = 1.0
+	get_tree().quit()
 
 func _on_defaults() -> void:
 	_vol_master     = 1.0
@@ -198,10 +255,14 @@ func _on_defaults() -> void:
 	_start_meat     = 10
 	_combat_numbers = true
 	_blood_level    = 2
+	_sudden_death_delay = DEFAULT_SUDDEN_DEATH_DELAY
 	_debug_tools    = false
+	_debug_mirror_defense = false
 	_apply_audio()
 	_populate_controls()
 	_save_config()
+	_emit_debug_mirror_defense()
+	sudden_death_delay_changed.emit(_sudden_death_delay)
 	CombatNumbers.enabled = true
 	BloodFx.level = BloodFx.BloodLevel.NORMAL
 	UiAudio.play()
@@ -225,9 +286,23 @@ func _populate_controls() -> void:
 	_spin_start_meat.value           = _start_meat
 	_check_combat_numbers.button_pressed = _combat_numbers
 	_option_blood.select(_blood_level)
+	_spin_sudden_death.value         = _sudden_death_delay
 	_check_debug_tools.button_pressed = _debug_tools
 	_btn_spawn_chest.disabled = not _debug_tools
 	_btn_max_resources.disabled = not _debug_tools
+	_check_debug_mirror.button_pressed = _debug_mirror_defense
+	_check_debug_mirror.disabled = not _debug_tools
+	_edit_player_name.text        = GameMode.player_name
+	_edit_server_url.text         = SnapshotService.server_url
+	_edit_server_key.text         = SnapshotService.server_key
+	_check_self_match.button_pressed = SnapshotService.allow_self_match
+	_update_versus_dev_visibility()
+
+func _update_versus_dev_visibility() -> void:
+	for node_name : String in VERSUS_DEV_NODES:
+		var node : Control = _versus_grid.get_node_or_null(node_name) as Control
+		if node != null:
+			node.visible = _debug_tools
 
 func _apply_audio() -> void:
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(_vol_master))
@@ -251,7 +326,9 @@ func _save_config() -> void:
 	cfg.set_value("gameplay", "start_meat",      _start_meat)
 	cfg.set_value("gameplay", "combat_numbers",  _combat_numbers)
 	cfg.set_value("gameplay", "blood_level",     _blood_level)
+	cfg.set_value("gameplay", "sudden_death_delay", _sudden_death_delay)
 	cfg.set_value("debug",    "tools",           _debug_tools)
+	cfg.set_value("debug",    "mirror_defense",  _debug_mirror_defense)
 	cfg.save(CONFIG_PATH)
 
 func _load_config() -> void:
@@ -269,18 +346,24 @@ func _load_config() -> void:
 	_start_meat     = cfg.get_value("gameplay", "start_meat",     10)
 	_combat_numbers = cfg.get_value("gameplay", "combat_numbers", true)
 	_blood_level    = cfg.get_value("gameplay", "blood_level",    2)
+	_sudden_death_delay = cfg.get_value("gameplay", "sudden_death_delay", DEFAULT_SUDDEN_DEATH_DELAY)
 	_debug_tools    = cfg.get_value("debug",    "tools",          false)
+	_debug_mirror_defense = cfg.get_value("debug", "mirror_defense", false)
 	_apply_audio()
 	_apply_display()
 	CombatNumbers.enabled = _combat_numbers
 	BloodFx.level = _blood_level as BloodFx.BloodLevel
 
 func _apply_display() -> void:
-	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-	DisplayServer.window_set_mode(mode)
-	DisplayServer.window_set_vsync_mode(
-		DisplayServer.VSYNC_ENABLED if _vsync else DisplayServer.VSYNC_DISABLED
-	)
+	# Settings screen loads in BOTH title and main scenes. Only touch the window
+	# when it differs from the saved choice: redundant window_set_mode calls
+	# during a scene change can leave an exported build with a stale viewport.
+	var want_mode : DisplayServer.WindowMode = DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+	if DisplayServer.window_get_mode() != want_mode:
+		DisplayServer.window_set_mode(want_mode)
+	var want_vsync : DisplayServer.VSyncMode = DisplayServer.VSYNC_ENABLED if _vsync else DisplayServer.VSYNC_DISABLED
+	if DisplayServer.window_get_vsync_mode() != want_vsync:
+		DisplayServer.window_set_vsync_mode(want_vsync)
 	await get_tree().process_frame
 	emit_signal("display_changed")
 
@@ -291,5 +374,35 @@ func _apply_display() -> void:
 func get_wave_interval() -> float:
 	return _wave_interval
 
+func get_sudden_death_delay() -> float:
+	return _sudden_death_delay
+
 func get_start_resources() -> Dictionary:
 	return { "gold": _start_gold, "wood": _start_wood, "meat": _start_meat }
+
+# Mirror only counts while Debug tools is on, so switching Debug tools off
+# can never leave a hidden mirror flag active.
+func is_debug_mirror_defense_enabled() -> bool:
+	return _debug_tools and _debug_mirror_defense
+
+# =========================================================================== #
+#  Versus tab
+# =========================================================================== #
+
+func _apply_versus_settings() -> void:
+	GameMode.set_player_name(_edit_player_name.text)
+	SnapshotService.set_config(
+		_edit_server_url.text,
+		_edit_server_key.text,
+		_check_self_match.button_pressed
+	)
+
+func _on_test_connection_pressed() -> void:
+	_apply_versus_settings()
+	_label_conn_status.text       = "Testing..."
+	_btn_test_connection.disabled = true
+	SnapshotService.test_connection()
+
+func _on_connection_tested(ok: bool, message: String) -> void:
+	_btn_test_connection.disabled = false
+	_label_conn_status.text = ("OK: " if ok else "Failed: ") + message
