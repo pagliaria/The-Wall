@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3 uid="uid://b3hhnc6fc3a4j"]
+[gd_scene load_steps=41 format=3 uid="uid://b3hhnc6fc3a4j"]
 
 [ext_resource type="Script" uid="uid://dh0k4630tdlyf" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://bmij8vhib8d1x" path="res://assets/Buildings/Wall/wall_the_one.png" id="2_jyhfs"]
@@ -27,6 +27,7 @@
 [ext_resource type="Script" uid="uid://c1pdp6ex06qlv" path="res://scripts/sell_zone.gd" id="38_sellzone"]
 [ext_resource type="PackedScene" path="res://scenes/versus_status.tscn" id="39_versus_status"]
 [ext_resource type="PackedScene" path="res://scenes/sudden_death_banner.tscn" id="40_sudden_death"]
+[ext_resource type="PackedScene" path="res://scenes/sudden_death_overlay.tscn" id="41_sudden_death_fx"]
 
 [sub_resource type="Animation" id="Animation_lower"]
 resource_name = "lower"
@@ -641,6 +642,8 @@ target_position = Vector2(0, 0)
 
 [node name="NavRegion" type="NavigationRegion2D" parent="."]
 navigation_polygon = SubResource("NavigationPolygon_muem4")
+
+[node name="SuddenDeathOverlay" parent="." instance=ExtResource("41_sudden_death_fx")]
 
 [node name="resource_timer" type="Timer" parent="."]
 wait_time = 180.0

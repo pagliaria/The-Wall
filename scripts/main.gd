@@ -65,6 +65,7 @@ var _castle_placed := false
 @onready var building_upgrade_panel : CanvasLayer  = $HUD/BuildingUpgradePanel
 @onready var versus_status    : PanelContainer     = $HUD/VersusStatus
 @onready var sudden_death_banner : PanelContainer  = $HUD/SuddenDeathBanner
+@onready var sudden_death_overlay : Node2D         = $SuddenDeathOverlay
 
 var _castle_prompt    : CanvasLayer = null
 var _wave_manager     : Node        = null
@@ -130,6 +131,7 @@ func _setup_wave_manager() -> void:
 	_wave_manager.debug_mirror_defense = settings_screen.is_debug_mirror_defense_enabled()
 	_wave_manager.sudden_death_delay   = settings_screen.get_sudden_death_delay()
 	_wave_manager.sudden_death_changed.connect(sudden_death_banner.set_state)
+	_wave_manager.sudden_death_changed.connect(sudden_death_overlay.set_active)
 
 	_wave_manager.wave_countdown_changed.connect(_on_wave_countdown_changed)
 	_wave_manager.wave_started.connect(_on_wave_started)
