@@ -158,8 +158,10 @@ func is_rush_button_visible() -> bool:
 	return rush_button.visible
 
 func set_wave_active(_wave_number: int) -> void:
-	wave_label.text     = "Fight!"
-	wave_label.modulate = Color(1.0, 0.3, 0.3)
+	title.visible        = false
+	wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wave_label.text      = "Fight!"
+	wave_label.modulate   = Color(1.0, 0.3, 0.3)
 
 func set_wave_ended(player_won: bool) -> void:
 	victory.visible    = true
@@ -173,4 +175,5 @@ func set_wave_ended(player_won: bool) -> void:
 	victory.visible        = false
 	title.visible          = true
 	wave_label.visible     = true
+	wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	wave_display.modulate  = original_color
