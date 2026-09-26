@@ -250,7 +250,11 @@ func _ready() -> void:
 	if faction == "player":
 		add_to_group("player_units")
 	_init_item_bonuses()
-	_hp_fill.texture = HP_FILL_BLUE
+	# Blue fill marks a real player unit. A mirrored hostile copy (faction ==
+	# "enemy") keeps the scene's own default red fill instead, so its HP bar
+	# reads as hostile the same way its Red Units recolor does.
+	if faction == "player":
+		_hp_fill.texture = HP_FILL_BLUE
 	call_deferred("_on_unit_ready")
 
 func _on_unit_ready() -> void:

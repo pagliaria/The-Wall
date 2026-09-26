@@ -1091,9 +1091,20 @@ func spawn_mirrored_defense_from_file(path: String) -> bool:
 	spawn_mirrored_defense(parsed)
 	return true
 
+# Mirrored defense uses the same script/stats as the plain player scene, just
+# with a Red Units recolor swapped in - so an opposing player's units read as
+# hostile at a glance instead of looking identical to your own troops.
+const MIRROR_SCENE_PATHS : Dictionary = {
+	"pawn":    "res://scenes/pawn_mirror.tscn",
+	"warrior": "res://scenes/warrior_mirror.tscn",
+	"archer":  "res://scenes/archer_mirror.tscn",
+	"monk":    "res://scenes/monk_mirror.tscn",
+	"lancer":  "res://scenes/lancer_mirror.tscn",
+}
+
 func _build_mirrored_unit(entry: Dictionary) -> CharacterBody2D:
 	var unit_type  : String = str(entry.get("unit_type", ""))
-	var scene_path : String = "res://scenes/%s.tscn" % unit_type
+	var scene_path : String = MIRROR_SCENE_PATHS.get(unit_type, "res://scenes/%s.tscn" % unit_type)
 	if not ResourceLoader.exists(scene_path):
 		push_warning("Mirrored defense: unknown unit_type '%s'" % unit_type)
 		return null
