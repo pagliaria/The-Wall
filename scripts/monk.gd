@@ -70,7 +70,6 @@ func _get_cast_range() -> float:
 func _process_state(delta: float) -> void:
 	match _state:
 		State.IDLE:
-			_apply_separation(delta)
 			_idle_heal_timer -= delta
 			if _idle_heal_timer <= 0.0:
 				_idle_heal_timer = IDLE_HEAL_SCAN_RATE

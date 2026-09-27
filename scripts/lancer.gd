@@ -55,7 +55,6 @@ func _get_melee_range() -> float:
 func _process_state(delta: float) -> void:
 	match _state:
 		State.IDLE:
-			_apply_separation(delta)
 			if _state_timer >= _state_dur:
 				_enter_state(State.IDLE if has_moved else _pick_next_wander_state())
 		State.MOVE:

@@ -87,7 +87,6 @@ func _process_state(delta: float) -> void:
 			if _nav_agent.is_navigation_finished():
 				_enter_state(State.IDLE)
 		State.IDLE:
-			_apply_separation(delta)
 			if not has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.GATHER:
@@ -180,7 +179,6 @@ func _do_nav_move_to_body(delta: float, target_body: Node, target_pos: Vector2, 
 		if target_body != null and _is_target(collider, target_body):
 			_enter_state(on_arrive)
 			return
-	_apply_separation(delta)
 
 func _is_target(collider: Node, target: Node) -> bool:
 	if collider == null or target == null:

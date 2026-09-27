@@ -266,6 +266,12 @@ func _get_base_max_hp() -> int:
 func _physics_process(delta: float) -> void:
 	_state_timer += delta
 	_process_state(delta)
+	# Single source of truth for the anti-stack nudge: runs every physics frame
+	# regardless of state (idle, chasing, parked in combat, healing, shooting -
+	# all of it), so no state can silently forget to call it. Units still walk
+	# through each other while actively pathing; this just keeps them from fully
+	# overlapping once several converge on the same spot.
+	_apply_separation(delta)
 
 func _process_state(_delta: float) -> void:
 	pass
@@ -273,13 +279,11 @@ func _process_state(_delta: float) -> void:
 func _do_nav_move(delta: float, move_speed: float) -> void:
 	has_moved = true
 	if _nav_agent.is_navigation_finished():
-		_apply_separation(delta)
 		return
 	var next_point := _nav_agent.get_next_path_position()
 	var move_dir   := (next_point - position).normalized()
 	_sprite.flip_h  = move_dir.x < 0
 	move_and_collide(move_dir * move_speed * delta)
-	_apply_separation(delta)
 
 func _apply_separation(delta: float) -> void:
 	var parent := get_parent()

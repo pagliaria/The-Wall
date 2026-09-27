@@ -65,5 +65,11 @@ func _on_body_entered(body: Node) -> void:
 		return
 	if body.has_method("take_damage"):
 		CombatAudio.play("arrow_hit")
-		body.take_damage(damage, _attacker)
+		# The archer that fired this can die mid-flight (killed by something else
+		# while the arrow is still in the air) — _attacker would then point at a
+		# freed Node, and take_damage()'s typed Node param throws on a freed
+		# reference instead of just failing an is_instance_valid() check. Land the
+		# hit either way, just credit no one for it if the shooter's gone.
+		var attacker : Node = _attacker if is_instance_valid(_attacker) else null
+		body.take_damage(damage, attacker)
 		queue_free()

@@ -62,7 +62,6 @@ func _get_attack_range() -> float:
 func _process_state(delta: float) -> void:
 	match _state:
 		State.IDLE:
-			_apply_separation(delta)
 			if not has_moved and _state_timer >= _state_dur:
 				_enter_state(_pick_next_wander_state())
 		State.MOVE:

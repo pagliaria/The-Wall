@@ -137,6 +137,10 @@ func _physics_process(delta: float) -> void:
 	if _state == State.DEAD:
 		return
 	_state_timer += delta
+	# Single source of truth for the anti-stack nudge - runs every physics frame
+	# no matter the state (idle, chasing, parked attacking), so it can't get
+	# silently skipped the way it was while parked in ATTACKING before.
+	_apply_separation(delta)
 	# Hired manual movement
 	if hired and _hired_moving and _state == State.IDLE:
 		_nav.target_position = _hired_move_target
@@ -148,8 +152,6 @@ func _physics_process(delta: float) -> void:
 				_sprite.play("idle")
 		return
 	match _state:
-		State.IDLE:
-			_apply_separation(delta)
 		State.BATTLE:
 			_do_battle(delta)
 		State.ATTACKING:
@@ -287,7 +289,6 @@ func update_hired_target(enemies: Array) -> void:
 
 func _do_nav_move(delta: float) -> void:
 	if _state != State.BATTLE and _nav.is_navigation_finished():
-		_apply_separation(delta)
 		return
 	var next : Vector2 = _nav.get_next_path_position()
 	var dir  : Vector2
@@ -299,7 +300,6 @@ func _do_nav_move(delta: float) -> void:
 		return
 	_sprite.flip_h = dir.x < 0
 	move_and_collide(dir * move_speed * delta)
-	_apply_separation(delta)
 
 func _apply_separation(delta: float) -> void:
 	var parent := get_parent()
