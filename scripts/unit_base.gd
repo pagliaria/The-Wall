@@ -8,6 +8,11 @@ signal leveled_up(new_level: int)
 var is_selected : bool   = false
 var has_moved   : bool   = false
 var faction     : String = "player"
+# Mirrors enemy_base.gd's flag. wave_manager.register_enemy() sets this true
+# for every hostile spawn (real enemy or mirrored defender) to stop mid-battle
+# reinforcements from dropping loot; a mirrored defender is cleared right back
+# off since it should drop chests like any real enemy would.
+var summoned    : bool   = false
 
 func set_selected(value: bool) -> void:
 	if is_selected == value:
@@ -491,6 +496,7 @@ func die() -> void:
 	queue_free()
 
 func _on_die() -> void:
+	var drop_pos : Vector2 = global_position
 	var anim_name := "death"
 	if _sprite.sprite_frames.has_animation(anim_name):
 		CombatAudio.play("death")
@@ -499,6 +505,79 @@ func _on_die() -> void:
 		var fps            := _sprite.sprite_frames.get_animation_speed(anim_name)
 		var total_duration := frames / fps
 		await get_tree().create_timer(total_duration).timeout
-		die()
-	else:
-		die()
+	# Only a mirrored hostile copy (faction == "enemy") drops loot — a real
+	# player unit dying must never hand the player a free chest. See the
+	# `summoned` comment above for why a mirrored defender still qualifies.
+	if faction == "enemy" and not summoned:
+		_try_drop_chest(drop_pos)
+	die()
+
+# =========================================================================== #
+#  Chest drops — mirrors enemy_base.gd's _try_drop_chest / _find_clear_chest_spot
+#  so a mirrored hostile copy of a player unit type drops loot the same way a
+#  real PvE enemy does. Kept as its own copy rather than a shared helper,
+#  matching how _apply_separation is already duplicated between the two base
+#  scripts in this project.
+# =========================================================================== #
+
+const CHEST_SCENE        : PackedScene = preload("res://scenes/Chest.tscn")
+const ChestScript        : GDScript    = preload("res://scripts/chest.gd")
+const TerrainScript      : GDScript    = preload("res://scripts/terrain.gd")
+const DROP_CHANCE_COMMON : float       = 0.20
+const DROP_CHANCE_RARE   : float       = 0.08
+const DROP_CHANCE_EPIC   : float       = 0.03
+
+func _try_drop_chest(drop_pos: Vector2) -> void:
+	var rng        := RandomNumberGenerator.new()
+	rng.randomize()
+	var roll       : float = rng.randf()
+	var chest_type : int   = -1
+	if roll < DROP_CHANCE_EPIC:
+		chest_type = 2
+	elif roll < DROP_CHANCE_RARE:
+		chest_type = 1
+	elif roll < DROP_CHANCE_COMMON:
+		chest_type = 0
+	if chest_type == -1:
+		return
+	var chest_pos : Vector2 = _find_clear_chest_spot(drop_pos, rng)
+	var chest : Node2D = CHEST_SCENE.instantiate()
+	chest.position = chest_pos
+	chest.z_index   = 2
+	chest.call("setup", chest_type)
+	get_tree().root.add_child(chest)
+	UiAudio.play("chest_drop")
+
+func _find_clear_chest_spot(start_pos: Vector2, rng: RandomNumberGenerator) -> Vector2:
+	var min_spacing : float = ChestScript.CHEST_MIN_SPACING
+	var map_pad     : float = 32.0
+	var map_min     : Vector2 = Vector2(map_pad, map_pad)
+	var map_max     : Vector2 = Vector2(
+		TerrainScript.MAP_COLS * TerrainScript.TILE_SIZE - map_pad,
+		TerrainScript.MAP_ROWS * TerrainScript.TILE_SIZE - map_pad
+	)
+	var occupied : Array = []
+	for existing in get_tree().get_nodes_in_group("chests"):
+		if is_instance_valid(existing):
+			occupied.append(existing.position)
+	const MAX_ATTEMPTS : int = 16
+	var candidate : Vector2 = Vector2(
+		clampf(start_pos.x, map_min.x, map_max.x),
+		clampf(start_pos.y, map_min.y, map_max.y)
+	)
+	for attempt in MAX_ATTEMPTS:
+		var clear : bool = true
+		for p in occupied:
+			if candidate.distance_to(p) < min_spacing:
+				clear = false
+				break
+		if clear:
+			return candidate
+		var extra_radius : float = min_spacing * 0.65 * float(attempt + 1)
+		var jitter_angle  : float = rng.randf() * TAU
+		var probe : Vector2 = start_pos + Vector2(cos(jitter_angle), sin(jitter_angle)) * extra_radius
+		candidate = Vector2(
+			clampf(probe.x, map_min.x, map_max.x),
+			clampf(probe.y, map_min.y, map_max.y)
+		)
+	return candidate

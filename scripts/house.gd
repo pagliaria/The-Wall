@@ -67,6 +67,15 @@ const HIRE_ROSTER : Array = [
 		"cost":  {"gold": 15, "meat": 10},
 		"max":   1,
 	},
+	{
+		"id":    "pengu_boss",
+		"label": "Pengu Boss",
+		"scene": "res://scenes/enemy_pengu_boss.tscn",
+		"icon":  "res://assets/Enemies/pengu_boss/pengu_idle.png",
+		"icon_frame": Rect2(0, 0, 128, 128),
+		"cost":  {"gold": 15, "meat": 10},
+		"max":   1,
+	},
 ]
 
 var units_layer  : Node2D = null

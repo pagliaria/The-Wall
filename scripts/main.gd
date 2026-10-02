@@ -344,6 +344,15 @@ func _rebake_nav() -> void:
 	poly.parsed_geometry_type = NavigationPolygon.PARSED_GEOMETRY_STATIC_COLLIDERS
 	poly.source_geometry_mode = NavigationPolygon.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
 	poly.agent_radius = 32.0
+	# Training dummies (collision_layer 16, see training_target_dummy.tscn) are
+	# thin posts meant to be walked right up to and swung at, not obstacles to
+	# route around like a building. agent_radius's 32-unit inflation plus the
+	# dummy's own footprint pushes the nearest reachable point past melee range,
+	# so warriors/lancers can approach but never actually land a hit. Excluding
+	# that one layer from the bake leaves buildings/walls (layer 1, untouched)
+	# blocking pathing exactly as before.
+	const DUMMY_COLLISION_LAYER : int = 16
+	poly.parsed_collision_mask  = 4294967295 - DUMMY_COLLISION_LAYER
 	var source_geometry := NavigationMeshSourceGeometryData2D.new()
 	NavigationServer2D.parse_source_geometry_data(poly, source_geometry, self)
 	NavigationServer2D.bake_from_source_geometry_data(poly, source_geometry, _on_nav_bake_complete)

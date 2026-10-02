@@ -866,6 +866,12 @@ func spawn_mirrored_defense(raw_snapshot: Dictionary) -> int:
 		if unit != null:
 			register_enemy(unit)
 			spawned += 1
+			# Same reasoning as the hired-unit loop below: register_enemy() flags
+			# every summon as "summoned" to stop mid-battle reinforcements from
+			# dropping loot, but a mirrored defender is a real opposing player's
+			# unit, not a throwaway summon — clear the flag so unit_base.gd's
+			# death handling actually rolls a chest for it.
+			unit.set("summoned", false)
 	for entry : Dictionary in snapshot["hired_units"]:
 		var unit : CharacterBody2D = _build_mirrored_hired_unit(entry)
 		if unit != null:
