@@ -1,0 +1,62 @@
+[gd_scene load_steps=8 format=3 uid="uid://b0lvoqh4q0age"]
+
+[ext_resource type="Script" uid="uid://bgnollbonescrpt" path="res://scripts/gnoll_bone.gd" id="1_bone"]
+[ext_resource type="Texture2D" uid="uid://1npi6olpsmk5" path="res://assets/Enemies/Gnoll/Gnoll_Bone.png" id="2_bone_tex"]
+
+[sub_resource type="AtlasTexture" id="bone_0"]
+atlas = ExtResource("2_bone_tex")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="bone_1"]
+atlas = ExtResource("2_bone_tex")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="bone_2"]
+atlas = ExtResource("2_bone_tex")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="bone_3"]
+atlas = ExtResource("2_bone_tex")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="SpriteFrames" id="bone_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("bone_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("bone_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("bone_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("bone_3")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 14.0
+}]
+
+[sub_resource type="CircleShape2D" id="bone_shape"]
+radius = 10.0
+
+[node name="GnollBone" type="Area2D"]
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("1_bone")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("bone_frames")
+animation = &"spin"
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("bone_shape")
+
+[node name="Lifetime" type="Timer" parent="."]
+wait_time = 3.0
+one_shot = true
+autostart = true
+
+[connection signal="timeout" from="Lifetime" to="." method="_on_lifetime_timeout"]

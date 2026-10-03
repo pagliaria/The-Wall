@@ -59,6 +59,15 @@ const HIRE_ROSTER : Array = [
 		"max":   4,
 	},
 	{
+		"id":    "gnoll",
+		"label": "Gnoll",
+		"scene": "res://scenes/enemy_gnoll.tscn",
+		"icon":  "res://assets/Enemies/Gnoll/Gnoll_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 4, "meat": 3},
+		"max":   3,
+	},
+	{
 		"id":    "bear",
 		"label": "Bear",
 		"scene": "res://scenes/enemy_bear.tscn",
