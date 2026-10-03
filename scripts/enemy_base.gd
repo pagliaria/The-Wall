@@ -383,6 +383,47 @@ func flash_red() -> void:
 		_sprite.modulate = original_mod
 
 # =========================================================================== #
+#  Poison (DoT) — mirrors unit_base.gd's apply_poison so Bumblebee's sting
+#  works identically whether it hit a real player unit or a hired unit here.
+#  Ticks damage via take_damage() (blood/numbers/death/XP all just work) and
+#  tints the sprite green for the duration. Unlike unit_base.gd's flash_red
+#  (which captures/restores whatever modulate is current), this file's
+#  flash_red above always reverts to the stored original_mod member, so the
+#  green tint has to live there too or a hit-flash mid-poison would clear it.
+# =========================================================================== #
+
+const POISON_TINT : Color = Color(0.55, 1.0, 0.4)
+
+var _poison_active     : bool = false
+var _poison_ticks_left : int  = 0
+
+func apply_poison(damage_per_tick: int, tick_interval: float, duration: float, source: Node = null) -> void:
+	if hp <= 0 or _state == State.DEAD:
+		return
+	# Re-stung before the last dose wears off: refresh to the longer remaining
+	# duration rather than starting a second concurrent tick loop (which would
+	# double up damage each tick).
+	_poison_ticks_left = maxi(_poison_ticks_left, int(round(duration / tick_interval)))
+	if _poison_active:
+		return
+	_poison_active   = true
+	original_mod     = POISON_TINT
+	_sprite.modulate = POISON_TINT
+	_run_poison(tick_interval, damage_per_tick, source)
+
+func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> void:
+	while _poison_ticks_left > 0:
+		await get_tree().create_timer(tick_interval).timeout
+		if not is_instance_valid(self) or hp <= 0:
+			return
+		_poison_ticks_left -= 1
+		take_damage(damage_per_tick, source)
+	_poison_active = false
+	original_mod    = Color.WHITE
+	if is_instance_valid(_sprite):
+		_sprite.modulate = Color.WHITE
+
+# =========================================================================== #
 #  Chest drops
 # =========================================================================== #
 

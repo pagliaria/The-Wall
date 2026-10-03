@@ -50,6 +50,15 @@ const HIRE_ROSTER : Array = [
 		"max":   3,
 	},
 	{
+		"id":    "bumblebee",
+		"label": "Bumblebee",
+		"scene": "res://scenes/enemy_bumblebee.tscn",
+		"icon":  "res://assets/Enemies/Bumblebee/Bumblebee_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 3, "meat": 2},
+		"max":   4,
+	},
+	{
 		"id":    "bear",
 		"label": "Bear",
 		"scene": "res://scenes/enemy_bear.tscn",

@@ -477,6 +477,44 @@ func flash_red() -> void:
 	if _sprite.modulate == Color.RED:
 		_sprite.modulate = Color.WHITE
 
+# =========================================================================== #
+#  Poison (DoT) — e.g. Bumblebee's sting. Ticks damage over time via the
+#  normal take_damage() path (so blood/numbers/death/XP all just work) and
+#  tints the sprite green for the duration. Coexists with flash_red() above
+#  because that function captures whatever modulate is current and restores
+#  to it afterward, rather than assuming white — so a red hit-flash mid-poison
+#  correctly fades back to green instead of clearing the tint early.
+# =========================================================================== #
+
+const POISON_TINT : Color = Color(0.55, 1.0, 0.4)
+
+var _poison_active     : bool = false
+var _poison_ticks_left : int  = 0
+
+func apply_poison(damage_per_tick: int, tick_interval: float, duration: float, source: Node = null) -> void:
+	if hp <= 0:
+		return
+	# Re-stung before the last dose wears off: refresh to the longer remaining
+	# duration rather than starting a second concurrent tick loop (which would
+	# double up damage each tick).
+	_poison_ticks_left = maxi(_poison_ticks_left, int(round(duration / tick_interval)))
+	if _poison_active:
+		return
+	_poison_active   = true
+	_sprite.modulate = POISON_TINT
+	_run_poison(tick_interval, damage_per_tick, source)
+
+func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> void:
+	while _poison_ticks_left > 0:
+		await get_tree().create_timer(tick_interval).timeout
+		if not is_instance_valid(self) or hp <= 0:
+			return
+		_poison_ticks_left -= 1
+		take_damage(damage_per_tick, source)
+	_poison_active = false
+	if is_instance_valid(_sprite):
+		_sprite.modulate = Color.WHITE
+
 func receive_heal(amount: int, healer: Node = null) -> void:
 	hp = mini(hp + amount, max_hp)
 	_update_hp_bar()
