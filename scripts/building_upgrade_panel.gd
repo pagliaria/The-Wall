@@ -28,15 +28,15 @@ const UPGRADE_LABELS := {
 @onready var _title_label: Label = $Panel/Margin/VBox/Header/Title
 @onready var _status_label: Label = $Panel/Margin/VBox/Header/Status
 @onready var _buttons := {
-	"attack_damage": $Panel/Margin/VBox/Grid/AttackDamageButton,
-	"attack_speed": $Panel/Margin/VBox/Grid/AttackSpeedButton,
-	"move_speed": $Panel/Margin/VBox/Grid/MoveSpeedButton,
-	"hp": $Panel/Margin/VBox/Grid/HpButton,
-	"unit_cap": $Panel/Margin/VBox/Grid/UnitCapButton,
-	"production_speed": $Panel/Margin/VBox/Grid/ProductionSpeedButton,
-	"range": $Panel/Margin/VBox/Grid/RangeButton,
-	"gather_speed": $Panel/Margin/VBox/Grid/GatherSpeedButton,
-	"turn_in_bonus": $Panel/Margin/VBox/Grid/TurnInBonusButton,
+	"attack_damage": $Panel/Margin/VBox/Scroll/Grid/AttackDamageButton,
+	"attack_speed": $Panel/Margin/VBox/Scroll/Grid/AttackSpeedButton,
+	"move_speed": $Panel/Margin/VBox/Scroll/Grid/MoveSpeedButton,
+	"hp": $Panel/Margin/VBox/Scroll/Grid/HpButton,
+	"unit_cap": $Panel/Margin/VBox/Scroll/Grid/UnitCapButton,
+	"production_speed": $Panel/Margin/VBox/Scroll/Grid/ProductionSpeedButton,
+	"range": $Panel/Margin/VBox/Scroll/Grid/RangeButton,
+	"gather_speed": $Panel/Margin/VBox/Scroll/Grid/GatherSpeedButton,
+	"turn_in_bonus": $Panel/Margin/VBox/Scroll/Grid/TurnInBonusButton,
 }
 
 var _tracked_building: Node = null
@@ -122,11 +122,14 @@ func _show_hire_ui() -> void:
 	if ctrl == null or not ctrl.has_method("get_hire_roster"):
 		return
 	var roster : Array = ctrl.get_hire_roster()
-	var grid : GridContainer = $Panel/Margin/VBox/Grid
+	var grid : GridContainer = $Panel/Margin/VBox/Scroll/Grid
 	grid.columns = 4
-	# Widen panel for hire cards
+	# Widen/heighten panel for hire cards — tall enough for ~2 rows before the
+	# Scroll container (added once the roster grew past one row's worth of
+	# buttons) takes over for anything beyond that, instead of spilling past
+	# the panel's edge.
 	_panel.custom_minimum_size = Vector2(560, 0)
-	_panel.offset_top = -420.0
+	_panel.offset_top = -480.0
 	if _hire_buttons.size() != roster.size():
 		for b in _hire_buttons:
 			if is_instance_valid(b):
@@ -208,7 +211,7 @@ func _show_hire_ui() -> void:
 		btn.show()
 
 func _hide_hire_ui() -> void:
-	($Panel/Margin/VBox/Grid as GridContainer).columns = 2
+	($Panel/Margin/VBox/Scroll/Grid as GridContainer).columns = 2
 	_panel.custom_minimum_size = Vector2(0, 0)
 	_panel.offset_top = -360.0
 	for b in _hire_buttons:

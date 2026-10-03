@@ -63,11 +63,12 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_boar.tscn",     "count": 3},
 		{"path": "res://scenes/enemy_warrior.tscn",  "count": 4},
 	],
-	# ── Wave 6 — Post-boss relief, witch doctors teased ───────────────────
+	# ── Wave 6 — Post-boss relief, witch doctors teased, bear introduced ──
 	[
 		{"path": "res://scenes/enemy_slime.tscn",       "count": 6},
 		{"path": "res://scenes/enemy_badger.tscn",       "count": 5},
 		{"path": "res://scenes/enemy_witch_doctor.tscn", "count": 1},
+		{"path": "res://scenes/enemy_bear.tscn",         "count": 2},
 	],
 	# ── Wave 7 — Skeleton swarms begin ────────────────────────────────────
 	[
@@ -75,12 +76,13 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_warrior.tscn",     "count": 5},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 2},
 	],
-	# ── Wave 8 — Boars and badgers combined ───────────────────────────────
+	# ── Wave 8 — Boars, badgers, and bears combined ───────────────────────
 	[
 		{"path": "res://scenes/enemy_boar.tscn",        "count": 4},
 		{"path": "res://scenes/enemy_badger.tscn",       "count": 6},
 		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 8},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 2},
+		{"path": "res://scenes/enemy_bear.tscn",        "count": 3},
 	],
 	# ── Wave 9 — Everything before boss 2, full chaos ─────────────────────
 	[
@@ -89,6 +91,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_boar.tscn",        "count": 4},
 		{"path": "res://scenes/enemy_badger.tscn",      "count": 5},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
+		{"path": "res://scenes/enemy_bear.tscn",        "count": 3},
 	],
 	# ── Wave 10 — BOSS: Witch Doctor Boss + skeleton army ─────────────────
 	[
@@ -102,6 +105,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_boar.tscn",        "count": 5},
 		{"path": "res://scenes/enemy_badger.tscn",      "count": 6},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 2},
+		{"path": "res://scenes/enemy_bear.tscn",        "count": 3},
 	],
 	# ── Wave 12 — Skeleton flood ───────────────────────────────────────────
 	[
@@ -117,6 +121,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_boar.tscn",        "count": 5},
 		{"path": "res://scenes/enemy_badger.tscn",      "count": 6},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
+		{"path": "res://scenes/enemy_bear.tscn",        "count": 4},
 	],
 	# ── Wave 14 — Final gauntlet before pengu ─────────────────────────────
 	[
@@ -125,6 +130,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_boar.tscn",        "count": 6},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
 		{"path": "res://scenes/enemy_badger.tscn",      "count": 6},
+		{"path": "res://scenes/enemy_bear.tscn",        "count": 4},
 	],
 	# ── Wave 15 — FINAL BOSS: Pengu ───────────────────────────────────────
 	[
@@ -622,6 +628,7 @@ const FORMATION_JITTER : float = 60.0   # random spread within tier
 const FORMATION_TIERS : Dictionary = {
 	"enemy_warrior":     FORMATION_FRONT,
 	"enemy_boar":        FORMATION_FRONT,
+	"enemy_bear":        FORMATION_FRONT,
 	"enemy_skeleton":    FORMATION_MID,
 	"enemy_slime":       FORMATION_MID,
 	"enemy_badger":      FORMATION_BACK,

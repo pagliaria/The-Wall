@@ -59,54 +59,59 @@ theme_override_colors/font_color = Color(0.55, 0.5, 0.42, 1)
 theme_override_font_sizes/font_size = 12
 text = "Ready"
 
-[node name="Grid" type="GridContainer" parent="Panel/Margin/VBox"]
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Grid" type="GridContainer" parent="Panel/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 2
 
-[node name="AttackDamageButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="AttackDamageButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "DMG"
 
-[node name="AttackSpeedButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="AttackSpeedButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "AS"
 
-[node name="MoveSpeedButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="MoveSpeedButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "MS"
 
-[node name="HpButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="HpButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "HP"
 
-[node name="UnitCapButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="UnitCapButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "CAP"
 
-[node name="ProductionSpeedButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="ProductionSpeedButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "SPD"
 
-[node name="RangeButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="RangeButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "RNG"
 
-[node name="GatherSpeedButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="GatherSpeedButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "GTH"
 
-[node name="TurnInBonusButton" type="Button" parent="Panel/Margin/VBox/Grid"]
+[node name="TurnInBonusButton" type="Button" parent="Panel/Margin/VBox/Scroll/Grid"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "BONUS"

@@ -591,9 +591,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
-				if event.pressed: _zoom_toward_mouse(ZOOM_STEP)
+				if event.pressed and not _mouse_over_ui(): _zoom_toward_mouse(ZOOM_STEP)
 			MOUSE_BUTTON_WHEEL_DOWN:
-				if event.pressed: _zoom_toward_mouse(-ZOOM_STEP)
+				if event.pressed and not _mouse_over_ui(): _zoom_toward_mouse(-ZOOM_STEP)
 			MOUSE_BUTTON_MIDDLE:
 				if event.pressed:
 					_panning         = true
@@ -605,6 +605,14 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_F11:
 			_toggle_fullscreen()
+
+# Any Control currently under the mouse (hire panel's scroll list, settings
+# screen, HUD buttons, etc.) should keep the scroll wheel to itself instead of
+# also zooming the game camera underneath it. main.gd's _input() runs ahead of
+# Godot's own GUI input dispatch, so without this check both fire on every
+# wheel tick no matter what's on top.
+func _mouse_over_ui() -> bool:
+	return get_viewport().gui_get_hovered_control() != null
 
 func _zoom_toward_mouse(step: float) -> void:
 	var old_zoom := camera.zoom.x

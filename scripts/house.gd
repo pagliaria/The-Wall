@@ -50,6 +50,15 @@ const HIRE_ROSTER : Array = [
 		"max":   3,
 	},
 	{
+		"id":    "bear",
+		"label": "Bear",
+		"scene": "res://scenes/enemy_bear.tscn",
+		"icon":  "res://assets/Enemies/Bear/Bear_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 5, "meat": 5},
+		"max":   2,
+	},
+	{
 		"id":    "witch_doctor",
 		"label": "Witch Doctor",
 		"scene": "res://scenes/enemy_witch_doctor.tscn",
