@@ -238,6 +238,7 @@ var home_node     : Node    = null
 @onready var _hp_bar           : Control           = $HpBar
 @onready var _hp_fill          : TextureRect       = $HpBar/health
 @onready var wave_manager := get_tree().current_scene.get_node_or_null("WaveManager")
+var _status_bar : StatusBar = null
 
 const LEVEL_BADGE_SCENE := preload("res://scenes/level_badge.tscn")
 var _badge : Node2D = null
@@ -246,6 +247,7 @@ const HP_FILL_BLUE : Texture2D = preload("res://assets/UI Elements/UI Elements/B
 
 func _ready() -> void:
 	_rng.randomize()
+	_ensure_status_bar()
 	_spawn_pos = position
 	_badge     = LEVEL_BADGE_SCENE.instantiate()
 	add_child(_badge)
@@ -261,6 +263,13 @@ func _ready() -> void:
 	if faction == "player":
 		_hp_fill.texture = HP_FILL_BLUE
 	call_deferred("_on_unit_ready")
+
+func _ensure_status_bar() -> void:
+	if is_instance_valid(_status_bar):
+		return
+	_status_bar = StatusBar.new()
+	_status_bar.position = Vector2(8.0, -38.0)
+	_hp_bar.add_child(_status_bar)
 
 func _on_unit_ready() -> void:
 	pass
@@ -480,10 +489,8 @@ func flash_red() -> void:
 # =========================================================================== #
 #  Poison (DoT) — e.g. Bumblebee's sting. Ticks damage over time via the
 #  normal take_damage() path (so blood/numbers/death/XP all just work) and
-#  tints the sprite green for the duration. Coexists with flash_red() above
-#  because that function captures whatever modulate is current and restores
-#  to it afterward, rather than assuming white — so a red hit-flash mid-poison
-#  correctly fades back to green instead of clearing the tint early.
+#  tints the sprite green for the duration. Poison takes tint priority while
+#  wet is also active; when it ends, the wet tint is restored automatically.
 # =========================================================================== #
 
 const POISON_TINT : Color = Color(0.55, 1.0, 0.4)
@@ -492,7 +499,7 @@ var _poison_active     : bool = false
 var _poison_ticks_left : int  = 0
 
 func apply_poison(damage_per_tick: int, tick_interval: float, duration: float, source: Node = null) -> void:
-	if hp <= 0:
+	if hp <= 0 or tick_interval <= 0.0 or duration <= 0.0:
 		return
 	# Re-stung before the last dose wears off: refresh to the longer remaining
 	# duration rather than starting a second concurrent tick loop (which would
@@ -527,8 +534,8 @@ func receive_heal(amount: int, healer: Node = null) -> void:
 
 # =========================================================================== #
 #  Wet (status) — water enemies (e.g. Harpoon Shark) apply this on hit. Slows
-#  movement and attack speed for the duration and shows a small bobbing water
-#  droplet above the target. speed_mult/attack_mult follow the same semantics
+#  movement and attack speed for the duration and shows a water badge in the
+#  shared status row above the health bar. speed_mult/attack_mult follow the same semantics
 #  as the existing building/item multipliers: speed_mult multiplies the move
 #  SPEED value directly (so <1.0 = slower), attack_mult multiplies the attack
 #  RATE value, which is a time duration (so >1.0 = slower, longer cooldown).
@@ -539,13 +546,11 @@ func receive_heal(amount: int, healer: Node = null) -> void:
 # =========================================================================== #
 
 const WET_TINT           : Color     = Color(0.6, 0.78, 1.0)
-const WET_DROPLET_SCENE  : PackedScene = preload("res://scenes/wet_droplet_fx.tscn")
 
 var _wet_active         : bool  = false
 var _wet_time_left      : float = 0.0
 var _status_speed_mult  : float = 1.0
 var _status_attack_mult : float = 1.0
-var _wet_droplet        : Node2D = null
 
 func get_status_speed_multiplier() -> float:
 	return _status_speed_mult
@@ -561,13 +566,13 @@ func apply_wet(speed_mult: float, attack_mult: float, duration: float) -> void:
 	_wet_time_left      = maxf(_wet_time_left, duration)
 	_status_speed_mult  = speed_mult
 	_status_attack_mult = attack_mult
-	if not is_instance_valid(_wet_droplet):
-		_wet_droplet = WET_DROPLET_SCENE.instantiate()
-		add_child(_wet_droplet)
+	_ensure_status_bar()
+	_status_bar.set_status(&"wet", WET_TINT)
+	_update_hp_bar()
 	if _wet_active:
 		return
 	_wet_active      = true
-	_sprite.modulate = WET_TINT
+	_refresh_status_tint()
 	_run_wet()
 
 func _run_wet() -> void:
@@ -580,17 +585,23 @@ func _run_wet() -> void:
 	_wet_active         = false
 	_status_speed_mult  = 1.0
 	_status_attack_mult = 1.0
-	if is_instance_valid(_sprite):
+	_status_bar.clear_status(&"wet")
+	_refresh_status_tint()
+	_update_hp_bar()
+
+func _refresh_status_tint() -> void:
+	if _poison_active:
+		_sprite.modulate = POISON_TINT
+	elif _wet_active:
+		_sprite.modulate = WET_TINT
+	else:
 		_sprite.modulate = Color.WHITE
-	if is_instance_valid(_wet_droplet):
-		_wet_droplet.queue_free()
-	_wet_droplet = null
 
 func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
 		return
 	var ratio        := clampf(float(hp) / float(max_hp), 0.0, 1.0)
-	_hp_bar.visible   = ratio < 1.0
+	_hp_bar.visible   = ratio < 1.0 or _status_bar.has_statuses()
 	_hp_fill.scale.x  = HP_FILL_FULL_SCALE_X * ratio
 
 func die() -> void:

@@ -61,6 +61,7 @@ var _chase_timer  : float = 0.0
 @onready var _hp_bar  : Control           = $HpBar
 @onready var _hp_fill : TextureRect       = $HpBar/health
 @onready var wave_manager := get_tree().current_scene.get_node_or_null("WaveManager")
+var _status_bar : StatusBar = null
 
 var original_mod := Color.WHITE
 
@@ -73,7 +74,15 @@ func _ready() -> void:
 	hp           = max_hp
 	_spawn_pos   = position
 	original_mod = _sprite.modulate
+	_ensure_status_bar()
 	call_deferred("_initial_state")
+
+func _ensure_status_bar() -> void:
+	if is_instance_valid(_status_bar):
+		return
+	_status_bar = StatusBar.new()
+	_status_bar.position = Vector2(8.0, -38.0)
+	_hp_bar.add_child(_status_bar)
 
 func _initial_state() -> void:
 	if _battle_ready:
@@ -348,7 +357,7 @@ func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
 		return
 	var ratio       : float = clampf(float(hp) / float(max_hp), 0.0, 1.0)
-	_hp_bar.visible  = ratio < 1.0
+	_hp_bar.visible  = ratio < 1.0 or _status_bar.has_statuses()
 	_hp_fill.scale.x = HP_FILL_FULL_SCALE_X * ratio
 
 # Nothing in solo mode ever heals a real enemy, so this never existed before —
@@ -365,19 +374,16 @@ func receive_heal(amount: int, healer: Node = null) -> void:
 # =========================================================================== #
 #  Wet (status) — mirrors unit_base.gd's apply_wet so Harpoon Shark's splash
 #  works identically on a real player unit or a hired unit here. See that
-#  file's comment for the speed_mult/attack_mult semantics. Like poison above,
-#  this file's flash_red always reverts to the stored original_mod member, so
-#  the tint has to live there too, same as poison does.
+#  file's comment for the speed_mult/attack_mult semantics. Its badge shares
+#  the common status row above the health bar with other active effects.
 # =========================================================================== #
 
 const WET_TINT          : Color      = Color(0.6, 0.78, 1.0)
-const WET_DROPLET_SCENE : PackedScene = preload("res://scenes/wet_droplet_fx.tscn")
 
 var _wet_active         : bool  = false
 var _wet_time_left      : float = 0.0
 var _status_speed_mult  : float = 1.0
 var _status_attack_mult : float = 1.0
-var _wet_droplet        : Node2D = null
 
 func get_status_speed_multiplier() -> float:
 	return _status_speed_mult
@@ -386,19 +392,18 @@ func get_status_attack_speed_multiplier() -> float:
 	return _status_attack_mult
 
 func apply_wet(speed_mult: float, attack_mult: float, duration: float) -> void:
-	if hp <= 0 or _state == State.DEAD:
+	if hp <= 0 or _state == State.DEAD or duration <= 0.0:
 		return
 	_wet_time_left      = maxf(_wet_time_left, duration)
 	_status_speed_mult  = speed_mult
 	_status_attack_mult = attack_mult
-	if not is_instance_valid(_wet_droplet):
-		_wet_droplet = WET_DROPLET_SCENE.instantiate()
-		add_child(_wet_droplet)
+	_ensure_status_bar()
+	_status_bar.set_status(&"wet", WET_TINT)
+	_update_hp_bar()
 	if _wet_active:
 		return
 	_wet_active      = true
-	original_mod     = WET_TINT
-	_sprite.modulate = WET_TINT
+	_refresh_status_tint()
 	_run_wet()
 
 func _run_wet() -> void:
@@ -411,12 +416,19 @@ func _run_wet() -> void:
 	_wet_active         = false
 	_status_speed_mult  = 1.0
 	_status_attack_mult = 1.0
-	original_mod        = Color.WHITE
+	_status_bar.clear_status(&"wet")
+	_refresh_status_tint()
+	_update_hp_bar()
+
+func _refresh_status_tint() -> void:
+	if _poison_active:
+		original_mod = POISON_TINT
+	elif _wet_active:
+		original_mod = WET_TINT
+	else:
+		original_mod = Color.WHITE
 	if is_instance_valid(_sprite):
-		_sprite.modulate = Color.WHITE
-	if is_instance_valid(_wet_droplet):
-		_wet_droplet.queue_free()
-	_wet_droplet = null
+		_sprite.modulate = original_mod
 
 func _on_enter_dead_state() -> void:
 	var drop_pos : Vector2 = position
@@ -442,10 +454,8 @@ func flash_red() -> void:
 #  Poison (DoT) — mirrors unit_base.gd's apply_poison so Bumblebee's sting
 #  works identically whether it hit a real player unit or a hired unit here.
 #  Ticks damage via take_damage() (blood/numbers/death/XP all just work) and
-#  tints the sprite green for the duration. Unlike unit_base.gd's flash_red
-#  (which captures/restores whatever modulate is current), this file's
-#  flash_red above always reverts to the stored original_mod member, so the
-#  green tint has to live there too or a hit-flash mid-poison would clear it.
+#  tints the sprite green for the duration. Poison takes tint priority while
+#  wet is also active; when it ends, the wet tint is restored automatically.
 # =========================================================================== #
 
 const POISON_TINT : Color = Color(0.55, 1.0, 0.4)
@@ -454,17 +464,19 @@ var _poison_active     : bool = false
 var _poison_ticks_left : int  = 0
 
 func apply_poison(damage_per_tick: int, tick_interval: float, duration: float, source: Node = null) -> void:
-	if hp <= 0 or _state == State.DEAD:
+	if hp <= 0 or _state == State.DEAD or tick_interval <= 0.0 or duration <= 0.0:
 		return
 	# Re-stung before the last dose wears off: refresh to the longer remaining
 	# duration rather than starting a second concurrent tick loop (which would
 	# double up damage each tick).
 	_poison_ticks_left = maxi(_poison_ticks_left, int(round(duration / tick_interval)))
+	_ensure_status_bar()
+	_status_bar.set_status(&"poison", POISON_TINT)
+	_update_hp_bar()
 	if _poison_active:
 		return
 	_poison_active   = true
-	original_mod     = POISON_TINT
-	_sprite.modulate = POISON_TINT
+	_refresh_status_tint()
 	_run_poison(tick_interval, damage_per_tick, source)
 
 func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> void:
@@ -478,9 +490,9 @@ func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> vo
 		var valid_source : Node = source if is_instance_valid(source) else null
 		take_damage(damage_per_tick, valid_source)
 	_poison_active = false
-	original_mod    = Color.WHITE
-	if is_instance_valid(_sprite):
-		_sprite.modulate = Color.WHITE
+	_status_bar.clear_status(&"poison")
+	_refresh_status_tint()
+	_update_hp_bar()
 
 # =========================================================================== #
 #  Chest drops
