@@ -50,7 +50,7 @@ func _get_attack_damage() -> int:
 	return BASE_ATTACK_DAMAGE + _level_damage_bonus + get_building_attack_damage_bonus()
 
 func _get_attack_rate() -> float:
-	return maxf(0.1, BASE_ATTACK_RATE + _level_attack_rate_bonus) * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier()
+	return maxf(0.1, BASE_ATTACK_RATE + _level_attack_rate_bonus) * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier() * get_status_attack_speed_multiplier()
 
 func _get_attack_range() -> float:
 	return SHOOT_RANGE + get_building_range_bonus()
@@ -212,7 +212,7 @@ func _pick_target(enemies: Array) -> void:
 	_target = best
 
 func _get_move_speed() -> float:
-	return MOVE_SPEED * get_building_move_speed_multiplier()
+	return MOVE_SPEED * get_building_move_speed_multiplier() * get_status_speed_multiplier()
 
 func _on_selected()   -> void: CombatAudio.play("female_ready")
 func _on_move_to()    -> void: CombatAudio.play("female_go"); _enter_state(State.MOVE_TO)

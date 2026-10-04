@@ -330,5 +330,5 @@ func _do_training(delta: float) -> void:
 	_cast_timer = _get_attack_rate()
 	_sprite.play("idle")
 
-func _get_move_speed()   -> float: return MOVE_SPEED * get_building_move_speed_multiplier() * get_item_move_speed_multiplier()
-func _get_attack_rate()  -> float: return CAST_RATE * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier()
+func _get_move_speed()   -> float: return MOVE_SPEED * get_building_move_speed_multiplier() * get_item_move_speed_multiplier() * get_status_speed_multiplier()
+func _get_attack_rate()  -> float: return CAST_RATE * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier() * get_status_attack_speed_multiplier()

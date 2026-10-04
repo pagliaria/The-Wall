@@ -170,7 +170,7 @@ func _physics_process(delta: float) -> void:
 			_attack_timer -= delta
 			if _attack_timer <= 0.0:
 				_is_striking  = true
-				_attack_timer = _get_attack_rate()
+				_attack_timer = _get_attack_rate() * _status_attack_mult
 				_do_attack_tick(delta)
 				_do_attack_hit()
 
@@ -188,7 +188,7 @@ func _enter_state(new_state: State) -> void:
 		State.BATTLE:
 			_on_enter_battle_state()
 		State.ATTACKING:
-			_attack_timer = _get_attack_rate()
+			_attack_timer = _get_attack_rate() * _status_attack_mult
 			_on_enter_attacking_state()
 		State.DEAD:
 			_on_enter_dead_state()
@@ -299,7 +299,7 @@ func _do_nav_move(delta: float) -> void:
 	if dir == Vector2.ZERO:
 		return
 	_sprite.flip_h = dir.x < 0
-	move_and_collide(dir * move_speed * delta)
+	move_and_collide(dir * move_speed * _status_speed_mult * delta)
 
 func _apply_separation(delta: float) -> void:
 	var parent := get_parent()
@@ -361,6 +361,62 @@ func receive_heal(amount: int, healer: Node = null) -> void:
 	CombatNumbers.show_number(global_position, amount, true)
 	if healer != null and is_instance_valid(healer) and healer.has_method("grant_xp"):
 		healer.grant_xp(int(amount * 2.0))
+
+# =========================================================================== #
+#  Wet (status) — mirrors unit_base.gd's apply_wet so Harpoon Shark's splash
+#  works identically on a real player unit or a hired unit here. See that
+#  file's comment for the speed_mult/attack_mult semantics. Like poison above,
+#  this file's flash_red always reverts to the stored original_mod member, so
+#  the tint has to live there too, same as poison does.
+# =========================================================================== #
+
+const WET_TINT          : Color      = Color(0.6, 0.78, 1.0)
+const WET_DROPLET_SCENE : PackedScene = preload("res://scenes/wet_droplet_fx.tscn")
+
+var _wet_active         : bool  = false
+var _wet_time_left      : float = 0.0
+var _status_speed_mult  : float = 1.0
+var _status_attack_mult : float = 1.0
+var _wet_droplet        : Node2D = null
+
+func get_status_speed_multiplier() -> float:
+	return _status_speed_mult
+
+func get_status_attack_speed_multiplier() -> float:
+	return _status_attack_mult
+
+func apply_wet(speed_mult: float, attack_mult: float, duration: float) -> void:
+	if hp <= 0 or _state == State.DEAD:
+		return
+	_wet_time_left      = maxf(_wet_time_left, duration)
+	_status_speed_mult  = speed_mult
+	_status_attack_mult = attack_mult
+	if not is_instance_valid(_wet_droplet):
+		_wet_droplet = WET_DROPLET_SCENE.instantiate()
+		add_child(_wet_droplet)
+	if _wet_active:
+		return
+	_wet_active      = true
+	original_mod     = WET_TINT
+	_sprite.modulate = WET_TINT
+	_run_wet()
+
+func _run_wet() -> void:
+	while _wet_time_left > 0.0:
+		var step : float = minf(_wet_time_left, 0.1)
+		await get_tree().create_timer(step).timeout
+		if not is_instance_valid(self):
+			return
+		_wet_time_left -= step
+	_wet_active         = false
+	_status_speed_mult  = 1.0
+	_status_attack_mult = 1.0
+	original_mod        = Color.WHITE
+	if is_instance_valid(_sprite):
+		_sprite.modulate = Color.WHITE
+	if is_instance_valid(_wet_droplet):
+		_wet_droplet.queue_free()
+	_wet_droplet = null
 
 func _on_enter_dead_state() -> void:
 	var drop_pos : Vector2 = position

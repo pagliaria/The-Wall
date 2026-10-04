@@ -312,7 +312,7 @@ func _on_die() -> void:
 	super._on_die()
 
 func _get_move_speed() -> float:
-	return MOVE_SPEED * get_building_move_speed_multiplier()
+	return MOVE_SPEED * get_building_move_speed_multiplier() * get_status_speed_multiplier()
 
 func _get_extract_time() -> float:
 	return _resource_node.extract_time * get_building_gather_speed_multiplier()

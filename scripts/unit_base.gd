@@ -522,6 +522,67 @@ func receive_heal(amount: int, healer: Node = null) -> void:
 	if healer != null and is_instance_valid(healer) and healer.has_method("grant_xp"):
 		healer.grant_xp(int(amount * XP_PER_HEAL))
 
+# =========================================================================== #
+#  Wet (status) — water enemies (e.g. Harpoon Shark) apply this on hit. Slows
+#  movement and attack speed for the duration and shows a small bobbing water
+#  droplet above the target. speed_mult/attack_mult follow the same semantics
+#  as the existing building/item multipliers: speed_mult multiplies the move
+#  SPEED value directly (so <1.0 = slower), attack_mult multiplies the attack
+#  RATE value, which is a time duration (so >1.0 = slower, longer cooldown).
+#  Each fighting subclass's _get_move_speed()/_get_attack_rate() multiplies in
+#  get_status_speed_multiplier()/get_status_attack_speed_multiplier() the same
+#  way it already multiplies in the building/item bonuses, so this needs no
+#  per-subclass combat-loop changes beyond that one extra factor.
+# =========================================================================== #
+
+const WET_TINT           : Color     = Color(0.6, 0.78, 1.0)
+const WET_DROPLET_SCENE  : PackedScene = preload("res://scenes/wet_droplet_fx.tscn")
+
+var _wet_active         : bool  = false
+var _wet_time_left      : float = 0.0
+var _status_speed_mult  : float = 1.0
+var _status_attack_mult : float = 1.0
+var _wet_droplet        : Node2D = null
+
+func get_status_speed_multiplier() -> float:
+	return _status_speed_mult
+
+func get_status_attack_speed_multiplier() -> float:
+	return _status_attack_mult
+
+func apply_wet(speed_mult: float, attack_mult: float, duration: float) -> void:
+	if hp <= 0:
+		return
+	# Re-splashed before the last dose wears off: refresh to the longer
+	# remaining duration rather than stacking a second expiry loop.
+	_wet_time_left      = maxf(_wet_time_left, duration)
+	_status_speed_mult  = speed_mult
+	_status_attack_mult = attack_mult
+	if not is_instance_valid(_wet_droplet):
+		_wet_droplet = WET_DROPLET_SCENE.instantiate()
+		add_child(_wet_droplet)
+	if _wet_active:
+		return
+	_wet_active      = true
+	_sprite.modulate = WET_TINT
+	_run_wet()
+
+func _run_wet() -> void:
+	while _wet_time_left > 0.0:
+		var step : float = minf(_wet_time_left, 0.1)
+		await get_tree().create_timer(step).timeout
+		if not is_instance_valid(self):
+			return
+		_wet_time_left -= step
+	_wet_active         = false
+	_status_speed_mult  = 1.0
+	_status_attack_mult = 1.0
+	if is_instance_valid(_sprite):
+		_sprite.modulate = Color.WHITE
+	if is_instance_valid(_wet_droplet):
+		_wet_droplet.queue_free()
+	_wet_droplet = null
+
 func _update_hp_bar() -> void:
 	if not is_instance_valid(_hp_bar):
 		return

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://de8puvf7eqhf1"]
+
+[ext_resource type="Script" uid="uid://bwetdropletscrpt" path="res://scripts/wet_droplet_fx.gd" id="1_droplet"]
+
+[node name="WetDropletFx" type="Node2D"]
+script = ExtResource("1_droplet")

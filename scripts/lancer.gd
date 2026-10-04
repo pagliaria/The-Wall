@@ -213,8 +213,8 @@ func _do_battle(delta: float) -> void:
 	_nav_agent.target_position = _target.position
 	_do_nav_move(delta, _get_move_speed())
 
-func _get_move_speed()  -> float: return MOVE_SPEED * get_building_move_speed_multiplier() * get_item_move_speed_multiplier()
-func _get_attack_rate() -> float: return ATTACK_RATE * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier()
+func _get_move_speed()  -> float: return MOVE_SPEED * get_building_move_speed_multiplier() * get_item_move_speed_multiplier() * get_status_speed_multiplier()
+func _get_attack_rate() -> float: return ATTACK_RATE * get_building_attack_speed_multiplier() * get_item_attack_speed_multiplier() * get_status_attack_speed_multiplier()
 
 func _on_selected()   -> void: CombatAudio.play("male_ready")
 func _on_move_to()    -> void: CombatAudio.play("male_go"); _enter_state(State.MOVE_TO)

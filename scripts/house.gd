@@ -50,6 +50,15 @@ const HIRE_ROSTER : Array = [
 		"max":   3,
 	},
 	{
+		"id":    "gnome",
+		"label": "Gnome",
+		"scene": "res://scenes/enemy_gnome.tscn",
+		"icon":  "res://assets/Enemies/Gnome/Gnome_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 2, "meat": 1},
+		"max":   5,
+	},
+	{
 		"id":    "bumblebee",
 		"label": "Bumblebee",
 		"scene": "res://scenes/enemy_bumblebee.tscn",
@@ -65,6 +74,15 @@ const HIRE_ROSTER : Array = [
 		"icon":  "res://assets/Enemies/Gnoll/Gnoll_Avatar.png",
 		"icon_frame": Rect2(0, 0, 0, 0),
 		"cost":  {"gold": 4, "meat": 3},
+		"max":   3,
+	},
+	{
+		"id":    "harpoon_shark",
+		"label": "Harpoon Shark",
+		"scene": "res://scenes/enemy_harpoon_shark.tscn",
+		"icon":  "res://assets/Enemies/Harpoon Shark/Harpoon Shark_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 5, "meat": 3},
 		"max":   3,
 	},
 	{
