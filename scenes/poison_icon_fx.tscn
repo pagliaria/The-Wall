@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4qym0fdjn345"]
+
+[ext_resource type="Script" uid="uid://bpoisoniconscrp" path="res://scripts/poison_icon_fx.gd" id="1_poison"]
+
+[node name="PoisonIconFx" type="Node2D"]
+script = ExtResource("1_poison")

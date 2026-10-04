@@ -9,7 +9,7 @@ const SPEED : float = 360.0
 # Harpoon.png's default facing angle in the art is unverified from here — if
 # it points the wrong way once previewed, adjust this one constant rather
 # than touching the rotation logic below.
-const SPRITE_FACING_OFFSET : float = 0.0
+const SPRITE_FACING_OFFSET : float = deg_to_rad(45.0)
 
 # "A little" slow, per the Wet status's own semantics (see apply_wet's
 # comment in unit_base.gd): speed_mult < 1.0 slows movement, attack_mult > 1.0

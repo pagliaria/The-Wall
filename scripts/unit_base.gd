@@ -510,7 +510,10 @@ func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> vo
 		if not is_instance_valid(self) or hp <= 0:
 			return
 		_poison_ticks_left -= 1
-		take_damage(damage_per_tick, source)
+		# The source may be freed while this timer waits. A stale object passed
+		# to take_damage's typed Node parameter errors before its validity check.
+		var valid_source : Node = source if is_instance_valid(source) else null
+		take_damage(damage_per_tick, valid_source)
 	_poison_active = false
 	if is_instance_valid(_sprite):
 		_sprite.modulate = Color.WHITE

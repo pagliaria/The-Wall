@@ -1,44 +1,12 @@
-[gd_scene load_steps=38 format=3 uid="uid://cidtfdx5p0xwe"]
+[gd_scene load_steps=46 format=3 uid="uid://tg28kx8v6sli"]
 
-[ext_resource type="Script" uid="uid://bharpoonsharkscr1" path="res://scripts/enemy_harpoon_shark.gd" id="1_shark"]
+[ext_resource type="Script" uid="uid://b1jtmvisa8yqf" path="res://scripts/enemy_harpoon_shark.gd" id="1_shark"]
 [ext_resource type="Texture2D" uid="uid://racjaomyo2xc" path="res://assets/Enemies/Harpoon Shark/Harpoon Shark_Throw.png" id="2_throw"]
 [ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="3_dust"]
 [ext_resource type="Texture2D" uid="uid://cyhvs6v0mv8ns" path="res://assets/Enemies/Harpoon Shark/Harpoon Shark_Idle.png" id="4_idle"]
 [ext_resource type="Texture2D" uid="uid://dth4wreyf6jr3" path="res://assets/Enemies/Harpoon Shark/Harpoon Shark_Run.png" id="5_run"]
 [ext_resource type="Texture2D" uid="uid://vvnniucpqaqc" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Base.png" id="6_barbase"]
 [ext_resource type="Texture2D" uid="uid://bmvu32pp07fxe" path="res://assets/UI Elements/UI Elements/Bars/SmallBar_Fill.png" id="7_barfill"]
-
-[sub_resource type="AtlasTexture" id="throw_0"]
-atlas = ExtResource("2_throw")
-region = Rect2(0, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="throw_1"]
-atlas = ExtResource("2_throw")
-region = Rect2(192, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="throw_2"]
-atlas = ExtResource("2_throw")
-region = Rect2(384, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="throw_3"]
-atlas = ExtResource("2_throw")
-region = Rect2(576, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="throw_4"]
-atlas = ExtResource("2_throw")
-region = Rect2(768, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="throw_5"]
-atlas = ExtResource("2_throw")
-region = Rect2(960, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="throw_6"]
-atlas = ExtResource("2_throw")
-region = Rect2(1152, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="throw_7"]
-atlas = ExtResource("2_throw")
-region = Rect2(1344, 0, 192, 192)
 
 [sub_resource type="AtlasTexture" id="dust_0"]
 atlas = ExtResource("3_dust")
@@ -135,6 +103,38 @@ region = Rect2(768, 0, 192, 192)
 [sub_resource type="AtlasTexture" id="run_5"]
 atlas = ExtResource("5_run")
 region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_0"]
+atlas = ExtResource("2_throw")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_1"]
+atlas = ExtResource("2_throw")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_2"]
+atlas = ExtResource("2_throw")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_3"]
+atlas = ExtResource("2_throw")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_4"]
+atlas = ExtResource("2_throw")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_5"]
+atlas = ExtResource("2_throw")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_6"]
+atlas = ExtResource("2_throw")
+region = Rect2(1152, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="throw_7"]
+atlas = ExtResource("2_throw")
+region = Rect2(1344, 0, 192, 192)
 
 [sub_resource type="SpriteFrames" id="shark_frames"]
 animations = [{
@@ -276,7 +276,6 @@ atlas = ExtResource("7_barfill")
 [node name="EnemyHarpoonShark" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_shark")
-attack_damage = 5
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("shark_frames")
