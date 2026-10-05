@@ -1,0 +1,89 @@
+[gd_scene load_steps=13 format=3 uid="uid://w2t8yfvhg1vw"]
+
+[ext_resource type="Script" uid="uid://boneshotanimfxs" path="res://scripts/one_shot_anim_fx.gd" id="1_fx"]
+[ext_resource type="Texture2D" uid="uid://f0cqlxd8twv1" path="res://assets/Enemies/Extra/Hex Shaman Transformation Spell/Hex Shaman_Explosion Spell.png" id="2_poof"]
+
+[sub_resource type="AtlasTexture" id="poof_0"]
+atlas = ExtResource("2_poof")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_1"]
+atlas = ExtResource("2_poof")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_2"]
+atlas = ExtResource("2_poof")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_3"]
+atlas = ExtResource("2_poof")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_4"]
+atlas = ExtResource("2_poof")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_5"]
+atlas = ExtResource("2_poof")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_6"]
+atlas = ExtResource("2_poof")
+region = Rect2(1152, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_7"]
+atlas = ExtResource("2_poof")
+region = Rect2(1344, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_8"]
+atlas = ExtResource("2_poof")
+region = Rect2(1536, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="poof_9"]
+atlas = ExtResource("2_poof")
+region = Rect2(1728, 0, 192, 192)
+
+[sub_resource type="SpriteFrames" id="poof_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("poof_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("poof_9")
+}],
+"loop": false,
+"name": &"default",
+"speed": 16.0
+}]
+
+[node name="PigPoofFx" type="Node2D"]
+script = ExtResource("1_fx")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("poof_frames")
+animation = &"default"

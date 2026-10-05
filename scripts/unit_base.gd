@@ -279,6 +279,13 @@ func _get_base_max_hp() -> int:
 
 func _physics_process(delta: float) -> void:
 	_state_timer += delta
+	# Transformed (Hex Shaman's curse) pre-empts everything below: no movement,
+	# no attacking, just a harmless pig standing there until it wears off. See
+	# apply_transform_pig()'s comment further down for why this lives here
+	# instead of touching every subclass's own state machine.
+	if _transformed:
+		_apply_separation(delta)
+		return
 	_process_state(delta)
 	# Single source of truth for the anti-stack nudge: runs every physics frame
 	# regardless of state (idle, chasing, parked in combat, healing, shooting -
@@ -505,10 +512,13 @@ func apply_poison(damage_per_tick: int, tick_interval: float, duration: float, s
 	# duration rather than starting a second concurrent tick loop (which would
 	# double up damage each tick).
 	_poison_ticks_left = maxi(_poison_ticks_left, int(round(duration / tick_interval)))
+	_ensure_status_bar()
+	_status_bar.set_status(&"poison", POISON_TINT)
+	_update_hp_bar()
 	if _poison_active:
 		return
-	_poison_active   = true
-	_sprite.modulate = POISON_TINT
+	_poison_active = true
+	_refresh_status_tint()
 	_run_poison(tick_interval, damage_per_tick, source)
 
 func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> void:
@@ -522,8 +532,9 @@ func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> vo
 		var valid_source : Node = source if is_instance_valid(source) else null
 		take_damage(damage_per_tick, valid_source)
 	_poison_active = false
-	if is_instance_valid(_sprite):
-		_sprite.modulate = Color.WHITE
+	_status_bar.clear_status(&"poison")
+	_refresh_status_tint()
+	_update_hp_bar()
 
 func receive_heal(amount: int, healer: Node = null) -> void:
 	hp = mini(hp + amount, max_hp)
@@ -531,6 +542,53 @@ func receive_heal(amount: int, healer: Node = null) -> void:
 	CombatNumbers.show_number(global_position, amount, true)
 	if healer != null and is_instance_valid(healer) and healer.has_method("grant_xp"):
 		healer.grant_xp(int(amount * XP_PER_HEAL))
+
+# =========================================================================== #
+#  Transform (Pig) — Hex Shaman's curse. A full lockdown rather than a tint:
+#  swaps the sprite to a harmless wandering pig and disables acting entirely
+#  for the duration. Intercepted once at the very top of _physics_process (see
+#  above) so it works no matter which subclass got hit, with zero per-unit-
+#  type changes needed — same reasoning as why the anti-stack nudge lives in
+#  one place instead of being copied into every state machine.
+# =========================================================================== #
+
+const PIG_FRAMES : SpriteFrames = preload("res://resources/pig_sprite_frames.tres")
+
+var _transformed           : bool        = false
+var _transform_time_left   : float       = 0.0
+var _pre_transform_frames  : SpriteFrames = null
+
+func is_transformed() -> bool:
+	return _transformed
+
+func apply_transform_pig(duration: float) -> void:
+	if hp <= 0 or duration <= 0.0:
+		return
+	# Re-cursed before the last one wears off: just extend it, same convention
+	# as every other timed status here.
+	_transform_time_left = maxf(_transform_time_left, duration)
+	if _transformed:
+		return
+	_transformed = true
+	_pre_transform_frames = _sprite.sprite_frames
+	_sprite.sprite_frames = PIG_FRAMES
+	_sprite.modulate      = Color.WHITE
+	if _sprite.sprite_frames.has_animation("idle"):
+		_sprite.play("idle")
+	_run_transform()
+
+func _run_transform() -> void:
+	while _transform_time_left > 0.0:
+		var step : float = minf(_transform_time_left, 0.1)
+		await get_tree().create_timer(step).timeout
+		if not is_instance_valid(self):
+			return
+		_transform_time_left -= step
+	_transformed = false
+	if is_instance_valid(_sprite) and is_instance_valid(_pre_transform_frames):
+		_sprite.sprite_frames = _pre_transform_frames
+		_refresh_status_tint()
+	_pre_transform_frames = null
 
 # =========================================================================== #
 #  Wet (status) — water enemies (e.g. Harpoon Shark) apply this on hit. Slows

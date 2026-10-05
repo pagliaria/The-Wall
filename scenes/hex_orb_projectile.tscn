@@ -1,0 +1,56 @@
+[gd_scene load_steps=8 format=3 uid="uid://dpfldcxqn02gy"]
+
+[ext_resource type="Script" uid="uid://b15k63bda7ogk" path="res://scripts/hex_orb_projectile.gd" id="1_orb"]
+[ext_resource type="Texture2D" uid="uid://doaig7w15hbm1" path="res://assets/Enemies/Hex Shaman/Hex Shaman_Projectile.png" id="2_orb_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hvqh7"]
+atlas = ExtResource("2_orb_tex")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6c1wp"]
+atlas = ExtResource("2_orb_tex")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pvqin"]
+atlas = ExtResource("2_orb_tex")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="orb_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hvqh7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6c1wp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvqin")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="orb_shape"]
+
+[node name="HexOrbProjectile" type="Area2D"]
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("1_orb")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("orb_frames")
+animation = &"spin"
+frame = 1
+frame_progress = 0.118147
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("orb_shape")
+
+[node name="Lifetime" type="Timer" parent="."]
+wait_time = 3.0
+one_shot = true
+autostart = true
+
+[connection signal="timeout" from="Lifetime" to="." method="_on_lifetime_timeout"]

@@ -150,6 +150,11 @@ func _physics_process(delta: float) -> void:
 	# no matter the state (idle, chasing, parked attacking), so it can't get
 	# silently skipped the way it was while parked in ATTACKING before.
 	_apply_separation(delta)
+	# Transformed (Hex Shaman's curse) pre-empts everything below: no movement,
+	# no attacking, just a harmless pig standing there until it wears off. See
+	# apply_transform_pig()'s comment further down for why this lives here.
+	if _transformed:
+		return
 	# Hired manual movement
 	if hired and _hired_moving and _state == State.IDLE:
 		_nav.target_position = _hired_move_target
@@ -370,6 +375,49 @@ func receive_heal(amount: int, healer: Node = null) -> void:
 	CombatNumbers.show_number(global_position, amount, true)
 	if healer != null and is_instance_valid(healer) and healer.has_method("grant_xp"):
 		healer.grant_xp(int(amount * 2.0))
+
+# =========================================================================== #
+#  Transform (Pig) — mirrors unit_base.gd's apply_transform_pig so Hex
+#  Shaman's curse works identically on a real player unit or a hired unit
+#  here. See that file's comment for why this is a full lockdown intercepted
+#  in _physics_process rather than a per-subclass change.
+# =========================================================================== #
+
+const PIG_FRAMES : SpriteFrames = preload("res://resources/pig_sprite_frames.tres")
+
+var _transformed          : bool        = false
+var _transform_time_left  : float       = 0.0
+var _pre_transform_frames : SpriteFrames = null
+
+func is_transformed() -> bool:
+	return _transformed
+
+func apply_transform_pig(duration: float) -> void:
+	if hp <= 0 or _state == State.DEAD or duration <= 0.0:
+		return
+	_transform_time_left = maxf(_transform_time_left, duration)
+	if _transformed:
+		return
+	_transformed = true
+	_pre_transform_frames = _sprite.sprite_frames
+	_sprite.sprite_frames = PIG_FRAMES
+	_sprite.modulate      = Color.WHITE
+	if _sprite.sprite_frames.has_animation("idle"):
+		_sprite.play("idle")
+	_run_transform()
+
+func _run_transform() -> void:
+	while _transform_time_left > 0.0:
+		var step : float = minf(_transform_time_left, 0.1)
+		await get_tree().create_timer(step).timeout
+		if not is_instance_valid(self):
+			return
+		_transform_time_left -= step
+	_transformed = false
+	if is_instance_valid(_sprite) and is_instance_valid(_pre_transform_frames):
+		_sprite.sprite_frames = _pre_transform_frames
+		_refresh_status_tint()
+	_pre_transform_frames = null
 
 # =========================================================================== #
 #  Wet (status) — mirrors unit_base.gd's apply_wet so Harpoon Shark's splash

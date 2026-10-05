@@ -79,6 +79,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_bumblebee.tscn",    "count": 4},
 		{"path": "res://scenes/enemy_gnoll.tscn",         "count": 3},
 		{"path": "res://scenes/enemy_harpoon_shark.tscn", "count": 2},
+		{"path": "res://scenes/enemy_hex_shaman.tscn",     "count": 2},
 	],
 	# ── Wave 7 — Skeleton swarms begin ────────────────────────────────────
 	[
@@ -95,6 +96,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_bear.tscn",        "count": 3},
 		{"path": "res://scenes/enemy_gnoll.tscn",       "count": 3},
 		{"path": "res://scenes/enemy_harpoon_shark.tscn", "count": 3},
+		{"path": "res://scenes/enemy_hex_shaman.tscn",   "count": 2},
 	],
 	# ── Wave 9 — Everything before boss 2, full chaos ─────────────────────
 	[
@@ -107,6 +109,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_bumblebee.tscn",   "count": 5},
 		{"path": "res://scenes/enemy_gnoll.tscn",        "count": 4},
 		{"path": "res://scenes/enemy_harpoon_shark.tscn", "count": 4},
+		{"path": "res://scenes/enemy_hex_shaman.tscn",    "count": 3},
 	],
 	# ── Wave 10 — BOSS: Witch Doctor Boss + skeleton army ─────────────────
 	[
@@ -123,6 +126,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_bear.tscn",        "count": 3},
 		{"path": "res://scenes/enemy_gnoll.tscn",       "count": 4},
 		{"path": "res://scenes/enemy_harpoon_shark.tscn", "count": 4},
+		{"path": "res://scenes/enemy_hex_shaman.tscn",   "count": 3},
 	],
 	# ── Wave 12 — Skeleton flood ───────────────────────────────────────────
 	[
@@ -142,6 +146,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_bumblebee.tscn",   "count": 6},
 		{"path": "res://scenes/enemy_gnoll.tscn",        "count": 5},
 		{"path": "res://scenes/enemy_harpoon_shark.tscn", "count": 5},
+		{"path": "res://scenes/enemy_hex_shaman.tscn",    "count": 4},
 	],
 	# ── Wave 14 — Final gauntlet before pengu ─────────────────────────────
 	[
@@ -154,6 +159,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_bumblebee.tscn",   "count": 6},
 		{"path": "res://scenes/enemy_gnoll.tscn",        "count": 5},
 		{"path": "res://scenes/enemy_harpoon_shark.tscn", "count": 5},
+		{"path": "res://scenes/enemy_hex_shaman.tscn",    "count": 4},
 	],
 	# ── Wave 15 — FINAL BOSS: Pengu ───────────────────────────────────────
 	[
@@ -659,6 +665,7 @@ const FORMATION_TIERS : Dictionary = {
 	"enemy_bumblebee":   FORMATION_BACK,
 	"enemy_gnoll":       FORMATION_BACK,
 	"enemy_harpoon_shark": FORMATION_BACK,
+	"enemy_hex_shaman": FORMATION_BACK,
 	"enemy_witch_doctor": FORMATION_BACK,
 	"enemy_cat_boss":    FORMATION_BOSS,
 	"enemy_pengu_boss":  FORMATION_BOSS,
