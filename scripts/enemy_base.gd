@@ -334,7 +334,7 @@ func _apply_separation(delta: float) -> void:
 #  Damage / death
 # =========================================================================== #
 
-func take_damage(amount: int, attacker: Node = null) -> void:
+func take_damage(amount: int, attacker: Node = null, is_status_damage: bool = false) -> void:
 	# Block friendly fire
 	if hired and attacker != null and is_instance_valid(attacker):
 		if attacker.get("faction") == "player" or attacker.get("hired") == true:
@@ -469,7 +469,9 @@ func _run_wet() -> void:
 	_update_hp_bar()
 
 func _refresh_status_tint() -> void:
-	if _poison_active:
+	if _burning_active:
+		original_mod = BURN_TINT
+	elif _poison_active:
 		original_mod = POISON_TINT
 	elif _wet_active:
 		original_mod = WET_TINT
@@ -536,9 +538,47 @@ func _run_poison(tick_interval: float, damage_per_tick: int, source: Node) -> vo
 		# The source may be freed while this timer waits. A stale object passed
 		# to take_damage's typed Node parameter errors before its validity check.
 		var valid_source : Node = source if is_instance_valid(source) else null
-		take_damage(damage_per_tick, valid_source)
+		take_damage(damage_per_tick, valid_source, true)
 	_poison_active = false
 	_status_bar.clear_status(&"poison")
+	_refresh_status_tint()
+	_update_hp_bar()
+
+# =========================================================================== #
+#  Burning (DoT) — mirrors unit_base.gd's apply_burning so Imp's fire breath
+#  works identically whether it hit a real player unit or a hired unit here.
+#  Takes top tint priority over poison/wet since fire reads as the most
+#  urgent threat of the three.
+# =========================================================================== #
+
+const BURN_TINT : Color = Color(1.0, 0.55, 0.25)
+
+var _burning_active  : bool = false
+var _burn_ticks_left : int  = 0
+
+func apply_burning(damage_per_tick: int, tick_interval: float, duration: float, source: Node = null) -> void:
+	if hp <= 0 or _state == State.DEAD or tick_interval <= 0.0 or duration <= 0.0:
+		return
+	_burn_ticks_left = maxi(_burn_ticks_left, int(round(duration / tick_interval)))
+	_ensure_status_bar()
+	_status_bar.set_status(&"burning", BURN_TINT)
+	_update_hp_bar()
+	if _burning_active:
+		return
+	_burning_active = true
+	_refresh_status_tint()
+	_run_burning(tick_interval, damage_per_tick, source)
+
+func _run_burning(tick_interval: float, damage_per_tick: int, source: Node) -> void:
+	while _burn_ticks_left > 0:
+		await get_tree().create_timer(tick_interval).timeout
+		if not is_instance_valid(self) or hp <= 0:
+			return
+		_burn_ticks_left -= 1
+		var valid_source : Node = source if is_instance_valid(source) else null
+		take_damage(damage_per_tick, valid_source, true)
+	_burning_active = false
+	_status_bar.clear_status(&"burning")
 	_refresh_status_tint()
 	_update_hp_bar()
 

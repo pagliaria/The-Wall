@@ -47,6 +47,18 @@ func _draw_glyph(center: Vector2, status_id: StringName, color: Color) -> void:
 				center + Vector2(-3.0, 3.0), center + Vector2(-4.0, 0.0)
 			]), color)
 			draw_circle(center + Vector2(-1.4, 0.3), 1.0, Color(1.0, 1.0, 1.0, 0.72))
+		&"burning":
+			# Flame: a tall outer teardrop with a smaller inner one offset upward,
+			# same two-tone trick wet's droplet highlight uses.
+			draw_colored_polygon(PackedVector2Array([
+				center + Vector2(0.0, -5.5), center + Vector2(3.2, -0.5),
+				center + Vector2(2.2, 3.0), center + Vector2(0.0, 4.5),
+				center + Vector2(-2.2, 3.0), center + Vector2(-3.2, -0.5)
+			]), color)
+			draw_colored_polygon(PackedVector2Array([
+				center + Vector2(0.0, -1.5), center + Vector2(1.3, 1.0),
+				center + Vector2(0.0, 3.0), center + Vector2(-1.3, 1.0)
+			]), Color(1.0, 0.92, 0.55, 0.9))
 		_:
 			draw_line(center + Vector2(0.0, -4.0), center + Vector2(0.0, 4.0), color, 1.8, true)
 			draw_line(center + Vector2(-4.0, 0.0), center + Vector2(4.0, 0.0), color, 1.8, true)

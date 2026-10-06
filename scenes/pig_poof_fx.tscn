@@ -1,6 +1,6 @@
-[gd_scene load_steps=13 format=3 uid="uid://w2t8yfvhg1vw"]
+[gd_scene load_steps=14 format=3 uid="uid://w2t8yfvhg1vw"]
 
-[ext_resource type="Script" uid="uid://boneshotanimfxs" path="res://scripts/one_shot_anim_fx.gd" id="1_fx"]
+[ext_resource type="Script" uid="uid://b7bf33fw1q7gg" path="res://scripts/one_shot_anim_fx.gd" id="1_fx"]
 [ext_resource type="Texture2D" uid="uid://f0cqlxd8twv1" path="res://assets/Enemies/Extra/Hex Shaman Transformation Spell/Hex Shaman_Explosion Spell.png" id="2_poof"]
 
 [sub_resource type="AtlasTexture" id="poof_0"]
@@ -86,4 +86,3 @@ script = ExtResource("1_fx")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("poof_frames")
-animation = &"default"
