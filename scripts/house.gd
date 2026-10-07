@@ -104,6 +104,15 @@ const HIRE_ROSTER : Array = [
 		"max":   3,
 	},
 	{
+		"id":    "slingshot_gnome",
+		"label": "Slingshot Gnome",
+		"scene": "res://scenes/enemy_slingshot_gnome.tscn",
+		"icon":  "res://assets/Enemies/Slingshot Gnome/Slingshot Gnome_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 3, "meat": 2},
+		"max":   4,
+	},
+	{
 		"id":    "harpoon_shark",
 		"label": "Harpoon Shark",
 		"scene": "res://scenes/enemy_harpoon_shark.tscn",

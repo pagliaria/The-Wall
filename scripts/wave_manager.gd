@@ -56,6 +56,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_bumblebee.tscn","count": 3},
 		{"path": "res://scenes/enemy_gnome.tscn",     "count": 5},
 		{"path": "res://scenes/enemy_imp.tscn",       "count": 3},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 2},
 	],
 	# ── Wave 4 — Boars introduced, building up to boss ────────────────────
 	[
@@ -67,6 +68,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_gnoll.tscn",     "count": 2},
 		{"path": "res://scenes/enemy_imp.tscn",       "count": 3},
 		{"path": "res://scenes/enemy_lizard.tscn",    "count": 3},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 3},
 	],
 	# ── Wave 5 — BOSS: Cat Boss + bodyguard boars ─────────────────────────
 	[
@@ -88,6 +90,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_lizard.tscn",          "count": 3},
 		{"path": "res://scenes/enemy_paddle_shark.tscn",    "count": 2},
 		{"path": "res://scenes/enemy_panda.tscn",           "count": 2},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 3},
 	],
 	# ── Wave 7 — Skeleton swarms begin ────────────────────────────────────
 	[
@@ -109,6 +112,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_minotaur.tscn",     "count": 1},
 		{"path": "res://scenes/enemy_paddle_shark.tscn", "count": 3},
 		{"path": "res://scenes/enemy_panda.tscn",        "count": 3},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 4},
 	],
 	# ── Wave 9 — Everything before boss 2, full chaos ─────────────────────
 	[
@@ -127,6 +131,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_minotaur.tscn",      "count": 2},
 		{"path": "res://scenes/enemy_paddle_shark.tscn",  "count": 4},
 		{"path": "res://scenes/enemy_panda.tscn",         "count": 4},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 5},
 	],
 	# ── Wave 10 — BOSS: Witch Doctor Boss + skeleton army ─────────────────
 	[
@@ -148,6 +153,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_minotaur.tscn",     "count": 2},
 		{"path": "res://scenes/enemy_paddle_shark.tscn", "count": 4},
 		{"path": "res://scenes/enemy_panda.tscn",        "count": 4},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 5},
 	],
 	# ── Wave 12 — Skeleton flood ───────────────────────────────────────────
 	[
@@ -173,6 +179,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_minotaur.tscn",      "count": 3},
 		{"path": "res://scenes/enemy_paddle_shark.tscn",  "count": 5},
 		{"path": "res://scenes/enemy_panda.tscn",         "count": 5},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 6},
 	],
 	# ── Wave 14 — Final gauntlet before pengu ─────────────────────────────
 	[
@@ -191,6 +198,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_minotaur.tscn",      "count": 3},
 		{"path": "res://scenes/enemy_paddle_shark.tscn",  "count": 5},
 		{"path": "res://scenes/enemy_panda.tscn",         "count": 5},
+		{"path": "res://scenes/enemy_slingshot_gnome.tscn", "count": 6},
 	],
 	# ── Wave 15 — FINAL BOSS: Pengu ───────────────────────────────────────
 	[
@@ -700,6 +708,7 @@ const FORMATION_TIERS : Dictionary = {
 	"enemy_bumblebee":   FORMATION_BACK,
 	"enemy_imp":         FORMATION_BACK,
 	"enemy_gnoll":       FORMATION_BACK,
+	"enemy_slingshot_gnome": FORMATION_BACK,
 	"enemy_harpoon_shark": FORMATION_BACK,
 	"enemy_hex_shaman": FORMATION_BACK,
 	"enemy_witch_doctor": FORMATION_BACK,
