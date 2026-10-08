@@ -59,6 +59,15 @@ const HIRE_ROSTER : Array = [
 		"max":   5,
 	},
 	{
+		"id":    "snake",
+		"label": "Snake",
+		"scene": "res://scenes/enemy_snake.tscn",
+		"icon":  "res://assets/Enemies/Snake/Snake_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 3, "meat": 1},
+		"max":   4,
+	},
+	{
 		"id":    "lizard",
 		"label": "Lizard",
 		"scene": "res://scenes/enemy_lizard.tscn",
