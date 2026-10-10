@@ -68,6 +68,15 @@ const HIRE_ROSTER : Array = [
 		"max":   4,
 	},
 	{
+		"id":    "spider",
+		"label": "Spider",
+		"scene": "res://scenes/enemy_spider.tscn",
+		"icon":  "res://assets/Enemies/Spider/Spider_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 4, "meat": 2},
+		"max":   3,
+	},
+	{
 		"id":    "spear_goblin",
 		"label": "Spear Goblin",
 		"scene": "res://scenes/enemy_spear_goblin.tscn",
@@ -75,6 +84,15 @@ const HIRE_ROSTER : Array = [
 		"icon_frame": Rect2(0, 0, 0, 0),
 		"cost":  {"gold": 4, "meat": 2},
 		"max":   4,
+	},
+	{
+		"id":    "torch_goblin",
+		"label": "Torch Goblin",
+		"scene": "res://scenes/enemy_torch_goblin.tscn",
+		"icon":  "res://assets/Enemies/Torch Goblin/Torch Goblin_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 4, "meat": 2},
+		"max":   3,
 	},
 	{
 		"id":    "pig_rider",
