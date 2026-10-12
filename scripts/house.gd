@@ -77,6 +77,15 @@ const HIRE_ROSTER : Array = [
 		"max":   3,
 	},
 	{
+		"id":    "thief",
+		"label": "Thief",
+		"scene": "res://scenes/enemy_thief.tscn",
+		"icon":  "res://assets/Enemies/Thief/Thief_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 5, "meat": 3},
+		"max":   3,
+	},
+	{
 		"id":    "spear_goblin",
 		"label": "Spear Goblin",
 		"scene": "res://scenes/enemy_spear_goblin.tscn",

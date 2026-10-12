@@ -1,0 +1,75 @@
+[gd_scene load_steps=11 format=3 uid="uid://bdustpooffx00001"]
+
+[ext_resource type="Script" uid="uid://boneshotanimfxs" path="res://scripts/one_shot_anim_fx.gd" id="1_fx"]
+[ext_resource type="Texture2D" uid="uid://ob2brwxpl1le" path="res://assets/Particle FX/Dust_01.png" id="2_dust"]
+
+[sub_resource type="AtlasTexture" id="dust_0"]
+atlas = ExtResource("2_dust")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="dust_1"]
+atlas = ExtResource("2_dust")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="dust_2"]
+atlas = ExtResource("2_dust")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="dust_3"]
+atlas = ExtResource("2_dust")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="dust_4"]
+atlas = ExtResource("2_dust")
+region = Rect2(256, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="dust_5"]
+atlas = ExtResource("2_dust")
+region = Rect2(320, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="dust_6"]
+atlas = ExtResource("2_dust")
+region = Rect2(384, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="dust_7"]
+atlas = ExtResource("2_dust")
+region = Rect2(448, 0, 64, 64)
+
+[sub_resource type="SpriteFrames" id="poof_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("dust_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("dust_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("dust_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("dust_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("dust_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("dust_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("dust_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("dust_7")
+}],
+"loop": false,
+"name": &"default",
+"speed": 20.0
+}]
+
+[node name="DustPoofFx" type="Node2D"]
+script = ExtResource("1_fx")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("poof_frames")
+animation = &"default"

@@ -102,6 +102,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_pig_rider.tscn",        "count": 2},
 		{"path": "res://scenes/enemy_torch_goblin.tscn",     "count": 4},
 		{"path": "res://scenes/enemy_spider.tscn",           "count": 2},
+		{"path": "res://scenes/enemy_thief.tscn",            "count": 2},
 	],
 	# ── Wave 7 — Skeleton swarms begin ────────────────────────────────────
 	[
@@ -129,6 +130,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_pig_rider.tscn",     "count": 3},
 		{"path": "res://scenes/enemy_torch_goblin.tscn",  "count": 5},
 		{"path": "res://scenes/enemy_spider.tscn",        "count": 3},
+		{"path": "res://scenes/enemy_thief.tscn",         "count": 3},
 	],
 	# ── Wave 9 — Everything before boss 2, full chaos ─────────────────────
 	[
@@ -153,6 +155,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_pig_rider.tscn",      "count": 4},
 		{"path": "res://scenes/enemy_torch_goblin.tscn",    "count": 5},
 		{"path": "res://scenes/enemy_spider.tscn",          "count": 4},
+		{"path": "res://scenes/enemy_thief.tscn",           "count": 3},
 	],
 	# ── Wave 10 — BOSS: Witch Doctor Boss + skeleton army ─────────────────
 	[
@@ -180,6 +183,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_pig_rider.tscn",     "count": 4},
 		{"path": "res://scenes/enemy_torch_goblin.tscn",  "count": 5},
 		{"path": "res://scenes/enemy_spider.tscn",        "count": 4},
+		{"path": "res://scenes/enemy_thief.tscn",         "count": 3},
 	],
 	# ── Wave 12 — Skeleton flood ───────────────────────────────────────────
 	[
@@ -197,6 +201,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_pig_rider.tscn",    "count": 5},
 		{"path": "res://scenes/enemy_torch_goblin.tscn", "count": 6},
 		{"path": "res://scenes/enemy_spider.tscn",       "count": 5},
+		{"path": "res://scenes/enemy_thief.tscn",        "count": 4},
 		{"path": "res://scenes/enemy_boar.tscn",        "count": 5},
 		{"path": "res://scenes/enemy_badger.tscn",      "count": 6},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
@@ -220,6 +225,7 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_pig_rider.tscn",    "count": 5},
 		{"path": "res://scenes/enemy_torch_goblin.tscn", "count": 6},
 		{"path": "res://scenes/enemy_spider.tscn",       "count": 5},
+		{"path": "res://scenes/enemy_thief.tscn",        "count": 4},
 		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 12},
 		{"path": "res://scenes/enemy_boar.tscn",        "count": 6},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 3},
@@ -743,6 +749,7 @@ const FORMATION_TIERS : Dictionary = {
 	"enemy_skeleton":    FORMATION_MID,
 	"enemy_snake":       FORMATION_MID,
 	"enemy_spider":      FORMATION_MID,
+	"enemy_thief":       FORMATION_MID,
 	"enemy_torch_goblin": FORMATION_MID,
 	"enemy_slime":       FORMATION_MID,
 	"enemy_badger":      FORMATION_BACK,
