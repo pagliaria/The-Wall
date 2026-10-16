@@ -1,0 +1,102 @@
+[gd_scene load_steps=25 format=3]
+
+[ext_resource type="Script" uid="uid://d8a4e2f7b1c9" path="res://scripts/bomb_fish_bomb.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bp7krdq8lhk10" path="res://assets/Enemies/Bomb Fish/Bomb_FuseLit.png" id="2_fuse"]
+[ext_resource type="Texture2D" uid="uid://bvnxwofk275m8" path="res://assets/Enemies/Bomb Fish/Bomb_Spinning.png" id="3_spin"]
+[ext_resource type="Texture2D" uid="uid://bq7ukm1hmy0v3" path="res://assets/Enemies/Bomb Fish/Bomb_Idle.png" id="4_idle"]
+[ext_resource type="Texture2D" uid="uid://ydrja20m4tvw" path="res://assets/Particle FX/Explosion_01.png" id="5_explosion"]
+
+[sub_resource type="AtlasTexture" id="idle_0"]
+atlas = ExtResource("4_idle")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="spin_0"]
+atlas = ExtResource("3_spin")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="spin_1"]
+atlas = ExtResource("3_spin")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="spin_2"]
+atlas = ExtResource("3_spin")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="spin_3"]
+atlas = ExtResource("3_spin")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="fuse_0"]
+atlas = ExtResource("2_fuse")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="fuse_1"]
+atlas = ExtResource("2_fuse")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="fuse_2"]
+atlas = ExtResource("2_fuse")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="fuse_3"]
+atlas = ExtResource("2_fuse")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="boom_0"]
+atlas = ExtResource("5_explosion")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="boom_1"]
+atlas = ExtResource("5_explosion")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="boom_2"]
+atlas = ExtResource("5_explosion")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="boom_3"]
+atlas = ExtResource("5_explosion")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="boom_4"]
+atlas = ExtResource("5_explosion")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="boom_5"]
+atlas = ExtResource("5_explosion")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="boom_6"]
+atlas = ExtResource("5_explosion")
+region = Rect2(1152, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="boom_7"]
+atlas = ExtResource("5_explosion")
+region = Rect2(1344, 0, 192, 192)
+
+[sub_resource type="SpriteFrames" id="bomb_frames"]
+animations = [
+{"frames": [{"duration": 1.0, "texture": SubResource("idle_0")} ], "loop": true, "name": &"idle", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": SubResource("spin_0")} , {"duration": 1.0, "texture": SubResource("spin_1")} , {"duration": 1.0, "texture": SubResource("spin_2")} , {"duration": 1.0, "texture": SubResource("spin_3")} ], "loop": true, "name": &"spin", "speed": 12.0},
+{"frames": [{"duration": 1.0, "texture": SubResource("fuse_0")} , {"duration": 1.0, "texture": SubResource("fuse_1")} , {"duration": 1.0, "texture": SubResource("fuse_2")} , {"duration": 1.0, "texture": SubResource("fuse_3")} ], "loop": true, "name": &"fuse", "speed": 12.0},
+{"frames": [{"duration": 1.0, "texture": SubResource("boom_0")} , {"duration": 1.0, "texture": SubResource("boom_1")} , {"duration": 1.0, "texture": SubResource("boom_2")} , {"duration": 1.0, "texture": SubResource("boom_3")} , {"duration": 1.0, "texture": SubResource("boom_4")} , {"duration": 1.0, "texture": SubResource("boom_5")} , {"duration": 1.0, "texture": SubResource("boom_6")} , {"duration": 1.0, "texture": SubResource("boom_7")} ], "loop": false, "name": &"explode", "speed": 18.0}]
+
+[sub_resource type="CircleShape2D" id="bomb_shape"]
+radius = 12.0
+
+[node name="BombFishBomb" type="Area2D"]
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("1_script")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("bomb_frames")
+animation = &"spin"
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("bomb_shape")
+
+[node name="Lifetime" type="Timer" parent="."]
+wait_time = 5.0
+one_shot = true
+autostart = true

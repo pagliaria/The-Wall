@@ -158,6 +158,15 @@ const HIRE_ROSTER : Array = [
 		"max":   4,
 	},
 	{
+		"id":    "giant_bat",
+		"label": "Giant Bat",
+		"scene": "res://scenes/enemy_giant_bat.tscn",
+		"icon":  "res://assets/Enemies/Giant Bat/Giant Bat_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 4, "meat": 3},
+		"max":   3,
+	},
+	{
 		"id":    "imp",
 		"label": "Imp",
 		"scene": "res://scenes/enemy_imp.tscn",
@@ -201,6 +210,15 @@ const HIRE_ROSTER : Array = [
 		"icon_frame": Rect2(0, 0, 0, 0),
 		"cost":  {"gold": 5, "meat": 3},
 		"max":   3,
+	},
+	{
+		"id":    "bomb_fish",
+		"label": "Bomb Fish",
+		"scene": "res://scenes/enemy_bomb_fish.tscn",
+		"icon":  "res://assets/Enemies/Bomb Fish/Bomb Fish_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 6, "meat": 4},
+		"max":   2,
 	},
 	{
 		"id":    "panda",

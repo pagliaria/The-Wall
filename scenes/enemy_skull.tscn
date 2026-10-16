@@ -1,6 +1,6 @@
-[gd_scene load_steps=46 format=3 uid="uid://kitkiqcukck3"]
+[gd_scene load_steps=53 format=3 uid="uid://kitkiqcukck3"]
 
-[ext_resource type="Script" uid="uid://bskullscript000001" path="res://scripts/enemy_skull.gd" id="1_skull"]
+[ext_resource type="Script" uid="uid://cl5is0uvutop6" path="res://scripts/enemy_skull.gd" id="1_skull"]
 [ext_resource type="Texture2D" uid="uid://c1fhnbrlj5cq4" path="res://assets/Enemies/Skull/Skull_Attack.png" id="2_attack"]
 [ext_resource type="Texture2D" uid="uid://rcfr4ka675xj" path="res://assets/Particle FX/Dust_02.png" id="3_dust"]
 [ext_resource type="Texture2D" uid="uid://be5e8ww4rdx2l" path="res://assets/Enemies/Skull/Skull_Idle.png" id="4_idle"]
@@ -35,34 +35,6 @@ region = Rect2(960, 0, 192, 192)
 
 [sub_resource type="AtlasTexture" id="atk_6"]
 atlas = ExtResource("2_attack")
-region = Rect2(1152, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="guard_0"]
-atlas = ExtResource("6_guard")
-region = Rect2(0, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="guard_1"]
-atlas = ExtResource("6_guard")
-region = Rect2(192, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="guard_2"]
-atlas = ExtResource("6_guard")
-region = Rect2(384, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="guard_3"]
-atlas = ExtResource("6_guard")
-region = Rect2(576, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="guard_4"]
-atlas = ExtResource("6_guard")
-region = Rect2(768, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="guard_5"]
-atlas = ExtResource("6_guard")
-region = Rect2(960, 0, 192, 192)
-
-[sub_resource type="AtlasTexture" id="guard_6"]
-atlas = ExtResource("6_guard")
 region = Rect2(1152, 0, 192, 192)
 
 [sub_resource type="AtlasTexture" id="dust_0"]
@@ -104,6 +76,34 @@ region = Rect2(512, 0, 64, 64)
 [sub_resource type="AtlasTexture" id="dust_9"]
 atlas = ExtResource("3_dust")
 region = Rect2(576, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="guard_0"]
+atlas = ExtResource("6_guard")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_1"]
+atlas = ExtResource("6_guard")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_2"]
+atlas = ExtResource("6_guard")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_3"]
+atlas = ExtResource("6_guard")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_4"]
+atlas = ExtResource("6_guard")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_5"]
+atlas = ExtResource("6_guard")
+region = Rect2(960, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="guard_6"]
+atlas = ExtResource("6_guard")
+region = Rect2(1152, 0, 192, 192)
 
 [sub_resource type="AtlasTexture" id="idle_0"]
 atlas = ExtResource("4_idle")
@@ -324,7 +324,6 @@ atlas = ExtResource("8_barfill")
 [node name="EnemySkull" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_skull")
-attack_damage = 5
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("skull_frames")
