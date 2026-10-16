@@ -168,8 +168,9 @@ const WAVE_COMPOSITIONS : Array = [
 		{"path": "res://scenes/enemy_giant_bat.tscn", "count": 3},
 		{"path": "res://scenes/enemy_bomb_fish.tscn", "count": 3},
 	],
-	# ── Wave 10 — BOSS: Witch Doctor Boss + skeleton army ─────────────────
+	# ── Wave 10 — BOSS: Troll + skeleton army ──────────────────────────────
 	[
+		{"path": "res://scenes/enemy_troll_boss.tscn",   "count": 1},
 		{"path": "res://scenes/enemy_witch_doctor.tscn","count": 1},
 		{"path": "res://scenes/enemy_skeleton.tscn",    "count": 16},
 		{"path": "res://scenes/enemy_badger.tscn",      "count": 4},
@@ -788,6 +789,7 @@ const FORMATION_TIERS : Dictionary = {
 	"enemy_hex_shaman": FORMATION_BACK,
 	"enemy_witch_doctor": FORMATION_BACK,
 	"enemy_cat_boss":    FORMATION_BOSS,
+	"enemy_troll_boss":  FORMATION_BOSS,
 	"enemy_pengu_boss":  FORMATION_BOSS,
 }
 

@@ -274,6 +274,15 @@ const HIRE_ROSTER : Array = [
 		"cost":  {"gold": 15, "meat": 10},
 		"max":   1,
 	},
+	{
+		"id":    "troll_boss",
+		"label": "Troll Boss",
+		"scene": "res://scenes/enemy_troll_boss.tscn",
+		"icon":  "res://assets/Enemies/Troll/Troll_Avatar.png",
+		"icon_frame": Rect2(0, 0, 0, 0),
+		"cost":  {"gold": 15, "meat": 10},
+		"max":   1,
+	},
 ]
 
 var units_layer  : Node2D = null
